@@ -1,0 +1,21 @@
+{
+  "phoneRequired": "رقم الهاتف مطلوب",
+  "phoneInvalid": "يجب أن يبدأ رقم الهاتف بـ '09' وأن يكون مكونًا من 10 أرقام",
+  "passwordRequired": "كلمة المرور مطلوبة",
+  "passwordMin": "يجب أن تكون كلمة المرور 8 أحرف على الأقل",
+  "nameRequired": "الاسم مطلوب",
+  "nameMin": "يجب أن يكون الاسم 3 أحرف على الأقل",
+  "roleRequired": "الدور مطلوب",
+  "roleInvalid": "يجب أن يكون الدور إما 'user' أو 'vendor'",
+  "successLogin": "تم تسجيل الدخول بنجاح",
+  "successRegister": "تم تسجيل المستخدم بنجاح. يرجى التحقق من رقم هاتفك.",
+  "verified": "تم التحقق من رقم الهاتف بنجاح. الحساب نشط الآن.",
+  "successLogout": "تم تسجيل الخروج بنجاح",
+  "errorUserNotFound": "المستخدم غير موجود",
+  "errorInvalidCredentials": "رقم الهاتف أو كلمة المرور غير صحيحة",
+  "errorPhoneInUse": "رقم الهاتف مستخدم بالفعل",
+  "invalidCode": "رمز التحقق غير صحيح",
+  "sms": {
+    "verificationCode": "رمز التحقق الخاص بك هو: {{code}}"
+  }
+}

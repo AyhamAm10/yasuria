@@ -1,0 +1,458 @@
+openapi: 3.0.0
+info:
+  title: Property API
+  version: 1.0.0
+  description: API for managing properties with attributes and specifications.
+
+servers:
+  - url: /api
+
+paths:
+  /property:
+    get:
+      summary: Get list of properties
+      description: Retrieves properties based on query parameters (e.g., title, location, price).
+      tags:
+        - property
+      parameters:
+        - name: title
+          in: query
+          description: Property title to search for
+          required: false
+          schema:
+            type: string
+        - name: location
+          in: query
+          description: Property location to search for
+          required: false
+          schema:
+            type: string
+        - name: minPrice
+          in: query
+          description: Minimum price filter
+          required: false
+          schema:
+            type: number
+            format: float
+        - name: maxPrice
+          in: query
+          description: Maximum price filter
+          required: false
+          schema:
+            type: number
+            format: float
+        - name: area
+          in: query
+          description: Property area filter
+          required: false
+          schema:
+            type: number
+            format: float
+        - name: page
+          in: query
+          description: Page number for pagination
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: Number of items per page for pagination
+          required: false
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Successfully retrieved properties
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        property:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                            title_ar:
+                              type: string
+                            title_en:
+                              type: string
+                            desc_ar:
+                              type: string
+                            desc_en:
+                              type: string
+                            location:
+                              type: string
+                            status:
+                              type: string
+                            price:
+                              type: number
+                              format: float
+                            area:
+                              type: number
+                              format: float
+                            images:
+                              type: array
+                              items:
+                                type: string
+                        attributes:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              attribute:
+                                type: object
+                                properties:
+                                  id:
+                                    type: integer
+                                  name:
+                                    type: string
+                              value:
+                                type: string
+                        specifications:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              specification:
+                                type: object
+                                properties:
+                                  id:
+                                    type: integer
+                                  name:
+                                    type: string
+                              value:
+                                type: string
+                  pagination:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      page:
+                        type: integer
+                      limit:
+                        type: integer
+                      totalPages:
+                        type: integer
+        '404':
+          description: Properties not found
+
+    post:
+      summary: Create a new property
+      description: Adds a new property with the provided details, including attributes and specifications.
+      tags:
+        - property
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title_ar:
+                  type: string
+                title_en:
+                  type: string
+                desc_ar:
+                  type: string
+                desc_en:
+                  type: string
+                location:
+                  type: string
+                status:
+                  type: string
+                price:
+                  type: number
+                  format: float
+                area:
+                  type: number
+                  format: float
+                attributes:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      value:
+                        type: string
+                specifications:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      value:
+                        type: string
+                long:
+                  type: number
+                  format: float
+                lat:
+                  type: number
+                  format: float
+                images:
+                  type: array
+                  items:
+                    type: url
+      responses:
+        '201':
+          description: Property created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      title_ar:
+                        type: string
+                      title_en:
+                        type: string
+                      location:
+                        type: string
+                      status:
+                        type: string
+                      price:
+                        type: number
+                        format: float
+                      area:
+                        type: number
+                        format: float
+                      images:
+                        type: array
+                        items:
+                          type: string
+        '400':
+          description: Invalid input data
+
+  /property/{id}:
+    get:
+      summary: Get a property by ID
+      description: Retrieves a property by its unique ID, along with its attributes and specifications.
+      tags:
+        - property
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the property to retrieve
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successfully retrieved property
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      property:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          title_ar:
+                            type: string
+                          title_en:
+                            type: string
+                          desc_ar:
+                            type: string
+                          desc_en:
+                            type: string
+                          location:
+                            type: string
+                          status:
+                            type: string
+                          price:
+                            type: number
+                            format: float
+                          area:
+                            type: number
+                            format: float
+                          images:
+                            type: array
+                            items:
+                              type: string
+                      attributes:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            attribute:
+                              type: object
+                              properties:
+                                id:
+                                  type: integer
+                                name:
+                                  type: string
+                            value:
+                              type: string
+                      specifications:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            specification:
+                              type: object
+                              properties:
+                                id:
+                                  type: integer
+                                name:
+                                  type: string
+                            value:
+                              type: string
+        '404':
+          description: Property not found
+
+    put:
+      summary: Update an existing property
+      description: Updates the details of an existing property, including attributes, specifications, and images.
+      tags:
+        - property
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the property to update
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title_ar:
+                  type: string
+                title_en:
+                  type: string
+                desc_ar:
+                  type: string
+                desc_en:
+                  type: string
+                location:
+                  type: string
+                status:
+                  type: string
+                price:
+                  type: number
+                  format: float
+                area:
+                  type: number
+                  format: float
+                attributes:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      value:
+                        type: string
+                specifications:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      value:
+                        type: string
+                lat:
+                  type: number
+                  format: float
+                long:
+                  type: number
+                  format: float
+                images:
+                  type: array
+                  items:
+                    type: url
+                keptImages:
+                  description: A JSON array of the paths to images that should be kept
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Property updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      title_ar:
+                        type: string
+                      title_en:
+                        type: string
+                      location:
+                        type: string
+                      status:
+                        type: string
+                      price:
+                        type: number
+                        format: float
+                      area:
+                        type: number
+                        format: float
+                      images:
+                        type: array
+                        items:
+                          type: string
+        '404':
+          description: Property not found
+        '403':
+          description: Forbidden action (user not authorized to update property)
+
+    delete:
+      summary: Delete a property
+      description: Deletes a property by ID.
+      tags:
+        - property
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the property to delete
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Property deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: {}
+        '404':
+          description: Property not found
+        '403':
+          description: Forbidden action (user not authorized to delete property)
+
+components:
+  schemas:
+    Property:
+      type: object

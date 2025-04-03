@@ -1,0 +1,204 @@
+openapi: 3.0.0
+info:
+  title: Attribute API
+  description: API for managing attributes
+  version: 1.0.0
+
+paths:
+  /attributes:
+    get:
+      summary: Retrieve a list of attributes
+      description: Fetches a list of attributes with support for filtering by `entityType` and pagination.
+      tags:
+        - attribute
+      parameters:
+        - name: page
+          in: query
+          description: Page number (default is 1)
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: Number of items per page (default is 10)
+          required: false
+          schema:
+            type: integer
+            default: 10
+        - name: entityType
+          in: query
+          description: The entity type to filter attributes by
+          required: false
+          schema:
+            type: string
+      responses:
+        200:
+          description: Attributes retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Attributes retrieved successfully"
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        title:
+                          type: string
+                          example: "Size"
+                        type:
+                          type: string
+                          example: "Dropdown"
+                        entity:
+                          type: string
+                          example: "Product"
+                        icon:
+                          type: string
+                          example: "size-icon.png"
+                  pagination:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                        example: 50
+                      page:
+                        type: integer
+                        example: 1
+                      limit:
+                        type: integer
+                        example: 10
+                      totalPages:
+                        type: integer
+                        example: 5
+        404:
+          description: No attributes found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "No attributes found"
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Internal server error"
+
+    post:
+      summary: Create a new attribute
+      tags:
+        - attribute
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - type
+                - entity
+              properties:
+                title:
+                  type: string
+                type:
+                  type: string
+                entity:
+                  type: string
+                icon:
+                  type: string
+                  nullable: true
+      responses:
+        201:
+          description: Attribute created successfully
+        400:
+          description: Missing required fields
+
+  /attributes/{id}:
+    get:
+      summary: Get an attribute by ID
+      tags:
+        - attribute
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Attribute retrieved successfully
+        404:
+          description: Attribute not found
+
+    put:
+      summary: Update an existing attribute
+      tags:
+        - attribute
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                type:
+                  type: string
+                entity:
+                  type: string
+                icon:
+                  type: string
+                  nullable: true
+      responses:
+        200:
+          description: Attribute updated successfully
+        404:
+          description: Attribute not found
+
+    delete:
+      summary: Delete an attribute
+      tags:
+        - attribute
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Attribute deleted successfully
+        404:
+          description: Attribute not found

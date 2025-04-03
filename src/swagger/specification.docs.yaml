@@ -1,0 +1,121 @@
+openapi: 3.0.0
+info:
+  title: Specifications API
+  description: API for managing specifications
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+    description: Local server
+tags:
+  - name: Specifications
+    description: Endpoints related to specifications
+paths:
+  /specifications:
+    get:
+      summary: Get paginated list of specifications
+      tags:
+        - Specifications
+      parameters:
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: Number of items per page
+          schema:
+            type: integer
+            default: 10
+        - name: entityType
+          in: query
+          description: Filter by entity type
+          schema:
+            type: string
+      responses:
+        200:
+          description: Successfully retrieved specifications
+        404:
+          description: No specifications found
+    post:
+      summary: Create a new specification
+      tags:
+        - Specifications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                type:
+                  type: string
+                entity:
+                  type: string
+      responses:
+        201:
+          description: Specification created successfully
+        400:
+          description: Missing required fields
+  /specifications/{id}:
+    get:
+      summary: Get a specification by ID
+      tags:
+        - Specifications
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Successfully retrieved the specification
+        404:
+          description: Specification not found
+    put:
+      summary: Update a specification
+      tags:
+        - Specifications
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                type:
+                  type: string
+                entity:
+                  type: string
+      responses:
+        200:
+          description: Specification updated successfully
+        404:
+          description: Specification not found
+    delete:
+      summary: Delete a specification
+      tags:
+        - Specifications
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Specification deleted successfully
+        404:
+          description: Specification not found

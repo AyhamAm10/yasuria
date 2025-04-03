@@ -1,0 +1,115 @@
+openapi: 3.0.0
+info:
+  title: Auth API
+  description: API for user authentication and registration
+  version: 1.0.0
+servers:
+  - url: 'http://localhost:3000'
+paths:
+  /auth/login:
+    post:
+      summary: Login a user
+      description: Logs in a user with their phone and password and returns an access token and refresh token.
+      operationId: login
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                phone:
+                  type: string
+                  example: "1234567890"
+                password:
+                  type: string
+                  example: "password123"
+      responses:
+        '200':
+          description: User successfully logged in
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+                    example: "jwtAccessToken"
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      name:
+                        type: string
+                        example: "John Doe"
+                      phone:
+                        type: string
+                        example: "1234567890"
+                      role:
+                        type: string
+                        example: "user"
+        '400':
+          description: Invalid credentials
+        '404':
+          description: User not found
+  /auth/regester:
+    post:
+      summary: Register a new user
+      description: Registers a new user with a name, phone, and password.
+      operationId: register
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "John Doe"
+                phone:
+                  type: string
+                  example: "1234567890"
+                password:
+                  type: string
+                  example: "password123"
+                role:
+                  type: string
+                  example: "user"
+      responses:
+        '201':
+          description: User successfully created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userId:
+                    type: integer
+                    example: 1
+        '400':
+          description: User already exists
+  /auth/logout:
+    post:
+      summary: Logout a user
+      description: Logs out the user and clears the refresh token cookie.
+      operationId: logout
+      tags:
+        - Auth
+      responses:
+        '200':
+          description: User successfully logged out
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "User logged out successfully."

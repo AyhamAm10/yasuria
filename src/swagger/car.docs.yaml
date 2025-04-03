@@ -1,0 +1,326 @@
+openapi: 3.0.0
+info:
+  title: Car Management API
+  description: API for managing cars, including creating, updating, deleting, and retrieving car information.
+  version: 1.0.0
+paths:
+  /cars:
+    get:
+      summary: Get a list of cars
+      description: Retrieve a list of cars based on various filter parameters like brand, model, location, and price.
+      tags:
+        - car
+      parameters:
+        - name: brand
+          in: query
+          description: Brand of the car
+          required: false
+          schema:
+            type: string
+        - name: model
+          in: query
+          description: Model of the car
+          required: false
+          schema:
+            type: string
+        - name: location
+          in: query
+          description: Location of the car
+          required: false
+          schema:
+            type: string
+        - name: minPrice
+          in: query
+          description: Minimum price of the car
+          required: false
+          schema:
+            type: number
+            format: float
+        - name: maxPrice
+          in: query
+          description: Maximum price of the car
+          required: false
+          schema:
+            type: number
+            format: float
+        - name: page
+          in: query
+          description: Page number for pagination
+          required: false
+          schema:
+            type: string
+            default: "1"
+        - name: limit
+          in: query
+          description: Number of items per page for pagination
+          required: false
+          schema:
+            type: string
+            default: "10"
+      responses:
+        '200':
+          description: Successfully retrieved the list of cars
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        car:
+                          $ref: '#/components/schemas/Car'
+                        attributes:
+                          type: array
+                          items:
+                            type: object
+                        specifications:
+                          type: array
+                          items:
+                            type: object
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '404':
+          description: Cars not found
+        '500':
+          description: Internal server error
+
+    post:
+      summary: Create a new car
+      description: Create a new car listing, including attributes, specifications, and images.
+      tags:
+        - car
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title_ar:
+                  type: string
+                title_en:
+                  type: string
+                desc_ar:
+                  type: string
+                desc_en:
+                  type: string
+                model:
+                  type: string
+                brand:
+                  type: string
+                location:
+                  type: string
+                status:
+                  type: string
+                price:
+                  type: number
+                lat:
+                  type: float
+                long:
+                  type: float
+                attributes:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      value:
+                        type: string
+                specifications:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      value:
+                        type: string
+                images:
+                  type: array
+                  items:
+                    type: url
+
+      responses:
+        '201':
+          description: Successfully created the car
+        '400':
+          description: Bad request
+
+  /cars/{id}:
+    get:
+      summary: Get car by ID
+      description: Retrieve detailed information about a specific car by ID, including attributes and specifications.
+      tags:
+        - car
+      parameters:
+        - name: id
+          in: path
+          description: The ID of the car to retrieve
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successfully retrieved the car
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      car:
+                        $ref: '#/components/schemas/Car'
+                      attributes:
+                        type: array
+                        items:
+                          type: object
+                      specifications:
+                        type: array
+                        items:
+                          type: object
+        '404':
+          description: Car not found
+
+    put:
+      summary: Update car details
+      description: Update the details of a specific car, including attributes, specifications, and images.
+      tags:
+        - car
+      parameters:
+        - name: id
+          in: path
+          description: The ID of the car to update
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title_ar:
+                  type: string
+                title_en:
+                  type: string
+                desc_ar:
+                  type: string
+                desc_en:
+                  type: string
+                model:
+                  type: string
+                brand:
+                  type: string
+                location:
+                  type: string
+                status:
+                  type: string
+                price:
+                  type: number
+                lat:
+                  type: float
+                long:
+                  type: float
+                attributes:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      value:
+                        type: string
+                specifications:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      value:
+                        type: string
+                images:
+                  type: array
+                  items:
+                    type: url
+      responses:
+        '200':
+          description: Successfully updated the car
+        '404':
+          description: Car not found
+        '403':
+          description: User not authorized to update this car
+
+    delete:
+      summary: Delete a car by ID
+      description: Delete a specific car by its ID along with its associated attributes and specifications.
+      tags:
+        - car
+      parameters:
+        - name: id
+          in: path
+          description: The ID of the car to delete
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successfully deleted the car
+        '404':
+          description: Car not found
+        '403':
+          description: User not authorized to delete this car
+
+components:
+  schemas:
+    Car:
+      type: object
+      properties:
+        id:
+          type: integer
+        title_ar:
+          type: string
+        title_en:
+          type: string
+        desc_ar:
+          type: string
+        desc_en:
+          type: string
+        brand:
+          type: string
+        model:
+          type: string
+        location:
+          type: string
+        status:
+          type: string
+        price:
+          type: number
+          format: float
+        images:
+          type: array
+          items:
+            type: string
+        lat:
+          type: number
+          format: float
+        long:
+          type: number
+          format: float
+
+    Pagination:
+      type: object
+      properties:
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+        totalPages:
+          type: integer
