@@ -29,6 +29,7 @@ export const AppDataSource = new DataSource({
   database: DB_NAME,
   synchronize: false,
   logging: false,
+  schema: "public",
   ssl: false,
   entities: [
     User,
