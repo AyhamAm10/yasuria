@@ -71,7 +71,7 @@ if (Environment.isDevelopment() || Environment.isProduction()) {
 
       await createSuperAdmin();
 
-      app.listen(PORT, () => {
+      app.listen(PORT ,'0.0.0.0', () => {
         logger.info(`Server running at http://localhost:${PORT}`);
       });
     })
