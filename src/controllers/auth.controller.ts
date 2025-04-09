@@ -33,6 +33,11 @@ export class AuthController {
         throw new APIError(HttpStatusCode.BAD_REQUEST, ErrorMessages.generateErrorMessage(entity, "invalid credentials", lang));
       }
 
+      console.log('SECRETS:', {
+        access: process.env.ACCESS_TOKEN_SECRET,
+        refresh: process.env.REFRESH_TOKEN_SECRET
+      });
+      
       const accessToken = jwt.sign(
         { userId: user.id, phone: user.phone, role: user.role },
         process.env.ACCESS_TOKEN_SECRET!,
@@ -40,10 +45,12 @@ export class AuthController {
       );
 
       const refreshToken = jwt.sign(
-        { userId: user.id, phone: user.phone },
+        { userId: user.id, phone: user.phone, role: user.role },
         process.env.REFRESH_TOKEN_SECRET!,
         { expiresIn: "7d" }
       );
+
+
 
       res.cookie("jwt", refreshToken, {
         httpOnly: true,
