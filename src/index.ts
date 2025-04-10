@@ -48,10 +48,10 @@ router.get("/", (req, res) => {
 });
 
 router.use("/auth", authRouter);
-router.use("/car", carRouter);
+router.use("/cars", carRouter);
 router.use("/property", propertyRouter);
 router.use("/service", serviceRouter);
-router.use("/attribute", attributeRouter);
+router.use("/attributes", attributeRouter);
 
 app.use(process.env.BASE_URL, router);
 
