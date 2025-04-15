@@ -13,13 +13,14 @@ import { Attribute, EntityAttribute } from "../entity/Attribute";
 import { Specifications } from "../entity/Specifications";
 import { EntitySpecification, SpecificationsValue } from "../entity/SpecificationsValue";
 import { addCarSchema } from "../helper/validation/schema/addCarSchema";
+import { BrokerOffice } from "../entity/BrokerOffice";
 
 const carRepository = AppDataSource.getRepository(Car);
 const attributeRepository = AppDataSource.getRepository(Attribute);
 const attributeValueRepository =AppDataSource.getRepository(AttributeValue);
 const specificationRepostry = AppDataSource.getRepository(Specifications)
 const specificationValueRepostry = AppDataSource.getRepository(SpecificationsValue)
-
+const brokerOfficeRepository = AppDataSource.getRepository(BrokerOffice)
 
 export const getCars = async (
   req: Request,
@@ -163,12 +164,16 @@ export const createCar = async (
       price,
       specifications,
       lat,
-      long
+      long,
+      listing_type,
+
     } = req.body;
 
     await validator(addCarSchema(lang), req.body);
 
     const userId = req["currentUser"]?.id;
+
+    // validate user 
     const user = await AppDataSource.getRepository(User).findOne({
       where: { id: userId },
     });
@@ -178,6 +183,15 @@ export const createCar = async (
         HttpStatusCode.UNAUTHORIZED,
         ErrorMessages.generateErrorMessage(userMessage, "not found", lang)
       );
+
+      // validate if the user is sempale user or broker office user
+      
+
+      const isOffice = await brokerOfficeRepository.findOne({
+        where:{user}
+      })
+
+
 
     const images = req.files
       ? (req.files as Express.Multer.File[]).map(
@@ -198,7 +212,9 @@ export const createCar = async (
       user,
       images,
       lat,
-      long
+      long,
+      listing_type,
+      broker_office:isOffice || null
     });
 
     const savedCar = await carRepository.save(newCar);

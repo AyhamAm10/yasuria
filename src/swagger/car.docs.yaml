@@ -116,6 +116,8 @@ paths:
                   type: string
                 price:
                   type: number
+                listing_type:
+                  type: string
                 lat:
                   type: float
                 long:
