@@ -25,7 +25,7 @@ export class User {
   @Column()
   phone: string;
 
-  @Column()
+  @Column({nullable:true})
   city: string;
 
   @Column({
