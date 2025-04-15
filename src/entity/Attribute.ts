@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne } from "typeorm";
-import { User } from "./Users";
+import { User } from "./User";
 
 export enum EntityAttribute {
   car = "car",

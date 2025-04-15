@@ -1,8 +1,8 @@
 
 import { NextFunction, Request, Response } from "express";
 import { AppDataSource } from "../config/data_source";
-import { Property } from "../entity/properties"; 
-import { User } from "../entity/Users";
+import { Property } from "../entity/Property"; 
+import { User } from "../entity/User";
 import { APIError } from "../error/api.error";
 import { HttpStatusCode } from "../error/api.error";
 import { ApiResponse } from "../helper/apiResponse";

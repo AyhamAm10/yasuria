@@ -1,6 +1,6 @@
 
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne } from "typeorm";
-import { User } from "./Users";
+import { User } from "./User";
 
 @Entity("ads")
 export class Ads {

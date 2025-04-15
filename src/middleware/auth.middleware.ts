@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { AppDataSource } from "../config/data_source";
-import { User } from "../entity/Users";
+import { User } from "../entity/User";
 import { APIError, HttpStatusCode } from "../error/api.error";
 import { ErrorMessages } from "../error/ErrorMessages";
 

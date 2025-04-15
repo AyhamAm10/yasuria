@@ -1,5 +1,5 @@
 import { AppDataSource } from "./data_source";
-import { User, UserRole } from "../entity/Users";
+import { User, UserRole } from "../entity/User";
 import bcrypt from "bcrypt";
 export const createSuperAdmin = async () => {
   try {
@@ -15,17 +15,15 @@ export const createSuperAdmin = async () => {
     }
 
        const phone = process.env.SUPERADMIN_PHONE;
-       const password = process.env.SUPERADMIN_PASSWORD;
    
-       if (!phone || !password) {
+       if (!phone ) {
          throw new Error("SUPERADMIN_EMAIL or SUPERADMIN_PASSWORD is not set in environment variables");
        }
-   
-       const hashedPassword = await bcrypt.hash(password, 10); 
+
    
     const superAdmin = userRepository.create({
       phone,
-      password: hashedPassword,
+      city:" ",
       role: UserRole.superAdmin,
       name: "Admin",
       isActive: true

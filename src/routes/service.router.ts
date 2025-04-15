@@ -2,7 +2,7 @@ import { Router } from "express";
 import { authMiddleware } from "../middleware/auth.middleware";
 import { upload } from "../middleware/uploadProfile";
 import { checkRole } from "../middleware/checkRole.middleware";
-import { UserRole } from "../entity/Users";
+import { UserRole } from "../entity/User";
 
 import { createService, deleteService, getServiceById, getServices, updateService } from "../controllers/Service.controller";
 

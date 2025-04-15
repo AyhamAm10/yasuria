@@ -5,7 +5,7 @@ import {
   CreateDateColumn,
   ManyToOne,
 } from "typeorm";
-import { User } from "./Users";
+import { User } from "./User";
 
 export enum Entity_Type {
   car = "car",

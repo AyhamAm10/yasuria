@@ -1,7 +1,9 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne } from "typeorm";
-import { User } from "./Users";
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne } from 'typeorm';
+import { User } from './User';
+import { ServiceCategory } from './SeviceCategory';
+import { BrokerOffice } from './BrokerOffice';
 
-@Entity("services")
+@Entity('services')
 export class Service {
   @PrimaryGeneratedColumn()
   id: number;
@@ -9,23 +11,35 @@ export class Service {
   @Column()
   title: string;
 
-  @Column("text")
+  @Column('text')
   description: string;
 
   @Column()
   location: string;
 
-  @Column("decimal")
+  @Column('decimal')
   price: number;
 
-  @Column("jsonb")
-  details: object;
+  @Column('jsonb')
+  details: Record<string, any>;
 
-  @Column({default: false})
+  @Column({ default: false })
   isActive: boolean;
 
-  @ManyToOne(() => User, (user) => user.id, { onDelete: "CASCADE" })
+  @Column({
+    type: 'enum',
+    enum: ['cars', 'properties'],
+  })
+  type: string;
+
+  @ManyToOne(() => ServiceCategory)
+  category: ServiceCategory;
+
+  @ManyToOne(() => User)
   user: User;
+
+  @ManyToOne(() => BrokerOffice, { nullable: true })
+  broker_office: BrokerOffice;
 
   @CreateDateColumn()
   created_at: Date;

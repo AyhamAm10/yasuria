@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { UserRole } from "../entity/Users";
+import { UserRole } from "../entity/User";
 import { APIError, HttpStatusCode } from "../error/api.error";
 import { ErrorMessages } from "../error/ErrorMessages";
 

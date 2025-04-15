@@ -5,17 +5,16 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import authRouter from "./routes/auth.router";
 import path = require("path");
-import multer = require("multer");
 import { errorHandler } from "./error/error.handler";
 import { swaggerDoc } from "./helper/swaggerOptions";
 import { Environment } from "./environment";
 import { logger } from "./logging/logger";
-import { User } from "./entity/Users";
 import carRouter from "./routes/car.router";
 import serviceRouter from "./routes/service.router";
 import propertyRouter from "./routes/property.router";
 import attributeRouter from "./routes/attribute.router";
 import { createSuperAdmin } from "./config/createSuperAdmin";
+import officeRouter from "./routes/office.router";
 
 
 
@@ -29,9 +28,6 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
-
-// handle I18Next
-
 
 
 app.use(express.json()); 
@@ -52,6 +48,7 @@ router.use("/cars", carRouter);
 router.use("/property", propertyRouter);
 router.use("/service", serviceRouter);
 router.use("/attributes", attributeRouter);
+router.use("/broker-offices", officeRouter);
 
 app.use(process.env.BASE_URL, router);
 

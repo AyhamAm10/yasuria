@@ -3,7 +3,7 @@ import { createCar, deleteCar, getCarById, getCars, updateCar } from "../control
 import { authMiddleware } from "../middleware/auth.middleware";
 import { upload } from "../middleware/uploadProfile";
 import { checkRole } from "../middleware/checkRole.middleware";
-import { UserRole } from "../entity/Users";
+import { UserRole } from "../entity/User";
 import { createProperty, deleteProperty, getProperties, getPropertyById, updateProperty } from "../controllers/property.controller";
 
 const propertyRouter: Router = Router();

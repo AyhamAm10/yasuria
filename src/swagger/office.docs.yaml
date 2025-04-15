@@ -1,0 +1,310 @@
+openapi: 3.0.3
+info:
+  title: Broker Office API
+  version: 1.0.0
+  description: |
+    API لإدارة مكاتب الوسطاء العقاريين، تشمل إنشاء، استرجاع، تحديث، وحذف المكاتب.
+servers:
+  - url: https://api.example.com
+    description: الخادم الرئيسي
+tags:
+  - name: Broker Office
+    description: عمليات إدارة مكاتب الوسطاء العقاريين
+paths:
+  /broker-offices:
+    post:
+      tags:
+        - Broker Office
+      summary: إنشاء مكتب وسيط جديد
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                phone:
+                  type: string
+                office_name:
+                  type: string
+                city:
+                  type: string
+                commercial_number:
+                  type: string
+                whatsapp_number:
+                  type: string
+                governorate:
+                  type: string
+                address:
+                  type: string
+                lat:
+                  type: number
+                  format: float
+                long:
+                  type: number
+                  format: float
+                working_hours_from:
+                  type: string
+                  format: time
+                working_hours_to:
+                  type: string
+                  format: time
+                description:
+                  type: string
+                image:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: تم إنشاء المكتب بنجاح
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: object
+        '400':
+          description: خطأ في البيانات المرسلة
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                  statusCode:
+                    type: integer
+                  errors:
+                    type: object
+    get:
+      tags:
+        - Broker Office
+      summary: استرجاع قائمة مكاتب الوسطاء
+      parameters:
+        - name: office_name
+          in: query
+          schema:
+            type: string
+        - name: governorate
+          in: query
+          schema:
+            type: string
+        - name: minRating
+          in: query
+          schema:
+            type: number
+        - name: maxRating
+          in: query
+          schema:
+            type: number
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: Accept-Language
+          in: header
+          schema:
+            type: string
+            default: ar
+      responses:
+        '200':
+          description: قائمة المكاتب المسترجعة
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      type: object
+                  pagination:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      page:
+                        type: integer
+                      limit:
+                        type: integer
+                      totalPages:
+                        type: integer
+        '404':
+          description: لم يتم العثور على نتائج
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                  statusCode:
+                    type: integer
+  /broker-offices/{id}:
+    get:
+      tags:
+        - Broker Office
+      summary: استرجاع مكتب محدد
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: Accept-Language
+          in: header
+          schema:
+            type: string
+            default: ar
+      responses:
+        '200':
+          description: تم العثور على المكتب
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+        '404':
+          description: لم يتم العثور على المكتب
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  statusCode:
+                    type: integer
+    put:
+      tags:
+        - Broker Office
+      summary: تحديث بيانات مكتب
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: Accept-Language
+          in: header
+          schema:
+            type: string
+            default: ar
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                office_name:
+                  type: string
+                city:
+                  type: string
+                commercial_number:
+                  type: string
+                whatsapp_number:
+                  type: string
+                governorate:
+                  type: string
+                address:
+                  type: string
+                lat:
+                  type: number
+                  format: float
+                long:
+                  type: number
+                  format: float
+                working_hours_from:
+                  type: string
+                  format: time
+                working_hours_to:
+                  type: string
+                  format: time
+                description:
+                  type: string
+                image:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: تم تحديث بيانات المكتب
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+    delete:
+      tags:
+        - Broker Office
+      summary: حذف مكتب وسيط
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: تم حذف المكتب بنجاح
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+        '404':
+          description: لم يتم العثور على المكتب
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                  statusCode:
+                    type: integer

@@ -6,6 +6,7 @@ export enum UserRole {
   vendor = "vendor",
   user = "user"
 }
+
 @Entity("users")
 export class User {
   @PrimaryGeneratedColumn()
@@ -25,7 +26,7 @@ export class User {
   phone: string;
 
   @Column()
-  password: string;
+  city: string;
 
   @Column({
     type: "enum",

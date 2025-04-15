@@ -2,18 +2,25 @@ import * as dotenv from "dotenv";
 import * as fs from "fs";
 import "reflect-metadata";
 import { DataSource } from "typeorm";
-import { User } from "../entity/Users";
-import { Car } from "../entity/Cars";
+import { User } from "../entity/User";
+import { Car } from "../entity/Car";
 import { Ads } from "../entity/Ads";
 import { Favorite } from "../entity/Favorites";
 import { Notification } from "../entity/Notifications";
-import { Property } from "../entity/properties";
+import { Property } from "../entity/Property";
 import { Service } from "../entity/Services";
 import { UserPermission } from "../entity/User_permissions";
 import { Attribute } from "../entity/Attribute";
 import { AttributeValue } from "../entity/AttributeValue";
 import { Specifications } from "../entity/Specifications";
 import { SpecificationsValue } from "../entity/SpecificationsValue";
+import { BrokerFollower } from "../entity/BrokerFollower";
+import { BrokerOffice } from "../entity/BrokerOffice";
+import { BrokerPortfolio } from "../entity/BrokerPortfolio";
+import { BrokerRating } from "../entity/BrokerRating";
+import { PropertyType } from "../entity/PropertyType";
+import { Request } from "../entity/Request";
+import { ServiceCategory } from "../entity/SeviceCategory";
 
 dotenv.config();
 const { DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME, NODE_ENV } =
@@ -43,7 +50,14 @@ export const AppDataSource = new DataSource({
     Attribute,
     AttributeValue,
     Specifications,
-    SpecificationsValue
+    SpecificationsValue,
+    BrokerFollower,
+    BrokerOffice,
+    BrokerPortfolio,
+    BrokerRating,
+    PropertyType,
+    Request,
+    ServiceCategory
   ],
 
   migrations: [__dirname + "/../migrations/*.ts"],

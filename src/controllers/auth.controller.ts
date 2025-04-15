@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { User, UserRole } from "../entity/Users";
+import { User, UserRole } from "../entity/User";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { AppDataSource } from "../config/data_source";
@@ -18,26 +18,18 @@ export class AuthController {
 
   static async login(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { phone, password } = req.body;
+      const { phone } = req.body;
       const lang = req.headers["accept-language"] || "ar";
       const entity = lang === "ar" ? "المستخدم" : "user";
-      await validator(getLoginSchema(lang) , req.body)
-
-      const user = await userRepository.findOne({ where: { phone } });
-      if (!user) {
-        throw new APIError(HttpStatusCode.NOT_FOUND, ErrorMessages.generateErrorMessage(entity, "not found", lang));
-      }
-
-      const isMatch = await bcrypt.compare(password, user.password);
-      if (!isMatch) {
-        throw new APIError(HttpStatusCode.BAD_REQUEST, ErrorMessages.generateErrorMessage(entity, "invalid credentials", lang));
-      }
-
-      console.log('SECRETS:', {
-        access: process.env.ACCESS_TOKEN_SECRET,
-        refresh: process.env.REFRESH_TOKEN_SECRET
-      });
       
+      await validator(getLoginSchema(lang), req.body);
+
+      let user = await userRepository.findOne({ where: { phone } });
+
+      if (!user) {
+              throw new APIError(HttpStatusCode.NOT_FOUND, ErrorMessages.generateErrorMessage(entity, "not found", lang));
+            }
+
       const accessToken = jwt.sign(
         { userId: user.id, phone: user.phone, role: user.role },
         process.env.ACCESS_TOKEN_SECRET!,
@@ -50,8 +42,6 @@ export class AuthController {
         { expiresIn: "7d" }
       );
 
-
-
       res.cookie("jwt", refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
@@ -60,7 +50,7 @@ export class AuthController {
 
       res.status(HttpStatusCode.OK).json(
         ApiResponse.success(
-          { accessToken , user },
+          { accessToken, user },
           ErrorMessages.generateErrorMessage(entity, "logged in", lang)
         )
       );
@@ -71,32 +61,47 @@ export class AuthController {
 
   static async register(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { name, phone, password, role } = req.body;
+      const { name, phone, city , role } = req.body;
       const lang = req.headers["accept-language"] || "ar";
-      await validator(getRegisterSchema(lang) , req.body)
+      await validator(getRegisterSchema(lang), req.body);
       const entity = lang === "ar" ? "المستخدم" : "user";
 
       const userExists = await userRepository.findOne({ where: { phone } });
       if (userExists) {
-        console.log(userExists)
-        console.log()
         throw new APIError(HttpStatusCode.BAD_REQUEST, ErrorMessages.generateErrorMessage(entity, "already exists", lang));
       }
 
-      const hashedPassword = await bcrypt.hash(password, 10);
       const newUser = userRepository.create({
         name,
         phone,
-        password: hashedPassword,
+        city,
         role: role || UserRole.user,
         isActive: true,
       });
 
       const savedUser = await userRepository.save(newUser);
 
+      const accessToken = jwt.sign(
+        { userId: savedUser.id, phone: savedUser.phone, role: savedUser.role },
+        process.env.ACCESS_TOKEN_SECRET!,
+        { expiresIn: "20m" }
+      );
+
+      const refreshToken = jwt.sign(
+        { userId: savedUser.id, phone: savedUser.phone, role: savedUser.role },
+        process.env.REFRESH_TOKEN_SECRET!,
+        { expiresIn: "7d" }
+      );
+
+      res.cookie("jwt", refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+      });
+
       res.status(HttpStatusCode.OK_CREATED).json(
         ApiResponse.success(
-          { userId: savedUser.id },
+          { accessToken, user: savedUser },
           ErrorMessages.generateErrorMessage(entity, "created", lang)
         )
       );
@@ -127,35 +132,4 @@ export class AuthController {
       next(error);
     }
   }
-
-  // static async verifyCode(req: Request, res: Response, next: NextFunction): Promise<void> {
-  //   try {
-  //     await validator(verifyCodeSchema, req.body, req.t);
-
-  //     const { phone, code } = req.body;
-  //     const user = await userRepository.findOne({ where: { phone } });
-
-  //     if (!user) {
-  //       throw new APIError(HttpStatusCode.NOT_FOUND, req.t("error.userNotFound"));
-  //     }
-
-  //     const storedCode = verificationCodes.get(phone);
-  //     if (!storedCode || storedCode !== code) {
-  //       throw new APIError(HttpStatusCode.BAD_REQUEST, req.t("error.invalidCode"));
-  //     }
-
-  //     user.isActive = true;
-  //     await userRepository.save(user);
-  //     verificationCodes.delete(phone);
-
-  //     res.status(HttpStatusCode.OK).json({
-  //       message: req.t("success.verified"),
-  //     });
-
-  //   } catch (error) {
-  //     next(error);
-  //   }
-  // }
-
-  
 }
