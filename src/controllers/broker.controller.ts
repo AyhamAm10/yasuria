@@ -242,7 +242,8 @@ export class BrokerController {
     try {
       const lang = req.headers["accept-language"] || "ar";
       const brokerId = req.params.id;
-
+      const entity = lang === "ar" ? "المكاتب" : "broker offices";
+      
       const broker = await brokerRepository.findOne({
         where: { id: Number(brokerId) },
         relations: ["user", "portfolios", "properties", "cars", "broker_service"],
@@ -251,7 +252,7 @@ export class BrokerController {
       if (!broker) {
         throw new APIError(
           HttpStatusCode.NOT_FOUND,
-          ErrorMessages.generateErrorMessage("broker", "not found", lang)
+          ErrorMessages.generateErrorMessage(entity, "not found", lang)
         );
       }
 
@@ -260,7 +261,7 @@ export class BrokerController {
         .json(
           ApiResponse.success(
             broker,
-            ErrorMessages.generateErrorMessage("broker", "retrieved", lang)
+            ErrorMessages.generateErrorMessage(entity, "retrieved", lang)
           )
         );
     } catch (error) {
@@ -276,7 +277,8 @@ export class BrokerController {
     try {
       const lang = req.headers["accept-language"] || "ar";
       const serviceLang = lang === "ar" ? "ID الخدمة" : "ID service";
-  
+      const entity = lang === "ar" ? "المكاتب" : "broker offices";
+      
       await validator(brokerOfficeSchema(lang, true), req.body);
   
       const user = req["currentUser"];
@@ -288,7 +290,14 @@ export class BrokerController {
       if (!broker) {
         throw new APIError(
           HttpStatusCode.NOT_FOUND,
-          ErrorMessages.generateErrorMessage("broker", "not found", lang)
+          ErrorMessages.generateErrorMessage(entity, "not found", lang)
+        );
+      }
+
+      if (broker.user !== user) {
+        throw new APIError(
+          HttpStatusCode.FORBIDDEN,
+          ErrorMessages.generateErrorMessage(entity, "forbidden", lang)
         );
       }
   
@@ -332,7 +341,7 @@ export class BrokerController {
             broker: updatedBroker,
             services: req.body.services || broker.broker_service?.map(bs => bs.service.id)
           },
-          ErrorMessages.generateErrorMessage("broker", "updated", lang)
+          ErrorMessages.generateErrorMessage(entity, "updated", lang)
         )
       );
     } catch (error) {
@@ -348,15 +357,25 @@ export class BrokerController {
     try {
       const lang = req.headers["accept-language"] || "ar";
       const user = req["currentUser"];
+      const entity = lang === "ar" ? "المكاتب" : "broker offices";
+
 
       const broker = await brokerRepository.findOne({
         where: { user },
+        relations:["user"]
       });
 
       if (!broker) {
         throw new APIError(
           HttpStatusCode.NOT_FOUND,
-          ErrorMessages.generateErrorMessage("broker", "not found", lang)
+          ErrorMessages.generateErrorMessage(entity, "not found", lang)
+        );
+      }
+
+      if (broker.user !== user) {
+        throw new APIError(
+          HttpStatusCode.FORBIDDEN,
+          ErrorMessages.generateErrorMessage(entity, "forbidden", lang)
         );
       }
 
@@ -368,7 +387,7 @@ export class BrokerController {
         .json(
           ApiResponse.success(
             null,
-            ErrorMessages.generateErrorMessage("broker", "deleted", lang)
+            ErrorMessages.generateErrorMessage(entity, "deleted", lang)
           )
         );
     } catch (error) {

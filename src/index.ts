@@ -53,6 +53,7 @@ router.use("/service-category", serviceCategoryRouter);
 router.use("/attributes", attributeRouter);
 router.use("/broker-offices", officeRouter);
 router.use("/products", productsRouter);
+router.use("/request", productsRouter);
 
 app.use(process.env.BASE_URL, router);
 

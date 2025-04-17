@@ -1,0 +1,129 @@
+tags:
+  - name: Requests
+    description: CRUD operations for user requests
+
+paths:
+  /requests:
+    post:
+      tags:
+        - Requests
+      summary: Create a new request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                description:
+                  type: string
+                budget:
+                  type: number
+                governorate:
+                  type: string
+                status:
+                  type: string
+                  enum: [pending, in_progress, completed, cancelled]
+              required:
+                - description
+                - budget
+                - governorate
+      responses:
+        "201":
+          description: Request created successfully
+        "400":
+          description: Bad request
+        "500":
+          description: Internal server error
+
+    get:
+      tags:
+        - Requests
+      summary: Get all requests (paginated)
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: limit
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of requests
+        "500":
+          description: Internal server error
+
+  /requests/{id}:
+    get:
+      tags:
+        - Requests
+      summary: Get request by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Request fetched successfully
+        "404":
+          description: Request not found
+        "500":
+          description: Internal server error
+
+    put:
+      tags:
+        - Requests
+      summary: Update request by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                description:
+                  type: string
+                budget:
+                  type: number
+                governorate:
+                  type: string
+                status:
+                  type: string
+                  enum: [pending, in_progress, completed, cancelled]
+      responses:
+        "200":
+          description: Request updated successfully
+        "404":
+          description: Request not found
+        "400":
+          description: Bad request
+        "500":
+          description: Internal server error
+
+    delete:
+      tags:
+        - Requests
+      summary: Delete request by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Request deleted successfully
+        "404":
+          description: Request not found
+        "500":
+          description: Internal server error
