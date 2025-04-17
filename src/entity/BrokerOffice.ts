@@ -1,13 +1,25 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToOne, JoinColumn, OneToMany, ManyToOne, Index } from 'typeorm';
-import { User } from './User';
-import { BrokerPortfolio } from './BrokerPortfolio';
-import { BrokerFollower } from './BrokerFollower';
-import { BrokerRating } from './BrokerRating';
-import { Property } from './Property';
-import { Car } from './Car';
-import { Service } from './Services';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToOne,
+  JoinColumn,
+  OneToMany,
+  ManyToOne,
+  Index,
+} from "typeorm";
+import { User } from "./User";
+import { BrokerPortfolio } from "./BrokerPortfolio";
+import { BrokerFollower } from "./BrokerFollower";
+import { BrokerRating } from "./BrokerRating";
+import { Property } from "./Property";
+import { Car } from "./Car";
+import { Service } from "./Services";
+import { brokerService } from "./BrokerService";
 
-@Entity('broker_offices')
+@Entity("broker_offices")
 export class BrokerOffice {
   @PrimaryGeneratedColumn()
   id: number;
@@ -19,7 +31,7 @@ export class BrokerOffice {
   @Column()
   office_name: string;
 
-  @Column({nullable:true})
+  @Column({ nullable: true })
   image: string;
 
   @Column()
@@ -35,22 +47,22 @@ export class BrokerOffice {
   @Column()
   address: string;
 
-  @Column('double precision')
+  @Column("double precision")
   lat: number;
 
-  @Column('double precision')
+  @Column("double precision")
   long: number;
 
-  @Column('time')
+  @Column("time")
   working_hours_from: string;
 
-  @Column('time')
+  @Column("time")
   working_hours_to: string;
 
-  @Column('text')
+  @Column("text")
   description: string;
 
-  @Column('decimal', { precision: 3, scale: 2, default: 0 })
+  @Column("decimal", { precision: 3, scale: 2, default: 0 })
   rating_avg: number;
 
   @Column({ default: 0 })
@@ -78,6 +90,10 @@ export class BrokerOffice {
   @OneToMany(() => Car, (car) => car.broker_office)
   cars: Car[];
 
-  @OneToMany(() => Service, (service) => service.broker_office)
-  services: Service[];
+  @OneToMany(
+    () => brokerService,
+    (borkerService) => borkerService.broker_office,
+    { nullable: true }
+  )
+  broker_service: brokerService[];
 }

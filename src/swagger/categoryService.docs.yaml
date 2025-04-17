@@ -1,0 +1,209 @@
+swagger: '2.0'
+info:
+  title: Service Categories API
+  version: 1.0.0
+  description: API for managing service categories and their services
+
+tags:
+  - name: Service Categories
+    description: Operations related to service categories management
+
+paths:
+  /api/categories:
+    post:
+      tags:
+        - Service Categories
+      summary: Create a new service category
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: accept-language
+          in: header
+          description: Language for response messages (ar/en)
+          required: false
+          type: string
+          default: ar
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            properties:
+              name_ar:
+                type: string
+                description: Arabic name of the category
+              name_en:
+                type: string
+                description: English name of the category
+              type:
+                type: string
+                enum: [cars, properties]
+                description: Type of services in this category
+      responses:
+        201:
+          description: Category created successfully
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "تم إنشاء سمة الخدمة بنجاح"
+              data:
+                $ref: '#/definitions/ServiceCategory'
+        400:
+          description: Bad Request (Category already exists)
+        401:
+          description: Unauthorized
+
+    get:
+      tags:
+        - Service Categories
+      summary: Get all service categories
+      parameters:
+        - name: accept-language
+          in: header
+          required: false
+          type: string
+          default: ar
+        - name: type
+          in: query
+          description: Filter by service type (cars/properties)
+          required: false
+          type: string
+          enum: [cars, properties]
+      responses:
+        200:
+          description: List of service categories
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "تم جلب سمات الخدمة بنجاح"
+              data:
+                type: array
+                items:
+                  $ref: '#/definitions/ServiceCategory'
+        404:
+          description: No categories found
+
+  /api/categories/{id}:
+    get:
+      tags:
+        - Service Categories
+      summary: Get services by category ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: integer
+          format: int64
+        - name: accept-language
+          in: header
+          required: false
+          type: string
+          default: ar
+      responses:
+        200:
+          description: List of services in this category
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "تم جلب الخدمات بنجاح"
+              data:
+                type: array
+                items:
+                  $ref: '#/definitions/Service'
+        404:
+          description: Category not found
+
+    delete:
+      tags:
+        - Service Categories
+      summary: Delete a service category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: integer
+          format: int64
+        - name: accept-language
+          in: header
+          required: false
+          type: string
+          default: ar
+      responses:
+        200:
+          description: Category deleted successfully
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "تم حذف السمة بنجاح"
+        400:
+          description: Cannot delete (category has associated services)
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              message:
+                type: string
+                example: "لايمكنك حذف هذه السمة لانه هناك خدمات مرتبطة بها"
+        404:
+          description: Category not found
+
+definitions:
+  ServiceCategory:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+      name_ar:
+        type: string
+      name_en:
+        type: string
+      type:
+        type: string
+        enum: [cars, properties]
+      created_at:
+        type: string
+        format: date-time
+
+  Service:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+      title:
+        type: string
+      description:
+        type: string
+      location:
+        type: string
+      type:
+        type: string
+        enum: [cars, properties]
+      created_at:
+        type: string
+        format: date-time

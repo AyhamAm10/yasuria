@@ -21,6 +21,7 @@ import { BrokerRating } from "../entity/BrokerRating";
 import { PropertyType } from "../entity/PropertyType";
 import { Request } from "../entity/Request";
 import { ServiceCategory } from "../entity/SeviceCategory";
+import { brokerService } from "../entity/BrokerService";
 
 dotenv.config();
 const { DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME, NODE_ENV } =
@@ -57,7 +58,8 @@ export const AppDataSource = new DataSource({
     BrokerRating,
     PropertyType,
     Request,
-    ServiceCategory
+    ServiceCategory,
+    brokerService
   ],
 
   migrations: [__dirname + "/../migrations/*.ts"],

@@ -54,6 +54,14 @@ paths:
                 image:
                   type: string
                   format: binary
+                services:  
+                  type: array
+                  items:
+                    type: integer
+                    format: int64
+                    description: IDs of services
+                  example: [1, 2, 3]
+                  description: List of service IDs associated with this office
       responses:
         '201':
           description: تم إنشاء المكتب بنجاح

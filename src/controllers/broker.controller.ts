@@ -8,12 +8,15 @@ import { APIError, HttpStatusCode } from "../error/api.error";
 import { ErrorMessages } from "../error/ErrorMessages";
 import { ApiResponse } from "../helper/apiResponse";
 import { brokerOfficeSchema } from "../helper/validation/schema/brokerSchema";
+import { brokerService } from "../entity/BrokerService";
+import { Service } from "../entity/Services";
 
 const userRepository = AppDataSource.getRepository(User);
 const brokerRepository = AppDataSource.getRepository(BrokerOffice);
-
+const serviceRepository = AppDataSource.getRepository(Service);
+const brokerofficeServiceRepository =
+  AppDataSource.getRepository(brokerService);
 export class BrokerController {
-
   static async createBrokerOffice(
     req: Request,
     res: Response,
@@ -22,6 +25,7 @@ export class BrokerController {
     try {
       const lang = req.headers["accept-language"] || "ar";
       const entity = lang === "ar" ? "المكتب الوسيط" : "broker office";
+      const serviceLang = lang === "ar" ? "ID الخدمة" : "ID service";
 
       await validator(brokerOfficeSchema(lang), req.body);
 
@@ -38,6 +42,7 @@ export class BrokerController {
         working_hours_from,
         working_hours_to,
         description,
+        services,
       } = req.body;
 
       const image = req.file ? req.file.filename : "";
@@ -59,17 +64,17 @@ export class BrokerController {
       });
       const user = await userRepository.save(newUser);
 
-      const existingBroker = await brokerRepository.findOne({
-        where: { user: { id: user.id } },
-        relations: ["user"],
-      });
+      // const existingBroker = await brokerRepository.findOne({
+      //   where: { user: { id: user.id } },
+      //   relations: ["user"],
+      // });
 
-      if (existingBroker) {
-        throw new APIError(
-          HttpStatusCode.BAD_REQUEST,
-          ErrorMessages.generateErrorMessage(entity, "already exists", lang)
-        );
-      }
+      // if (existingBroker) {
+      //   throw new APIError(
+      //     HttpStatusCode.BAD_REQUEST,
+      //     ErrorMessages.generateErrorMessage(entity, "already exists", lang)
+      //   );
+      // }
 
       const newBrokerOffice = brokerRepository.create({
         user,
@@ -89,6 +94,26 @@ export class BrokerController {
       });
 
       const savedBroker = await brokerRepository.save(newBrokerOffice);
+
+      const servicePromises = services.map(async (id: number) => {
+        const service = await serviceRepository.findOne({
+          where: { id },
+        });
+      
+        if (!service) {
+          throw new APIError(
+            HttpStatusCode.NOT_FOUND,
+            ErrorMessages.generateErrorMessage(serviceLang, "not found", lang)
+          );
+        }
+        return brokerofficeServiceRepository.create({
+          service,
+          broker_office: savedBroker
+        });
+      });
+      
+      const servicesToSave = await Promise.all(servicePromises);
+      await brokerofficeServiceRepository.save(servicesToSave);
 
       const accessToken = jwt.sign(
         {
@@ -129,7 +154,7 @@ export class BrokerController {
         )
       );
     } catch (error) {
-      console.log(error)
+      console.log(error);
       next(error);
     }
   }
@@ -220,7 +245,7 @@ export class BrokerController {
 
       const broker = await brokerRepository.findOne({
         where: { id: Number(brokerId) },
-        relations: ["user", "portfolios", "properties", "cars", "services"],
+        relations: ["user", "portfolios", "properties", "cars", "broker_service"],
       });
 
       if (!broker) {
@@ -250,35 +275,66 @@ export class BrokerController {
   ): Promise<void> {
     try {
       const lang = req.headers["accept-language"] || "ar";
-
+      const serviceLang = lang === "ar" ? "ID الخدمة" : "ID service";
+  
       await validator(brokerOfficeSchema(lang, true), req.body);
-
+  
       const user = req["currentUser"];
       const broker = await brokerRepository.findOne({
         where: { user },
-        relations: ["user"],
+        relations: ["user", "broker_service", "broker_service.service"],
       });
-
+  
       if (!broker) {
         throw new APIError(
           HttpStatusCode.NOT_FOUND,
           ErrorMessages.generateErrorMessage("broker", "not found", lang)
         );
       }
-
+  
       if (req.file) broker.image = req.file.filename;
-
       brokerRepository.merge(broker, req.body);
-      const updatedBroker = await brokerRepository.save(broker);
+  
+      if (req.body.services) {
+        const { services } = req.body;
+  
+        await brokerofficeServiceRepository.delete({
+          broker_office: { id: broker.id }
+        });
 
-      res
-        .status(HttpStatusCode.OK)
-        .json(
-          ApiResponse.success(
-            updatedBroker,
-            ErrorMessages.generateErrorMessage("broker", "updated", lang)
-          )
-        );
+        const servicePromises = services.map(async (id: number) => {
+          const service = await serviceRepository.findOne({
+            where: { id },
+          });
+  
+          if (!service) {
+            throw new APIError(
+              HttpStatusCode.NOT_FOUND,
+              ErrorMessages.generateErrorMessage(serviceLang, "not found", lang)
+            );
+          }
+  
+          return brokerofficeServiceRepository.create({
+            service,
+            broker_office: broker
+          });
+        });
+  
+        const servicesToSave = await Promise.all(servicePromises);
+        await brokerofficeServiceRepository.save(servicesToSave);
+      }
+  
+      const updatedBroker = await brokerRepository.save(broker);
+  
+      res.status(HttpStatusCode.OK).json(
+        ApiResponse.success(
+          {
+            broker: updatedBroker,
+            services: req.body.services || broker.broker_service?.map(bs => bs.service.id)
+          },
+          ErrorMessages.generateErrorMessage("broker", "updated", lang)
+        )
+      );
     } catch (error) {
       next(error);
     }

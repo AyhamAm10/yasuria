@@ -1,0 +1,282 @@
+swagger: '2.0'
+info:
+  title: Services Management API
+  version: 1.0.0
+  description: API for managing services in the system
+
+tags:
+  - name: Services
+    description: Operations related to services management
+
+paths:
+  /api/services:
+    get:
+      tags:
+        - Services
+      summary: Get list of services with filtering and pagination
+      parameters:
+        - name: accept-language
+          in: header
+          description: Language for response messages (ar/en)
+          required: false
+          type: string
+          default: ar
+        - name: location
+          in: query
+          description: Filter by location
+          required: false
+          type: string
+        - name: priceMin
+          in: query
+          description: Minimum price filter
+          required: false
+          type: number
+          format: float
+        - name: priceMax
+          in: query
+          description: Maximum price filter
+          required: false
+          type: number
+          format: float
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          type: integer
+          default: 1
+        - name: limit
+          in: query
+          description: Items per page
+          required: false
+          type: integer
+          default: 10
+      responses:
+        200:
+          description: List of services
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "تم جلب الخدمات بنجاح"
+              data:
+                type: array
+                items:
+                  $ref: '#/definitions/Service'
+              pagination:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    example: 100
+                  page:
+                    type: integer
+                    example: 1
+                  limit:
+                    type: integer
+                    example: 10
+                  totalPages:
+                    type: integer
+                    example: 10
+
+    post:
+      tags:
+        - Services
+      summary: Create a new service
+      consumes:
+        - multipart/form-data
+      parameters:
+        - name: accept-language
+          in: header
+          required: false
+          type: string
+          default: ar
+        - name: Authorization
+          in: header
+          description: Bearer token
+          required: true
+          type: string
+        - name: title
+          in: formData
+          description: Service title
+          required: true
+          type: string
+        - name: description
+          in: formData
+          description: Service description
+          required: true
+          type: string
+        - name: location
+          in: formData
+          description: Service location
+          required: true
+          type: string
+        - name: type
+          in: formData
+          description: Service type
+          required: true
+          type: string
+          enum: [cars, properties]
+        - name: files
+          in: formData
+          description: Service images
+          required: false
+          type: file
+          collectionFormat: multi
+      responses:
+        201:
+          description: Service created successfully
+          schema:
+            $ref: '#/definitions/Service'
+        401:
+          description: Unauthorized (Broker office not found)
+
+  /api/services/{id}:
+    get:
+      tags:
+        - Services
+      summary: Get service details by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: integer
+          format: int64
+        - name: accept-language
+          in: header
+          required: false
+          type: string
+          default: ar
+      responses:
+        200:
+          description: Service details
+          schema:
+            $ref: '#/definitions/Service'
+        404:
+          description: Service not found
+
+    put:
+      tags:
+        - Services
+      summary: Update a service
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: integer
+          format: int64
+        - name: accept-language
+          in: header
+          required: false
+          type: string
+          default: ar
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/ServiceUpdate'
+      responses:
+        200:
+          description: Service updated
+          schema:
+            $ref: '#/definitions/Service'
+        404:
+          description: Service not found
+
+    delete:
+      tags:
+        - Services
+      summary: Delete a service
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: integer
+          format: int64
+        - name: accept-language
+          in: header
+          required: false
+          type: string
+          default: ar
+        - name: Authorization
+          in: header
+          required: true
+          type: string
+      responses:
+        200:
+          description: Service deleted
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "تم حذف الخدمة بنجاح"
+        400:
+          description: Cannot delete (service is used by offices)
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              message:
+                type: string
+                example: "لا يمكن حذف الخدمة لأنها مستخدمة بواحد أو أكثر من المكاتب"
+        404:
+          description: Service not found
+
+definitions:
+  Service:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+      title:
+        type: string
+      description:
+        type: string
+      location:
+        type: string
+      type:
+        type: string
+        enum: [cars, properties]
+      images:
+        type: array
+        items:
+          type: string
+      created_at:
+        type: string
+        format: date-time
+      user:
+        $ref: '#/definitions/User'
+
+  ServiceUpdate:
+    type: object
+    properties:
+      title:
+        type: string
+      description:
+        type: string
+      location:
+        type: string
+      type:
+        type: string
+        enum: [cars, properties]
+
+  User:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+      name:
+        type: string
+      phone:
+        type: string
