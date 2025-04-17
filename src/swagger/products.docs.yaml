@@ -1,0 +1,134 @@
+paths:
+  /products:
+    get:
+      tags:
+        - Products
+      summary: Get combined list of cars and properties
+      description: Retrieves the latest 10 cars and 10 properties, filtered by query parameters and sorted by creation date.
+      parameters:
+        - name: brand
+          in: query
+          description: Filter by car brand
+          required: false
+          schema:
+            type: string
+        - name: model
+          in: query
+          description: Filter by car model
+          required: false
+          schema:
+            type: string
+        - name: location
+          in: query
+          description: Filter by location (applies to both cars and properties)
+          required: false
+          schema:
+            type: string
+        - name: minPrice
+          in: query
+          description: Minimum price
+          required: false
+          schema:
+            type: number
+        - name: maxPrice
+          in: query
+          description: Maximum price
+          required: false
+          schema:
+            type: number
+        - name: area
+          in: query
+          description: Filter by property area
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A list of mixed products (cars and properties) sorted by created_at
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: تم استرجاع المنتجات بنجاح
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                          example: car
+                        car:
+                          type: object
+                          nullable: true
+                          properties:
+                            id:
+                              type: integer
+                              example: 1
+                            brand:
+                              type: string
+                              example: Toyota
+                            model:
+                              type: string
+                              example: Corolla
+                            location:
+                              type: string
+                              example: Riyadh
+                            price:
+                              type: number
+                              example: 30000
+                            created_at:
+                              type: string
+                              format: date-time
+                        property:
+                          type: object
+                          nullable: true
+                          properties:
+                            id:
+                              type: integer
+                              example: 5
+                            title_ar:
+                              type: string
+                              example: شقة فاخرة
+                            location:
+                              type: string
+                              example: Jeddah
+                            price:
+                              type: number
+                              example: 150000
+                            area:
+                              type: string
+                              example: 120
+                            created_at:
+                              type: string
+                              format: date-time
+                        attributes:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              key:
+                                type: string
+                                example: اللون
+                              value:
+                                type: string
+                                example: أحمر
+                        specifications:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              name:
+                                type: string
+                                example: القوة
+                              value:
+                                type: string
+                                example: 200 حصان
+        '500':
+          description: Internal server error
