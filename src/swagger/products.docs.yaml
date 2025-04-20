@@ -20,7 +20,7 @@ paths:
             type: string
         - name: location
           in: query
-          description: Filter by location (applies to both cars and properties)
+          description: Filter by location
           required: false
           schema:
             type: string
@@ -36,12 +36,6 @@ paths:
           required: false
           schema:
             type: number
-        - name: area
-          in: query
-          description: Filter by property area
-          required: false
-          schema:
-            type: string
       responses:
         '200':
           description: A list of mixed products (cars and properties) sorted by created_at
@@ -55,80 +49,135 @@ paths:
                     example: true
                   message:
                     type: string
-                    example: تم استرجاع المنتجات بنجاح
+                    example: "تم استرجاع المنتجات بنجاح"
                   data:
                     type: array
                     items:
-                      type: object
-                      properties:
-                        type:
-                          type: string
-                          example: car
-                        car:
-                          type: object
-                          nullable: true
+                      oneOf:
+                        - type: object
                           properties:
-                            id:
-                              type: integer
-                              example: 1
-                            brand:
+                            type:
                               type: string
-                              example: Toyota
-                            model:
-                              type: string
-                              example: Corolla
-                            location:
-                              type: string
-                              example: Riyadh
-                            price:
-                              type: number
-                              example: 30000
-                            created_at:
-                              type: string
-                              format: date-time
-                        property:
-                          type: object
-                          nullable: true
+                              enum: [car]
+                              example: car
+                            data:
+                              type: object
+                              properties:
+                                id:
+                                  type: integer
+                                title_ar:
+                                  type: string
+                                title_en:
+                                  type: string
+                                desc_ar:
+                                  type: string
+                                desc_en:
+                                  type: string
+                                images:
+                                  type: array
+                                  items:
+                                    type: string
+                                model:
+                                  type: string
+                                brand:
+                                  type: string
+                                location:
+                                  type: string
+                                lat:
+                                  type: number
+                                  nullable: true
+                                long:
+                                  type: number
+                                  nullable: true
+                                status:
+                                  type: string
+                                isActive:
+                                  type: boolean
+                                price:
+                                  type: number
+                                listing_type:
+                                  type: string
+                                  enum: [sale, rent]
+                                seller_type:
+                                  type: string
+                                  enum: [owner, broker]
+                                created_at:
+                                  type: string
+                                  format: date-time
+                                user:
+                                  type: object
+                                  properties:
+                                    id:
+                                      type: integer
+                                broker_office:
+                                  type: object
+                                  nullable: true
+                                  properties:
+                                    id:
+                                      type: integer
+                        - type: object
                           properties:
-                            id:
-                              type: integer
-                              example: 5
-                            title_ar:
+                            type:
                               type: string
-                              example: شقة فاخرة
-                            location:
-                              type: string
-                              example: Jeddah
-                            price:
-                              type: number
-                              example: 150000
-                            area:
-                              type: string
-                              example: 120
-                            created_at:
-                              type: string
-                              format: date-time
-                        attributes:
-                          type: array
-                          items:
-                            type: object
-                            properties:
-                              key:
-                                type: string
-                                example: اللون
-                              value:
-                                type: string
-                                example: أحمر
-                        specifications:
-                          type: array
-                          items:
-                            type: object
-                            properties:
-                              name:
-                                type: string
-                                example: القوة
-                              value:
-                                type: string
-                                example: 200 حصان
+                              enum: [property]
+                              example: property
+                            data:
+                              type: object
+                              properties:
+                                id:
+                                  type: integer
+                                title_ar:
+                                  type: string
+                                title_en:
+                                  type: string
+                                desc_ar:
+                                  type: string
+                                desc_en:
+                                  type: string
+                                isActive:
+                                  type: boolean
+                                location:
+                                  type: string
+                                images:
+                                  type: array
+                                  items:
+                                    type: string
+                                lat:
+                                  type: number
+                                  nullable: true
+                                long:
+                                  type: number
+                                  nullable: true
+                                status:
+                                  type: string
+                                price:
+                                  type: number
+                                area:
+                                  type: string
+                                listing_type:
+                                  type: string
+                                  enum: [sale, rent]
+                                seller_type:
+                                  type: string
+                                  enum: [owner, broker]
+                                created_at:
+                                  type: string
+                                  format: date-time
+                                property_type:
+                                  type: object
+                                  properties:
+                                    id:
+                                      type: integer
+                                user:
+                                  type: object
+                                  properties:
+                                    id:
+                                      type: integer
+                                broker_office:
+                                  type: object
+                                  nullable: true
+                                  properties:
+                                    id:
+                                      type: integer
         '500':
           description: Internal server error

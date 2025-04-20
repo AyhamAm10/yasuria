@@ -13,50 +13,25 @@ paths:
       parameters:
         - name: brand
           in: query
-          description: Brand of the car
-          required: false
-          schema:
-            type: string
+          schema: { type: string }
         - name: model
           in: query
-          description: Model of the car
-          required: false
-          schema:
-            type: string
+          schema: { type: string }
         - name: location
           in: query
-          description: Location of the car
-          required: false
-          schema:
-            type: string
+          schema: { type: string }
         - name: minPrice
           in: query
-          description: Minimum price of the car
-          required: false
-          schema:
-            type: number
-            format: float
+          schema: { type: number, format: float }
         - name: maxPrice
           in: query
-          description: Maximum price of the car
-          required: false
-          schema:
-            type: number
-            format: float
+          schema: { type: number, format: float }
         - name: page
           in: query
-          description: Page number for pagination
-          required: false
-          schema:
-            type: string
-            default: "1"
+          schema: { type: string, default: "1" }
         - name: limit
           in: query
-          description: Number of items per page for pagination
-          required: false
-          schema:
-            type: string
-            default: "10"
+          schema: { type: string, default: "10" }
       responses:
         '200':
           description: Successfully retrieved the list of cars
@@ -68,18 +43,7 @@ paths:
                   data:
                     type: array
                     items:
-                      type: object
-                      properties:
-                        car:
-                          $ref: '#/components/schemas/Car'
-                        attributes:
-                          type: array
-                          items:
-                            type: object
-                        specifications:
-                          type: array
-                          items:
-                            type: object
+                      $ref: '#/components/schemas/CarResponse'
                   pagination:
                     $ref: '#/components/schemas/Pagination'
         '404':
@@ -89,62 +53,12 @@ paths:
 
     post:
       summary: Create a new car
-      description: Create a new car listing, including attributes, specifications, and images.
-      tags:
-        - car
+      tags: [car]
       requestBody:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                title_ar:
-                  type: string
-                title_en:
-                  type: string
-                desc_ar:
-                  type: string
-                desc_en:
-                  type: string
-                model:
-                  type: string
-                brand:
-                  type: string
-                location:
-                  type: string
-                status:
-                  type: string
-                price:
-                  type: number
-                listing_type:
-                  type: string
-                lat:
-                  type: float
-                long:
-                  type: float
-                attributes:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      id:
-                        type: integer
-                      value:
-                        type: string
-                specifications:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      id:
-                        type: integer
-                      value:
-                        type: string
-                images:
-                  type: array
-                  items:
-                    type: url
-
+              $ref: '#/components/schemas/CarCreateRequest'
       responses:
         '201':
           description: Successfully created the car
@@ -154,16 +68,12 @@ paths:
   /cars/{id}:
     get:
       summary: Get car by ID
-      description: Retrieve detailed information about a specific car by ID, including attributes and specifications.
-      tags:
-        - car
+      tags: [car]
       parameters:
         - name: id
           in: path
-          description: The ID of the car to retrieve
           required: true
-          schema:
-            type: integer
+          schema: { type: integer }
       responses:
         '200':
           description: Successfully retrieved the car
@@ -173,156 +83,125 @@ paths:
                 type: object
                 properties:
                   data:
-                    type: object
-                    properties:
-                      car:
-                        $ref: '#/components/schemas/Car'
-                      attributes:
-                        type: array
-                        items:
-                          type: object
-                      specifications:
-                        type: array
-                        items:
-                          type: object
+                    $ref: '#/components/schemas/CarResponse'
         '404':
           description: Car not found
 
     put:
       summary: Update car details
-      description: Update the details of a specific car, including attributes, specifications, and images.
-      tags:
-        - car
+      tags: [car]
       parameters:
         - name: id
           in: path
-          description: The ID of the car to update
           required: true
-          schema:
-            type: integer
+          schema: { type: integer }
       requestBody:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                title_ar:
-                  type: string
-                title_en:
-                  type: string
-                desc_ar:
-                  type: string
-                desc_en:
-                  type: string
-                model:
-                  type: string
-                brand:
-                  type: string
-                location:
-                  type: string
-                status:
-                  type: string
-                price:
-                  type: number
-                lat:
-                  type: float
-                long:
-                  type: float
-                attributes:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      id:
-                        type: integer
-                      value:
-                        type: string
-                specifications:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      id:
-                        type: integer
-                      value:
-                        type: string
-                images:
-                  type: array
-                  items:
-                    type: url
+              $ref: '#/components/schemas/CarCreateRequest'
       responses:
         '200':
           description: Successfully updated the car
+        '403':
+          description: User not authorized
         '404':
           description: Car not found
-        '403':
-          description: User not authorized to update this car
 
     delete:
-      summary: Delete a car by ID
-      description: Delete a specific car by its ID along with its associated attributes and specifications.
-      tags:
-        - car
+      summary: Delete a car
+      tags: [car]
       parameters:
         - name: id
           in: path
-          description: The ID of the car to delete
           required: true
-          schema:
-            type: integer
+          schema: { type: integer }
       responses:
         '200':
           description: Successfully deleted the car
+        '403':
+          description: User not authorized
         '404':
           description: Car not found
-        '403':
-          description: User not authorized to delete this car
 
 components:
   schemas:
     Car:
       type: object
       properties:
-        id:
-          type: integer
-        title_ar:
-          type: string
-        title_en:
-          type: string
-        desc_ar:
-          type: string
-        desc_en:
-          type: string
-        brand:
-          type: string
-        model:
-          type: string
-        location:
-          type: string
-        status:
-          type: string
-        price:
-          type: number
-          format: float
+        id: { type: integer }
+        title_ar: { type: string }
+        title_en: { type: string }
+        desc_ar: { type: string }
+        desc_en: { type: string }
         images:
           type: array
-          items:
-            type: string
-        lat:
-          type: number
-          format: float
-        long:
-          type: number
-          format: float
+          items: { type: string }
+        model: { type: string }
+        brand: { type: string }
+        location: { type: string }
+        lat: { type: number, format: float, nullable: true }
+        long: { type: number, format: float, nullable: true }
+        status: { type: string }
+        isActive: { type: boolean }
+        price: { type: number, format: float }
+        listing_type:
+          type: string
+          enum: [sale, rent]
+        seller_type:
+          type: string
+          enum: [owner, broker]
+        created_at:
+          type: string
+          format: date-time
+
+    CarResponse:
+      allOf:
+        - $ref: '#/components/schemas/Car'
+        - type: object
+          properties:
+            broker_office:
+              type: object
+              nullable: true
+              properties:
+                id: { type: integer }
+                name: { type: string }
+            user:
+              type: object
+              properties:
+                id: { type: integer }
+                fullName: { type: string }
+
+    CarCreateRequest:
+      type: object
+      properties:
+        title_ar: { type: string }
+        title_en: { type: string }
+        desc_ar: { type: string }
+        desc_en: { type: string }
+        model: { type: string }
+        brand: { type: string }
+        location: { type: string }
+        status: { type: string }
+        price: { type: number }
+        lat: { type: number, format: float }
+        long: { type: number, format: float }
+        listing_type:
+          type: string
+          enum: [sale, rent]
+        seller_type:
+          type: string
+          enum: [owner, broker]
+        broker_office_id: { type: integer, nullable: true }
+        user_id: { type: integer }
+        images:
+          type: array
+          items: { type: string }
 
     Pagination:
       type: object
       properties:
-        total:
-          type: integer
-        page:
-          type: integer
-        limit:
-          type: integer
-        totalPages:
-          type: integer
+        total: { type: integer }
+        page: { type: integer }
+        limit: { type: integer }
+        totalPages: { type: integer }

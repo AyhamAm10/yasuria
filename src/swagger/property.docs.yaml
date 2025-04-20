@@ -46,8 +46,27 @@ paths:
           description: Property area filter
           required: false
           schema:
-            type: number
-            format: float
+            type: string
+        - name: listing_type
+          in: query
+          description: Filter by listing type (sale/rent)
+          required: false
+          schema:
+            type: string
+            enum: [sale, rent]
+        - name: seller_type
+          in: query
+          description: Filter by seller type (owner/broker)
+          required: false
+          schema:
+            type: string
+            enum: [owner, broker]
+        - name: property_type
+          in: query
+          description: Filter by property type ID
+          required: false
+          schema:
+            type: integer
         - name: page
           in: query
           description: Page number for pagination
@@ -75,61 +94,70 @@ paths:
                     items:
                       type: object
                       properties:
-                        property:
+                        id:
+                          type: integer
+                        title_ar:
+                          type: string
+                        title_en:
+                          type: string
+                        desc_ar:
+                          type: string
+                        desc_en:
+                          type: string
+                        isActive:
+                          type: boolean
+                        location:
+                          type: string
+                        images:
+                          type: array
+                          items:
+                            type: string
+                        lat:
+                          type: number
+                          format: float
+                          nullable: true
+                        long:
+                          type: number
+                          format: float
+                          nullable: true
+                        status:
+                          type: string
+                        price:
+                          type: number
+                          format: float
+                        area:
+                          type: string
+                        listing_type:
+                          type: string
+                          enum: [sale, rent]
+                        seller_type:
+                          type: string
+                          enum: [owner, broker]
+                        property_type:
                           type: object
                           properties:
                             id:
                               type: integer
-                            title_ar:
+                            name_ar:
                               type: string
-                            title_en:
+                            name_en:
                               type: string
-                            desc_ar:
+                            icon:
                               type: string
-                            desc_en:
-                              type: string
-                            location:
-                              type: string
-                            status:
-                              type: string
-                            price:
-                              type: number
-                              format: float
-                            area:
-                              type: number
-                              format: float
-                            images:
-                              type: array
-                              items:
-                                type: string
-                        attributes:
-                          type: array
-                          items:
-                            type: object
-                            properties:
-                              attribute:
-                                type: object
-                                properties:
-                                  id:
-                                    type: integer
-                                  name:
-                                    type: string
-                              value:
-                                type: string
-                        specifications:
-                          type: array
-                          items:
-                            type: object
-                            properties:
-                              specification:
-                                type: object
-                                properties:
-                                  id:
-                                    type: integer
-                                  name:
-                                    type: string
-                              value:
-                                type: string
+                        user:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                        broker_office:
+                          type: object
+                          nullable: true
+                          properties:
+                            id:
+                              type: integer
+                        created_at:
+                          type: string
+                          format: date-time
                   pagination:
                     type: object
                     properties:
@@ -146,7 +174,7 @@ paths:
 
     post:
       summary: Create a new property
-      description: Adds a new property with the provided details, including attributes and specifications.
+      description: Adds a new property with the provided details.
       tags:
         - property
       requestBody:
@@ -172,36 +200,39 @@ paths:
                   type: number
                   format: float
                 area:
-                  type: number
-                  format: float
-                attributes:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      id:
-                        type: integer
-                      value:
-                        type: string
-                specifications:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      id:
-                        type: integer
-                      value:
-                        type: string
-                long:
-                  type: number
-                  format: float
+                  type: string
+                listing_type:
+                  type: string
+                  enum: [sale, rent]
+                seller_type:
+                  type: string
+                  enum: [owner, broker]
+                property_type_id:
+                  type: integer
+                broker_office_id:
+                  type: integer
+                  nullable: true
                 lat:
                   type: number
                   format: float
+                  nullable: true
+                long:
+                  type: number
+                  format: float
+                  nullable: true
                 images:
                   type: array
                   items:
-                    type: url
+                    type: string
+              required:
+                - title_ar
+                - title_en
+                - location
+                - price
+                - area
+                - listing_type
+                - seller_type
+                - property_type_id
       responses:
         '201':
           description: Property created successfully
@@ -210,36 +241,50 @@ paths:
               schema:
                 type: object
                 properties:
-                  data:
+                  id:
+                    type: integer
+                  title_ar:
+                    type: string
+                  title_en:
+                    type: string
+                  location:
+                    type: string
+                  status:
+                    type: string
+                  price:
+                    type: number
+                    format: float
+                  area:
+                    type: string
+                  listing_type:
+                    type: string
+                  seller_type:
+                    type: string
+                  property_type:
                     type: object
                     properties:
                       id:
                         type: integer
-                      title_ar:
+                      name_ar:
                         type: string
-                      title_en:
+                      name_en:
                         type: string
-                      location:
-                        type: string
-                      status:
-                        type: string
-                      price:
-                        type: number
-                        format: float
-                      area:
-                        type: number
-                        format: float
-                      images:
-                        type: array
-                        items:
-                          type: string
+                  images:
+                    type: array
+                    items:
+                      type: string
+                  created_at:
+                    type: string
+                    format: date-time
         '400':
           description: Invalid input data
+        '403':
+          description: Forbidden action (user not authorized to create property)
 
   /property/{id}:
     get:
       summary: Get a property by ID
-      description: Retrieves a property by its unique ID, along with its attributes and specifications.
+      description: Retrieves a property by its unique ID.
       tags:
         - property
       parameters:
@@ -257,70 +302,76 @@ paths:
               schema:
                 type: object
                 properties:
-                  data:
+                  id:
+                    type: integer
+                  title_ar:
+                    type: string
+                  title_en:
+                    type: string
+                  desc_ar:
+                    type: string
+                  desc_en:
+                    type: string
+                  isActive:
+                    type: boolean
+                  location:
+                    type: string
+                  images:
+                    type: array
+                    items:
+                      type: string
+                  lat:
+                    type: number
+                    format: float
+                    nullable: true
+                  long:
+                    type: number
+                    format: float
+                    nullable: true
+                  status:
+                    type: string
+                  price:
+                    type: number
+                    format: float
+                  area:
+                    type: string
+                  listing_type:
+                    type: string
+                    enum: [sale, rent]
+                  seller_type:
+                    type: string
+                    enum: [owner, broker]
+                  property_type:
                     type: object
                     properties:
-                      property:
-                        type: object
-                        properties:
-                          id:
-                            type: integer
-                          title_ar:
-                            type: string
-                          title_en:
-                            type: string
-                          desc_ar:
-                            type: string
-                          desc_en:
-                            type: string
-                          location:
-                            type: string
-                          status:
-                            type: string
-                          price:
-                            type: number
-                            format: float
-                          area:
-                            type: number
-                            format: float
-                          images:
-                            type: array
-                            items:
-                              type: string
-                      attributes:
-                        type: array
-                        items:
-                          type: object
-                          properties:
-                            attribute:
-                              type: object
-                              properties:
-                                id:
-                                  type: integer
-                                name:
-                                  type: string
-                            value:
-                              type: string
-                      specifications:
-                        type: array
-                        items:
-                          type: object
-                          properties:
-                            specification:
-                              type: object
-                              properties:
-                                id:
-                                  type: integer
-                                name:
-                                  type: string
-                            value:
-                              type: string
+                      id:
+                        type: integer
+                      name_ar:
+                        type: string
+                      name_en:
+                        type: string
+                      icon:
+                        type: string
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                  broker_office:
+                    type: object
+                    nullable: true
+                    properties:
+                      id:
+                        type: integer
+                  created_at:
+                    type: string
+                    format: date-time
         '404':
           description: Property not found
 
     put:
       summary: Update an existing property
-      description: Updates the details of an existing property, including attributes, specifications, and images.
+      description: Updates the details of an existing property.
       tags:
         - property
       parameters:
@@ -345,6 +396,8 @@ paths:
                   type: string
                 desc_en:
                   type: string
+                isActive:
+                  type: boolean
                 location:
                   type: string
                 status:
@@ -353,36 +406,30 @@ paths:
                   type: number
                   format: float
                 area:
-                  type: number
-                  format: float
-                attributes:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      id:
-                        type: integer
-                      value:
-                        type: string
-                specifications:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      id:
-                        type: integer
-                      value:
-                        type: string
+                  type: string
+                listing_type:
+                  type: string
+                  enum: [sale, rent]
+                seller_type:
+                  type: string
+                  enum: [owner, broker]
+                property_type_id:
+                  type: integer
+                broker_office_id:
+                  type: integer
+                  nullable: true
                 lat:
                   type: number
                   format: float
+                  nullable: true
                 long:
                   type: number
                   format: float
+                  nullable: true
                 images:
                   type: array
                   items:
-                    type: url
+                    type: string
                 keptImages:
                   description: A JSON array of the paths to images that should be kept
                   type: array
@@ -396,29 +443,41 @@ paths:
               schema:
                 type: object
                 properties:
-                  data:
+                  id:
+                    type: integer
+                  title_ar:
+                    type: string
+                  title_en:
+                    type: string
+                  location:
+                    type: string
+                  status:
+                    type: string
+                  price:
+                    type: number
+                    format: float
+                  area:
+                    type: string
+                  listing_type:
+                    type: string
+                  seller_type:
+                    type: string
+                  property_type:
                     type: object
                     properties:
                       id:
                         type: integer
-                      title_ar:
+                      name_ar:
                         type: string
-                      title_en:
+                      name_en:
                         type: string
-                      location:
-                        type: string
-                      status:
-                        type: string
-                      price:
-                        type: number
-                        format: float
-                      area:
-                        type: number
-                        format: float
-                      images:
-                        type: array
-                        items:
-                          type: string
+                  images:
+                    type: array
+                    items:
+                      type: string
+                  updated_at:
+                    type: string
+                    format: date-time
         '404':
           description: Property not found
         '403':
@@ -444,15 +503,101 @@ paths:
               schema:
                 type: object
                 properties:
-                  data:
-                    type: array
-                    items: {}
+                  message:
+                    type: string
         '404':
           description: Property not found
         '403':
           description: Forbidden action (user not authorized to delete property)
 
+  /property-types:
+    get:
+      summary: Get list of property types
+      tags:
+        - property
+      responses:
+        '200':
+          description: Successfully retrieved property types
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    name_ar:
+                      type: string
+                    name_en:
+                      type: string
+                    icon:
+                      type: string
+                    created_at:
+                      type: string
+                      format: date-time
+        '404':
+          description: Property types not found
+
 components:
   schemas:
     Property:
       type: object
+      properties:
+        id:
+          type: integer
+        title_ar:
+          type: string
+        title_en:
+          type: string
+        desc_ar:
+          type: string
+        desc_en:
+          type: string
+        isActive:
+          type: boolean
+        location:
+          type: string
+        images:
+          type: array
+          items:
+            type: string
+        lat:
+          type: number
+          format: float
+          nullable: true
+        long:
+          type: number
+          format: float
+          nullable: true
+        status:
+          type: string
+        price:
+          type: number
+          format: float
+        area:
+          type: string
+        listing_type:
+          type: string
+          enum: [sale, rent]
+        seller_type:
+          type: string
+          enum: [owner, broker]
+        created_at:
+          type: string
+          format: date-time
+
+    PropertyType:
+      type: object
+      properties:
+        id:
+          type: integer
+        name_ar:
+          type: string
+        name_en:
+          type: string
+        icon:
+          type: string
+        created_at:
+          type: string
+          format: date-time

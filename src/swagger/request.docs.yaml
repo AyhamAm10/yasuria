@@ -31,6 +31,27 @@ paths:
       responses:
         "201":
           description: Request created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  description:
+                    type: string
+                  budget:
+                    type: number
+                  governorate:
+                    type: string
+                  status:
+                    type: string
+                  created_at:
+                    type: string
+                    format: date-time
+                  updated_at:
+                    type: string
+                    format: date-time
         "400":
           description: Bad request
         "500":
@@ -52,6 +73,48 @@ paths:
       responses:
         "200":
           description: List of requests
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        user:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                        description:
+                          type: string
+                        budget:
+                          type: number
+                        governorate:
+                          type: string
+                        status:
+                          type: string
+                        created_at:
+                          type: string
+                          format: date-time
+                        updated_at:
+                          type: string
+                          format: date-time
+                  meta:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      page:
+                        type: integer
+                      limit:
+                        type: integer
+                      totalPages:
+                        type: integer
         "500":
           description: Internal server error
 
@@ -69,6 +132,32 @@ paths:
       responses:
         "200":
           description: Request fetched successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                  description:
+                    type: string
+                  budget:
+                    type: number
+                  governorate:
+                    type: string
+                  status:
+                    type: string
+                  created_at:
+                    type: string
+                    format: date-time
+                  updated_at:
+                    type: string
+                    format: date-time
         "404":
           description: Request not found
         "500":
@@ -103,6 +192,32 @@ paths:
       responses:
         "200":
           description: Request updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                  description:
+                    type: string
+                  budget:
+                    type: number
+                  governorate:
+                    type: string
+                  status:
+                    type: string
+                  created_at:
+                    type: string
+                    format: date-time
+                  updated_at:
+                    type: string
+                    format: date-time
         "404":
           description: Request not found
         "400":
@@ -123,6 +238,13 @@ paths:
       responses:
         "200":
           description: Request deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
         "404":
           description: Request not found
         "500":
