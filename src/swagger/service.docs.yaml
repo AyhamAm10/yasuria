@@ -120,12 +120,17 @@ paths:
           required: true
           type: string
           enum: [cars, properties]
-        - name: files
+        - name: image
           in: formData
           description: Service images
           required: false
           type: file
           collectionFormat: multi
+        - name: category_id
+          in: formData
+          description: category id 
+          required: false
+          type: number
       responses:
         201:
           description: Service created successfully

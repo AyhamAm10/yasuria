@@ -6,8 +6,12 @@ import { HttpStatusCode } from "../error/api.error";
 import { ApiResponse } from "../helper/apiResponse";
 import { ErrorMessages } from "../error/ErrorMessages";
 import { BrokerOffice } from "../entity/BrokerOffice";
+import { validator } from "../helper/validation/validator";
+import { addServiceSchema } from "../helper/validation/schema/addServiceSchema";
+import { ServiceCategory } from "../entity/SeviceCategory";
 
 const serviceRepository = AppDataSource.getRepository(Service);
+const serviceCategoryRepository = AppDataSource.getRepository(ServiceCategory);
 const brokerOfficeRepository = AppDataSource.getRepository(BrokerOffice);
 
 export const getServices = async (
@@ -18,47 +22,48 @@ export const getServices = async (
   try {
     const {
       location,
-      priceMin,
-      priceMax,
-      page = "1",
+      page,
       limit = "10",
     } = req.query;
     const lang = req.headers["accept-language"] || "ar";
     const entity = lang == "ar" ? "الخدمات" : "services";
-    const pageNumber = Math.max(Number(page), 1);
-    const pageSize = Math.max(Number(limit), 1);
-    const skip = (pageNumber - 1) * pageSize;
-
-    const query = serviceRepository.createQueryBuilder("service");
+    
+    const query = serviceRepository.createQueryBuilder("service")
+      .leftJoinAndSelect("service.category", "category"); 
 
     if (location) query.andWhere("service.location = :location", { location });
-    if (priceMin) query.andWhere("service.price >= :priceMin", { priceMin });
-    if (priceMax) query.andWhere("service.price <= :priceMax", { priceMax });
 
-    const [services, totalCount] = await query
-      .skip(skip)
-      .take(pageSize)
-      .getManyAndCount();
 
-    // if(!services || services.length == 0){
-    //     throw new APIError(HttpStatusCode.NOT_FOUND,ErrorMessages.generateErrorMessage(entity, "not found", lang))
-    // }
-    const pagination = {
-      total: totalCount,
-      page: pageNumber,
-      limit: pageSize,
-      totalPages: Math.ceil(totalCount / pageSize),
-    };
+    let services, totalCount, pagination;
+    
+    if (page) {
+      const pageNumber = Math.max(Number(page), 1);
+      const pageSize = Math.max(Number(limit), 1);
+      const skip = (pageNumber - 1) * pageSize;
 
-    res
-      .status(HttpStatusCode.OK)
-      .json(
-        ApiResponse.success(
-          services,
-          ErrorMessages.generateErrorMessage(entity, "retrieved", lang),
-          pagination
-        )
-      );
+      [services, totalCount] = await query
+        .skip(skip)
+        .take(pageSize)
+        .getManyAndCount();
+
+      pagination = {
+        total: totalCount,
+        page: pageNumber,
+        limit: pageSize,
+        totalPages: Math.ceil(totalCount / pageSize),
+      };
+    } else {
+      services = await query.getMany();
+      totalCount = services.length;
+    }
+
+    res.status(HttpStatusCode.OK).json(
+      ApiResponse.success(
+        services,
+        ErrorMessages.generateErrorMessage(entity, "retrieved", lang),
+        page ? pagination : undefined 
+      )
+    );
   } catch (error) {
     next(error);
   }
@@ -106,22 +111,26 @@ export const createService = async (
   try {
     const lang = req.headers["accept-language"] || "ar";
     const entity = lang == "ar" ? "الخدمة" : "service";
-    const user = req["currentUser"];
-
-    // const office = await brokerOfficeRepository.findOne({ where: { user } });
-    // if (!office)
-    //   throw new APIError(
-    //     HttpStatusCode.UNAUTHORIZED,
-    //     ErrorMessages.generateErrorMessage("مكتب الوسيط", "not found", lang)
-    //   );
+    const { category_id } = req.body;
+    await validator(addServiceSchema, req.body);
 
     const images = req.files
       ? (req.files as Express.Multer.File[]).map(
           (file) => `/uploads/${file.filename}`
         )
       : [];
-
-    const newService = serviceRepository.create({ ...req.body, images });
+    const created = serviceRepository.create({ ...req.body, images });
+    const newService = Array.isArray(created) ? created[0] : created;
+    if (category_id) {
+      const category = await serviceCategoryRepository.findOneBy({ id: category_id });
+      if (!category) {
+        throw new APIError(
+          HttpStatusCode.NOT_FOUND,
+          ErrorMessages.generateErrorMessage("category", "not found", lang)
+        );
+      }
+      newService.category = category
+    }
     const savedService = await serviceRepository.save(newService);
 
     res
@@ -182,10 +191,9 @@ export const deleteService = async (
     const user = req["currentUser"];
     const lang = req.headers["accept-language"] || "ar";
 
-
     const service = await serviceRepository.findOne({
       where: { id: Number(id) },
-      relations: ["broker_service"], 
+      relations: ["broker_service"],
     });
 
     if (!service) {
@@ -195,14 +203,13 @@ export const deleteService = async (
       );
     }
 
-
     if (service.broker_office && service.broker_office.length > 0) {
       throw new APIError(
         HttpStatusCode.BAD_REQUEST,
         ErrorMessages.generateErrorMessage(
-          lang == 'ar'?
-          "لا يمكن حذف الخدمة لأنها مستخدمة بواحد أو أكثر من المكاتب":
-          "cannot delete service as it's used by one or more offices",
+          lang == "ar"
+            ? "لا يمكن حذف الخدمة لأنها مستخدمة بواحد أو أكثر من المكاتب"
+            : "cannot delete service as it's used by one or more offices",
           lang
         )
       );
@@ -211,12 +218,14 @@ export const deleteService = async (
     // إذا لم تكن مستخدمة، قم بالحذف
     await serviceRepository.delete(id);
 
-    res.status(HttpStatusCode.OK).json(
-      ApiResponse.success(
-        null,
-        ErrorMessages.generateErrorMessage("الخدمة", "deleted", lang)
-      )
-    );
+    res
+      .status(HttpStatusCode.OK)
+      .json(
+        ApiResponse.success(
+          null,
+          ErrorMessages.generateErrorMessage("الخدمة", "deleted", lang)
+        )
+      );
   } catch (error) {
     next(error);
   }

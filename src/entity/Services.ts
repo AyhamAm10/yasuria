@@ -25,14 +25,6 @@ export class Service {
   @Column()
   location: string;
 
-  // @Column('decimal')
-  // price: number;
-
-  // @Column('jsonb')
-  // details: Record<string, any>;
-
-  // @Column({ default: false })
-  // isActive: boolean;
 
   @Column({
     type: "enum",
@@ -40,7 +32,7 @@ export class Service {
   })
   type: string;
 
-  @ManyToOne(() => ServiceCategory)
+  @ManyToOne(() => ServiceCategory , {nullable: true})
   category: ServiceCategory;
 
   @OneToMany(() => brokerService, (borkerService) => borkerService.service, {
