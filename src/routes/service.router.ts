@@ -15,13 +15,13 @@ serviceRouter.post("/",
     createService
 );
 serviceRouter.get("/", 
-    authMiddleware,
-    checkRole([UserRole.vendor, UserRole.user, UserRole.admin, UserRole.superAdmin]),
+    // authMiddleware,
+    // checkRole([UserRole.vendor, UserRole.user, UserRole.admin, UserRole.superAdmin]),
     getServices
 );
 serviceRouter.get("/:id", 
-    authMiddleware,
-    checkRole([UserRole.vendor, UserRole.user, UserRole.admin, UserRole.superAdmin]),
+    // authMiddleware,
+    // checkRole([UserRole.vendor, UserRole.user, UserRole.admin, UserRole.superAdmin]),
     getServiceById
 );
 serviceRouter.put("/:id", 

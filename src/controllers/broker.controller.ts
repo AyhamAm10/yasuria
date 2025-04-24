@@ -95,32 +95,32 @@ export class BrokerController {
 
       const savedBroker = await brokerRepository.save(newBrokerOffice);
 
-      const servicePromises = services.map(async (id: number) => {
-        const service = await serviceRepository.findOne({
-          where: { id },
+      if(services){
+        const servicePromises = services.map(async (id: number) => {
+          const service = await serviceRepository.findOne({
+            where: { id },
+          });
+        
+          if (!service) {
+            throw new APIError(
+              HttpStatusCode.NOT_FOUND,
+              ErrorMessages.generateErrorMessage(serviceLang, "not found", lang)
+            );
+          }
+          return brokerofficeServiceRepository.create({
+            service,
+            broker_office: savedBroker
+          });
         });
-      
-        if (!service) {
-          throw new APIError(
-            HttpStatusCode.NOT_FOUND,
-            ErrorMessages.generateErrorMessage(serviceLang, "not found", lang)
-          );
-        }
-        return brokerofficeServiceRepository.create({
-          service,
-          broker_office: savedBroker
-        });
-      });
-      
-      const servicesToSave = await Promise.all(servicePromises);
-      await brokerofficeServiceRepository.save(servicesToSave);
-
+        
+        const servicesToSave = await Promise.all(servicePromises);
+        await brokerofficeServiceRepository.save(servicesToSave);  
+      }
       const accessToken = jwt.sign(
         {
           userId: user.id,
           phone: user.phone,
-          role: user.role,
-          brokerId: savedBroker.id,
+          role: UserRole.vendor,
         },
         process.env.ACCESS_TOKEN_SECRET!,
         { expiresIn: "20m" }
@@ -130,8 +130,8 @@ export class BrokerController {
         {
           userId: user.id,
           phone: user.phone,
-          role: user.role,
-          brokerId: savedBroker.id,
+          role: UserRole.vendor,
+         
         },
         process.env.REFRESH_TOKEN_SECRET!,
         { expiresIn: "7d" }
