@@ -108,12 +108,12 @@ export const createService = async (
     const entity = lang == "ar" ? "الخدمة" : "service";
     const user = req["currentUser"];
 
-    const office = await brokerOfficeRepository.findOne({ where: { user } });
-    if (!office)
-      throw new APIError(
-        HttpStatusCode.UNAUTHORIZED,
-        ErrorMessages.generateErrorMessage("مكتب الوسيط", "not found", lang)
-      );
+    // const office = await brokerOfficeRepository.findOne({ where: { user } });
+    // if (!office)
+    //   throw new APIError(
+    //     HttpStatusCode.UNAUTHORIZED,
+    //     ErrorMessages.generateErrorMessage("مكتب الوسيط", "not found", lang)
+    //   );
 
     const images = req.files
       ? (req.files as Express.Multer.File[]).map(

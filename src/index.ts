@@ -1,4 +1,4 @@
-import express, { Request, Response, NextFunction } from "express";
+import express from "express";
 import dotenv from "dotenv";
 import { AppDataSource } from "./config/data_source";
 import cookieParser from "cookie-parser";
