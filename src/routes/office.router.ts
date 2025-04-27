@@ -31,7 +31,7 @@ officeRouter.put("/:id",
     BrokerController.updateBrokerOffice
 );
 
-officeRouter.delete("/:id", 
+officeRouter.delete("/", 
     authMiddleware,
     checkRole([UserRole.vendor , UserRole.superAdmin]),
     BrokerController.deleteBrokerOffice
