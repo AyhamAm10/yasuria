@@ -5,14 +5,12 @@ import { APIError } from "../error/api.error";
 import { HttpStatusCode } from "../error/api.error";
 import { ApiResponse } from "../helper/apiResponse";
 import { ErrorMessages } from "../error/ErrorMessages";
-import { BrokerOffice } from "../entity/BrokerOffice";
 import { validator } from "../helper/validation/validator";
 import { addServiceSchema } from "../helper/validation/schema/addServiceSchema";
 import { ServiceCategory } from "../entity/SeviceCategory";
 
 const serviceRepository = AppDataSource.getRepository(Service);
 const serviceCategoryRepository = AppDataSource.getRepository(ServiceCategory);
-const brokerOfficeRepository = AppDataSource.getRepository(BrokerOffice);
 
 export const getServices = async (
   req: Request,

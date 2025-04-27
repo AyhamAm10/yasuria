@@ -23,6 +23,8 @@ paths:
             schema:
               type: object
               properties:
+                user_name:
+                  type: string
                 phone:
                   type: string
                 office_name:

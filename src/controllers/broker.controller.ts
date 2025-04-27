@@ -32,6 +32,7 @@ export class BrokerController {
       const {
         phone,
         office_name,
+        user_name,
         city,
         commercial_number,
         whatsapp_number,
@@ -58,23 +59,11 @@ export class BrokerController {
       const newUser = userRepository.create({
         phone,
         city,
-        name: office_name,
+        name: user_name,
         isActive: true,
         role: UserRole.vendor,
       });
       const user = await userRepository.save(newUser);
-
-      // const existingBroker = await brokerRepository.findOne({
-      //   where: { user: { id: user.id } },
-      //   relations: ["user"],
-      // });
-
-      // if (existingBroker) {
-      //   throw new APIError(
-      //     HttpStatusCode.BAD_REQUEST,
-      //     ErrorMessages.generateErrorMessage(entity, "already exists", lang)
-      //   );
-      // }
 
       const newBrokerOffice = brokerRepository.create({
         user,
