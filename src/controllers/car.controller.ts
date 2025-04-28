@@ -156,7 +156,7 @@ export const createCar = async (
       title_en,
       desc_ar,
       desc_en,
-      attributes,
+      attributes, 
       model,
       brand,
       location,
@@ -166,32 +166,27 @@ export const createCar = async (
       lat,
       long,
       listing_type,
-
     } = req.body;
 
     await validator(addCarSchema(lang), req.body);
 
     const userId = req["currentUser"]?.id;
 
-    // validate user 
+   
     const user = await AppDataSource.getRepository(User).findOne({
       where: { id: userId },
     });
 
-    if (!user)
+    if (!user) {
       throw new APIError(
         HttpStatusCode.UNAUTHORIZED,
         ErrorMessages.generateErrorMessage(userMessage, "not found", lang)
       );
+    }
 
-      // validate if the user is sempale user or broker office user
-      
-
-      const isOffice = await brokerOfficeRepository.findOne({
-        where:{user}
-      })
-
-
+    const isOffice = await brokerOfficeRepository.findOne({
+      where: { user }
+    });
 
     const images = req.files
       ? (req.files as Express.Multer.File[]).map(
@@ -199,6 +194,7 @@ export const createCar = async (
         )
       : [];
 
+    // إنشاء السيارة
     const newCar = carRepository.create({
       title_ar,
       title_en,
@@ -214,71 +210,64 @@ export const createCar = async (
       lat,
       long,
       listing_type,
-      broker_office:isOffice || null
+      broker_office: isOffice || null
     });
 
     const savedCar = await carRepository.save(newCar);
 
+    let attributeList = [];
     if (attributes && attributes.length > 0) {
-      const newAttribute = attributes.map(async (attr) => {
-        const attribute_id = await attributeRepository.findOneBy({
-          id: attr.id,
-        });
-        if (!attribute_id) {
+      const attributePromises = attributes.map(async (attr) => {
+        const attribute = await attributeRepository.findOneBy({ id: attr.id });
+        if (!attribute) {
           throw new APIError(
             HttpStatusCode.NOT_FOUND,
-            ErrorMessages.generateErrorMessage(
-              userMessage,
-              "not found",
-              "attribute id"
-            )
+            ErrorMessages.generateErrorMessage("Attribute", "not found", lang)
           );
         }
 
-        return attributeValueRepository.create({
-          attribute: attribute_id,
+        const attributeValue = {
+          attribute: attribute,
           entity: "car",
           entity_id: savedCar.id,
           value: attr.value,
-        });
+          // selected_options: attr.selected_options || null 
+        };
+
+        return attributeValueRepository.create(attributeValue);
       });
 
-      var attributeList = await attributeValueRepository.save(newAttribute);
+      attributeList = await attributeValueRepository.save(await Promise.all(attributePromises));
     }
 
+    let specificationsList = [];
     if (specifications && specifications.length > 0) {
-      const newSpecifications = specifications.map(async (item) => {
-        const specifications_id = await specificationRepostry.findOneBy({
-          id: item.id,
-        });
-        if (!specifications_id) {
+      const specPromises = specifications.map(async (item) => {
+        const spec = await specificationRepostry.findOneBy({ id: item.id });
+        if (!spec) {
           throw new APIError(
             HttpStatusCode.NOT_FOUND,
-            ErrorMessages.generateErrorMessage(
-              userMessage,
-              "not found",
-              "specifications id"
-            )
+            ErrorMessages.generateErrorMessage("Specification", "not found", lang)
           );
         }
 
         return specificationValueRepostry.create({
-          specifications: specifications_id,
+          specifications: spec,
           entity: EntitySpecification.car,
           entity_id: savedCar.id,
-          value: item.value,
+          value: item.value
         });
       });
 
-      var specificationsList = await specificationValueRepostry.save(newSpecifications);
+      specificationsList = await specificationValueRepostry.save(await Promise.all(specPromises));
     }
 
     res.status(HttpStatusCode.OK_CREATED).json(
       ApiResponse.success(
         {
-          savedCar,
-          attributes: attributeList || [],
-          specifications: specificationsList || []
+          car: savedCar,
+          attributes: attributeList,
+          specifications: specificationsList
         },
         ErrorMessages.generateErrorMessage(entity, "created", lang)
       )

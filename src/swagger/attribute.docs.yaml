@@ -1,34 +1,36 @@
 openapi: 3.0.0
 info:
   title: Attribute API
-  description: API for managing attributes
+  description: API for managing attributes with nested dropdown support
   version: 1.0.0
 
 paths:
   /attributes:
     get:
       summary: Retrieve a list of attributes
-      description: Fetches a list of attributes with support for filtering by `entityType` and pagination.
+      description: |
+        Fetches a list of attributes with support for filtering by:
+        - entityType (car/properties)
+        - parent_id (for nested attributes)
+        - parent_value (for specific nested values)
       tags:
         - attribute
       parameters:
-        - name: page
-          in: query
-          description: Page number (default is 1)
-          required: false
-          schema:
-            type: integer
-            default: 1
-        - name: limit
-          in: query
-          description: Number of items per page (default is 10)
-          required: false
-          schema:
-            type: integer
-            default: 10
         - name: entityType
           in: query
-          description: The entity type to filter attributes by
+          description: Filter by entity type (car/properties)
+          required: false
+          schema:
+            $ref: '#/components/schemas/EntityAttribute'
+        - name: parent_id
+          in: query
+          description: Filter by parent attribute ID
+          required: false
+          schema:
+            type: integer
+        - name: parent_value
+          in: query
+          description: Filter by parent attribute value
           required: false
           schema:
             type: string
@@ -38,109 +40,79 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  message:
-                    type: string
-                    example: "Attributes retrieved successfully"
-                  data:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: integer
-                          example: 1
-                        title:
-                          type: string
-                          example: "Size"
-                        type:
-                          type: string
-                          example: "Dropdown"
-                        entity:
-                          type: string
-                          example: "Product"
-                        icon:
-                          type: string
-                          example: "size-icon.png"
-                  pagination:
-                    type: object
-                    properties:
-                      total:
-                        type: integer
-                        example: 50
-                      page:
-                        type: integer
-                        example: 1
-                      limit:
-                        type: integer
-                        example: 10
-                      totalPages:
-                        type: integer
-                        example: 5
+                $ref: '#/components/schemas/AttributeListResponse'
         404:
           description: No attributes found
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: false
-                  message:
-                    type: string
-                    example: "No attributes found"
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Internal server error
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: false
-                  message:
-                    type: string
-                    example: "Internal server error"
+                $ref: '#/components/schemas/ErrorResponse'
 
     post:
       summary: Create a new attribute
+      description: |
+        Create attribute with support for:
+        - Text input
+        - Dropdown
+        - Nested dropdown
       tags:
         - attribute
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               type: object
               required:
                 - title
-                - type
+                - input_type
                 - entity
               properties:
                 title:
                   type: string
-                type:
+                input_type:
                   type: string
+                  enum: [text, dropdown, nested_dropdown]
                 entity:
+                  $ref: '#/components/schemas/EntityAttribute'
+                parent_id:
+                  type: integer
+                  nullable: true
+                parent_value:
                   type: string
+                  nullable: true
+                options:
+                  type: string
+                  description: JSON string of options array
+                  example: '[{"value":"kia","label":"KIA"},{"value":"honda","label":"Honda"}]'
                 icon:
                   type: string
+                  format: binary
                   nullable: true
       responses:
         201:
           description: Attribute created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttributeResponse'
         400:
-          description: Missing required fields
+          description: Missing required fields or validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
 
   /attributes/{id}:
     get:
       summary: Get an attribute by ID
+      description: Get attribute details including related values
       tags:
         - attribute
       parameters:
@@ -152,11 +124,20 @@ paths:
       responses:
         200:
           description: Attribute retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttributeWithValuesResponse'
         404:
           description: Attribute not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
     put:
       summary: Update an existing attribute
+      description: Update attribute including nested relationships
       tags:
         - attribute
       parameters:
@@ -168,27 +149,26 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
-              type: object
-              properties:
-                title:
-                  type: string
-                type:
-                  type: string
-                entity:
-                  type: string
-                icon:
-                  type: string
-                  nullable: true
+              $ref: '#/components/schemas/AttributeUpdateRequest'
       responses:
         200:
           description: Attribute updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttributeResponse'
         404:
           description: Attribute not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
     delete:
       summary: Delete an attribute
+      description: Delete attribute and its related values
       tags:
         - attribute
       parameters:
@@ -200,5 +180,165 @@ paths:
       responses:
         200:
           description: Attribute deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
         404:
           description: Attribute not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    EntityAttribute:
+      type: string
+      enum: [car, properties]
+      example: car
+
+    AttributeBase:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: "Car Type"
+        input_type:
+          type: string
+          enum: [text, dropdown, nested_dropdown]
+          example: "dropdown"
+        entity:
+          $ref: '#/components/schemas/EntityAttribute'
+        icon:
+          type: string
+          nullable: true
+          example: "car-icon.png"
+        created_at:
+          type: string
+          format: date-time
+
+    AttributeOptions:
+      type: object
+      properties:
+        options:
+          type: array
+          items:
+            type: object
+            properties:
+              value:
+                type: string
+              label:
+                type: string
+              children:
+                type: array
+                items:
+                  type: object
+
+    AttributeResponse:
+      allOf:
+        - $ref: '#/components/schemas/AttributeBase'
+        - $ref: '#/components/schemas/AttributeOptions'
+
+    AttributeWithValuesResponse:
+      type: object
+      properties:
+        attribute:
+          $ref: '#/components/schemas/AttributeResponse'
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttributeValue'
+
+    AttributeListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Attributes retrieved successfully"
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttributeResponse'
+
+    AttributeValue:
+      type: object
+      properties:
+        id:
+          type: integer
+        value:
+          type: string
+        selected_options:
+          type: object
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    AttributeUpdateRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          nullable: true
+        input_type:
+          type: string
+          enum: [text, dropdown, nested_dropdown]
+          nullable: true
+        entity:
+          $ref: '#/components/schemas/EntityAttribute'
+          nullable: true
+        parent_id:
+          type: integer
+          nullable: true
+        parent_value:
+          type: string
+          nullable: true
+        options:
+          type: string
+          description: JSON string of options array
+          nullable: true
+        icon:
+          type: string
+          format: binary
+          nullable: true
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Operation completed successfully"
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Error message"
+        errors:
+          type: array
+          items:
+            type: string
+          nullable: true
+
+    ValidationErrorResponse:
+      allOf:
+        - $ref: '#/components/schemas/ErrorResponse'
+        - type: object
+          properties:
+            validation:
+              type: object
+              additionalProperties: true

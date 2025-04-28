@@ -174,29 +174,120 @@ components:
 
     CarCreateRequest:
       type: object
+      required:
+        - title_ar
+        - title_en
+        - desc_ar
+        - desc_en
+        - model
+        - brand
+        - location
+        - status
+        - price
+        - listing_type
+        - seller_type
+        - user_id
+        - images
       properties:
-        title_ar: { type: string }
-        title_en: { type: string }
-        desc_ar: { type: string }
-        desc_en: { type: string }
-        model: { type: string }
-        brand: { type: string }
-        location: { type: string }
-        status: { type: string }
-        price: { type: number }
-        lat: { type: number, format: float }
-        long: { type: number, format: float }
+        title_ar:
+          type: string
+          minLength: 3
+          example: "كيا سبورتاج 2023"
+        title_en:
+          type: string
+          minLength: 3
+          example: "Kia Sportage 2023"
+        desc_ar:
+          type: string
+          minLength: 10
+          example: "سيارة كيا سبورتاج موديل 2023 بحالة ممتازة"
+        desc_en:
+          type: string
+          minLength: 10
+          example: "Kia Sportage 2023 model in excellent condition"
+        model:
+          type: string
+          example: "2023"
+        brand:
+          type: string
+          example: "Kia"
+        location:
+          type: string
+          example: "الرياض، السعودية"
+        status:
+          type: string
+          enum: [new, used]
+          example: "new"
+        price:
+          type: number
+          format: float
+          minimum: 0
+          example: 120000.50
+        lat:
+          type: number
+          format: float
+          nullable: true
+          example: 24.7136
+        long:
+          type: number
+          format: float
+          nullable: true
+          example: 46.6753
         listing_type:
           type: string
           enum: [sale, rent]
+          example: "sale"
         seller_type:
           type: string
           enum: [owner, broker]
-        broker_office_id: { type: integer, nullable: true }
-        user_id: { type: integer }
+          example: "owner"
+        broker_office_id:
+          type: integer
+          nullable: true
+          example: 15
+        user_id:
+          type: integer
+          example: 42
         images:
           type: array
-          items: { type: string }
+          minItems: 1
+          items:
+            type: string
+            format: uri
+            example: "/src/public/uploads/car-image.jpg"
+        attributes:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - value
+            properties:
+              id:
+                type: integer
+                example: 1
+              value:
+                type: string
+                example: "sportage"
+              selected_options:
+                type: object
+                nullable: true
+                additionalProperties: true
+                example: {"make": "kia", "model": "sportage"}
+        specifications:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - value
+            properties:
+              id:
+                type: integer
+                example: 1
+              value:
+                type: string
+                example: "true"
 
     Pagination:
       type: object

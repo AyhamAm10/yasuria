@@ -16,13 +16,9 @@ export const getAttributes = async (
   next: NextFunction
 ) => {
   try {
-    const { page = "1", limit = "10", entityType } = req.query; // إضافة entityType كـ query parameter
+    const { entityType, parentId, parentValue } = req.query;
     const lang = req.headers["accept-language"] || "ar";
     const entity = lang === "ar" ? "الخصائص" : "attributes";
-
-    const pageNumber = Math.max(Number(page), 1);
-    const pageSize = Math.max(Number(limit), 1);
-    const skip = (pageNumber - 1) * pageSize;
 
     let queryBuilder = attributeRepository.createQueryBuilder("attribute");
 
@@ -32,10 +28,21 @@ export const getAttributes = async (
       });
     }
 
-    const [attributes, totalCount] = await queryBuilder
-      .skip(skip)
-      .take(pageSize)
-      .getManyAndCount();
+    if (parentId) {
+      queryBuilder = queryBuilder.andWhere("attribute.parent_id = :parentId", {
+        parentId,
+      });
+
+      if (parentValue) {
+        queryBuilder = queryBuilder.andWhere("attribute.parent_value = :parentValue", {
+          parentValue,
+        });
+      }
+    } else {
+      queryBuilder = queryBuilder.andWhere("attribute.parent_id IS NULL");
+    }
+
+    const attributes = await queryBuilder.getMany();
 
     if (!attributes.length) {
       throw new APIError(
@@ -44,22 +51,12 @@ export const getAttributes = async (
       );
     }
 
-    const pagination = {
-      total: totalCount,
-      page: pageNumber,
-      limit: pageSize,
-      totalPages: Math.ceil(totalCount / pageSize),
-    };
-
-    res
-      .status(HttpStatusCode.OK)
-      .json(
-        ApiResponse.success(
-          attributes,
-          ErrorMessages.generateErrorMessage(entity, "retrieved", lang),
-          pagination
-        )
-      );
+    res.status(HttpStatusCode.OK).json(
+      ApiResponse.success(
+        attributes,
+        ErrorMessages.generateErrorMessage(entity, "retrieved", lang)
+      )
+    );
   } catch (error) {
     next(error);
   }
@@ -75,7 +72,10 @@ export const getAttributeById = async (
     const lang = req.headers["accept-language"] || "ar";
     const entity = lang === "ar" ? "الخاصية" : "attribute";
 
-    const attribute = await attributeRepository.findOneBy({ id: Number(id) });
+    const attribute = await attributeRepository.findOne({
+      where: { id: Number(id) },
+      relations: ["values"] 
+    });
 
     if (!attribute) {
       throw new APIError(
@@ -84,14 +84,12 @@ export const getAttributeById = async (
       );
     }
 
-    res
-      .status(HttpStatusCode.OK)
-      .json(
-        ApiResponse.success(
-          attribute,
-          ErrorMessages.generateErrorMessage(entity, "retrieved", lang)
-        )
-      );
+    res.status(HttpStatusCode.OK).json(
+      ApiResponse.success(
+        attribute,
+        ErrorMessages.generateErrorMessage(entity, "retrieved", lang)
+      )
+    );
   } catch (error) {
     next(error);
   }
@@ -103,36 +101,52 @@ export const createAttribute = async (
   next: NextFunction
 ) => {
   try {
-    const { title, type, entity } = req.body;
+    const { title, input_type, entity, parent_id, parent_value, options } = req.body;
     const lang = req.headers["accept-language"] || "ar";
     const entityName = lang === "ar" ? "الخاصية" : "attribute";
+    
     await validator(attributeSchema(lang), req.body);
 
-    if (!title || !type || !entity) {
+    const requiredFields = ['title', 'input_type', 'entity'];
+    const missingFields = requiredFields.filter(field => !req.body[field]);
+
+    if (missingFields.length > 0) {
       throw new APIError(
         HttpStatusCode.BAD_REQUEST,
         ErrorMessages.generateErrorMessage(entityName, "missing fields", lang)
       );
     }
 
+    if (parent_id) {
+      const parentAttribute = await attributeRepository.findOneBy({ id: parent_id });
+      if (!parentAttribute) {
+        throw new APIError(
+          HttpStatusCode.BAD_REQUEST,
+          lang === "ar" ? "السمة الأم غير موجودة" : "Parent attribute not found"
+        );
+      }
+    }
+
     const icon = req.file ? req.file.filename : "";
 
     const newAttribute = attributeRepository.create({
       title,
-      type,
+      input_type,
       entity,
+      parent_id: parent_id || null,
+      parent_value: parent_value || null,
+      options: options ? JSON.parse(options) : null,
       icon,
     });
+
     await attributeRepository.save(newAttribute);
 
-    res
-      .status(HttpStatusCode.OK_CREATED)
-      .json(
-        ApiResponse.success(
-          newAttribute,
-          ErrorMessages.generateErrorMessage(entityName, "created", lang)
-        )
-      );
+    res.status(HttpStatusCode.OK_CREATED).json(
+      ApiResponse.success(
+        newAttribute,
+        ErrorMessages.generateErrorMessage(entityName, "created", lang)
+      )
+    );
   } catch (error) {
     next(error);
   }
@@ -145,7 +159,7 @@ export const updateAttribute = async (
 ) => {
   try {
     const { id } = req.params;
-    const { title, type, entity } = req.body;
+    const { title, input_type, entity, parent_id, parent_value, options } = req.body;
     const lang = req.headers["accept-language"] || "ar";
     const entityName = lang === "ar" ? "الخاصية" : "attribute";
 
@@ -158,21 +172,32 @@ export const updateAttribute = async (
       );
     }
 
+    if (parent_id) {
+      const parentAttribute = await attributeRepository.findOneBy({ id: parent_id });
+      if (!parentAttribute) {
+        throw new APIError(
+          HttpStatusCode.BAD_REQUEST,
+          lang === "ar" ? "السمة الأم غير موجودة" : "Parent attribute not found"
+        );
+      }
+    }
+
     attribute.title = title || attribute.title;
-    attribute.type = type || attribute.type;
+    attribute.input_type = input_type || attribute.input_type;
     attribute.entity = entity || attribute.entity;
+    attribute.parent_id = parent_id || attribute.parent_id;
+    attribute.parent_value = parent_value || attribute.parent_value;
+    attribute.options = options ? JSON.parse(options) : attribute.options;
     if (req.file) attribute.icon = req.file.filename;
 
     await attributeRepository.save(attribute);
 
-    res
-      .status(HttpStatusCode.OK)
-      .json(
-        ApiResponse.success(
-          attribute,
-          ErrorMessages.generateErrorMessage(entityName, "updated", lang)
-        )
-      );
+    res.status(HttpStatusCode.OK).json(
+      ApiResponse.success(
+        attribute,
+        ErrorMessages.generateErrorMessage(entityName, "updated", lang)
+      )
+    );
   } catch (error) {
     next(error);
   }
@@ -188,7 +213,10 @@ export const deleteAttribute = async (
     const lang = req.headers["accept-language"] || "ar";
     const entity = lang === "ar" ? "الخاصية" : "attribute";
 
-    const attribute = await attributeRepository.findOneBy({ id: Number(id) });
+    const attribute = await attributeRepository.findOne({
+      where: { id: Number(id) },
+      relations: ["values"]
+    });
 
     if (!attribute) {
       throw new APIError(
@@ -197,16 +225,18 @@ export const deleteAttribute = async (
       );
     }
 
+    if (attribute.values && attribute.values.length > 0) {
+      await attributeRepository.manager.getRepository("attribute_value").remove(attribute.values);
+    }
+
     await attributeRepository.remove(attribute);
 
-    res
-      .status(HttpStatusCode.OK)
-      .json(
-        ApiResponse.success(
-          null,
-          ErrorMessages.generateErrorMessage(entity, "deleted", lang)
-        )
-      );
+    res.status(HttpStatusCode.OK).json(
+      ApiResponse.success(
+        null,
+        ErrorMessages.generateErrorMessage(entity, "deleted", lang)
+      )
+    );
   } catch (error) {
     next(error);
   }

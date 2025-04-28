@@ -11,6 +11,7 @@ export class ErrorMessages {
                 "bad request": `Bad Request: Invalid data provided for ${entity}`,
                 "internal": `Internal Server Error: Something went wrong with ${entity}`,
                 "already exists": `${entity} is already taken`,
+                "missing fields": `Required fields are missing for ${entity}`,
                 //  success
                 "created": `${entity} has been successfully created`,
                 "retrieved": `${entity} data retrieved successfully`,
@@ -31,6 +32,7 @@ export class ErrorMessages {
                 "bad request": `طلب غير صالح: البيانات المدخلة لـ ${entity} غير صحيحة`,
                 "internal": `خطأ داخلي في الخادم: حدث خطأ أثناء معالجة ${entity}`,
                 "already exists": `${entity} مُستخدم بالفعل`,
+                "missing fields": `الحقول المطلوبة لـ ${entity} غير مكتملة`,
                 //  success
                 "created": `تم إنشاء ${entity} بنجاح`,
                 "retrieved": `تم جلب بيانات ${entity} بنجاح`,
