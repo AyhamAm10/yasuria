@@ -112,12 +112,9 @@ export const createService = async (
     const { category_id } = req.body;
     await validator(addServiceSchema, req.body);
 
-    const images = req.files
-      ? (req.files as Express.Multer.File[]).map(
-          (file) => `/uploads/${file.filename}`
-        )
-      : [];
-    const created = serviceRepository.create({ ...req.body, images });
+    const icon = req.file ? req.file.filename : "";
+
+    const created = serviceRepository.create({ ...req.body, icon });
     const newService = Array.isArray(created) ? created[0] : created;
     if (category_id) {
       const category = await serviceCategoryRepository.findOneBy({ id: category_id });

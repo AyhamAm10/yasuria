@@ -25,6 +25,8 @@ export class Service {
   @Column()
   location: string;
 
+  @Column()
+  icon: string;
 
   @Column({
     type: "enum",

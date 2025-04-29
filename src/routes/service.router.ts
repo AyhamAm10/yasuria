@@ -11,7 +11,7 @@ const serviceRouter: Router = Router();
 serviceRouter.post("/",
     authMiddleware,
     checkRole([ UserRole.superAdmin]),
-    upload.array("images", 5),
+    upload.single("images"),
     createService
 );
 serviceRouter.get("/", 
@@ -27,7 +27,7 @@ serviceRouter.get("/:id",
 serviceRouter.put("/:id", 
     authMiddleware,
     checkRole([ UserRole.superAdmin]),
-    upload.array("images", 5),
+    upload.single("images"),
     updateService
 );
 serviceRouter.delete("/:id", 
