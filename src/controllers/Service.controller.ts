@@ -148,34 +148,49 @@ export const updateService = async (
 ) => {
   try {
     const lang = req.headers["accept-language"] || "ar";
-    const entity = lang == "ar" ? "الخدمة" : "service";
-    const { id } = req.params;
+    const entity = lang === "ar" ? "الخدمة" : "service";
+    const { id } = req.params; 
+    const { category_id, ...updateData } = req.body; 
 
-    const service = await serviceRepository.findOne({
-      where: { id: Number(id) },
-    });
-    if (!service)
+    const existingService = await serviceRepository.findOneBy({ id: Number(id) });
+    
+    if (!existingService) {
       throw new APIError(
         HttpStatusCode.NOT_FOUND,
         ErrorMessages.generateErrorMessage(entity, "not found", lang)
       );
+    }
 
-    serviceRepository.merge(service, req.body);
-    const updatedService = await serviceRepository.save(service);
+    if (req.file) {
+      updateData.icon = req.file.filename; 
+      
+    }
 
-    res
-      .status(HttpStatusCode.OK)
-      .json(
-        ApiResponse.success(
-          updatedService,
-          ErrorMessages.generateErrorMessage(entity, "updated", lang)
-        )
-      );
+    if (category_id) {
+      const category = await serviceCategoryRepository.findOneBy({ id: category_id });
+      if (!category) {
+        throw new APIError(
+          HttpStatusCode.NOT_FOUND,
+          ErrorMessages.generateErrorMessage("category", "not found", lang)
+        );
+      }
+      updateData.category = category;
+    }
+
+    Object.assign(existingService, updateData);
+
+    const updatedService = await serviceRepository.save(existingService);
+
+    res.status(HttpStatusCode.OK).json(
+      ApiResponse.success(
+        updatedService,
+        ErrorMessages.generateErrorMessage(entity, "updated", lang)
+      )
+    )
   } catch (error) {
     next(error);
   }
 };
-
 export const deleteService = async (
   req: Request,
   res: Response,
