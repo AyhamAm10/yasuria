@@ -25,7 +25,7 @@ export class Service {
   @Column()
   location: string;
 
-  @Column()
+  @Column({nullable:true})
   icon: string;
 
   @Column({
