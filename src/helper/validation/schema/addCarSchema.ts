@@ -50,28 +50,8 @@ export const addCarSchema = (lang: string) =>
       attributes: Yup.array()
       .of(
         Yup.object().shape({
-          id: Yup.number()
-            .required(ErrorMessages.generateErrorMessage("Attribute ID", "required", lang))
-            .positive(ErrorMessages.generateErrorMessage("Attribute ID", "invalid", lang)),
-          value: Yup.string()
-            .required(ErrorMessages.generateErrorMessage("Attribute value", "required", lang)),
-          selected_options: Yup.mixed()
-            .test(
-              'is-valid-options',
-              ErrorMessages.generateErrorMessage("Selected options", "invalid", lang),
-              function(value) {
-                const { id } = this.parent;
-                
-                if (!id) return true;
-                
-                if (value && typeof value !== 'object') {
-                  return false;
-                }
-                
-                return true;
-              }
-            )
-            .nullable()
+          id: Yup.number().required(),
+          value: Yup.string().required()
         })
       )
       .nullable(),

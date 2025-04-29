@@ -213,7 +213,6 @@ export const createProperty = async (
       const attributePromises = attributes.map(async (attr) => {
         const attribute = await attributeRepository.findOne({ 
           where: { id: attr.id },
-          relations: ["parent"]
         });
 
         if (!attribute) {
@@ -223,21 +222,11 @@ export const createProperty = async (
           );
         }
 
-        if (attribute.input_type === "nested_dropdown" && !attr.selected_options) {
-          throw new APIError(
-            HttpStatusCode.BAD_REQUEST,
-            lang === "ar" 
-              ? "السمة المتداخلة تحتاج إلى تحديد الخيارات المختارة" 
-              : "Nested attribute requires selected options"
-          );
-        }
-
         return attributeValueRepository.create({
           attribute,
           entity: EntityAttribute.properties,
           entity_id: savedProperty.id,
           value: attr.value,
-          // selected_options: attr.selected_options || null
         });
       });
 
@@ -266,10 +255,9 @@ export const createProperty = async (
       specificationValues = await specificationValueRepository.save(await Promise.all(specPromises));
     }
 
-    // جلب العقار مع العلاقات
     const propertyWithRelations = await propertyRepository.findOne({
       where: { id: savedProperty.id },
-      relations: ["attribute_values", "specification_values"]
+      relations: ["attribute_value", "specification_value"]
     });
 
     res.status(HttpStatusCode.OK_CREATED).json(

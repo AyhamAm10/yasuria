@@ -220,10 +220,38 @@ paths:
                   type: number
                   format: float
                   nullable: true
-                images:
+                attributes:
                   type: array
                   items:
-                    type: string
+                    type: object
+                    required:
+                      - id
+                      - value
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      value:
+                        type: string
+                        example: "sportage"
+                specifications:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - id
+                      - value
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      value:
+                        type: string
+                        example: "true"
+                        images:
+                          type: array
+                          items:
+                            type: string
               required:
                 - title_ar
                 - title_en

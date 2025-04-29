@@ -269,11 +269,6 @@ components:
               value:
                 type: string
                 example: "sportage"
-              selected_options:
-                type: object
-                nullable: true
-                additionalProperties: true
-                example: {"make": "kia", "model": "sportage"}
         specifications:
           type: array
           items:

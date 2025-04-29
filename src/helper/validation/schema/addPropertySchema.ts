@@ -71,59 +71,14 @@ export const addPropertySchema = (lang: string) =>
       .required(ErrorMessages.generateErrorMessage("المساحة", "required", lang))
       .positive(ErrorMessages.generateErrorMessage("المساحة", "invalid", lang)),
 
-    attributes: Yup.array()
-      .of(
-        Yup.object().shape({
-          id: Yup.number()
-            .required(
-              ErrorMessages.generateErrorMessage(
-                "Attribute ID",
-                "required",
-                lang
-              )
-            )
-            .positive(
-              ErrorMessages.generateErrorMessage(
-                "Attribute ID",
-                "invalid",
-                lang
-              )
-            ),
-          value: Yup.string().required(
-            ErrorMessages.generateErrorMessage(
-              "Attribute value",
-              "required",
-              lang
-            )
-          ),
-          selected_options: Yup.mixed()
-            .test(
-              "is-valid-options",
-              ErrorMessages.generateErrorMessage(
-                "Selected options",
-                "invalid",
-                lang
-              ),
-              function (value) {
-                // الحصول على قيمة id من السمة الحالية
-                const { id } = this.parent;
-
-                // إذا لم يكن هناك id، لا داعي للتحقق
-                if (!id) return true;
-
-                // في الواقع هنا يجب التحقق من نوع السمة في قاعدة البيانات
-                // ولكن لأغراض التحقق نكتفي بالتحقق الأساسي
-                if (value && typeof value !== "object") {
-                  return false;
-                }
-
-                return true;
-              }
-            )
-            .nullable(),
-        })
-      )
-      .nullable(),
+    attributes:Yup.array()
+    .of(
+      Yup.object().shape({
+        id: Yup.number().required(),
+        value: Yup.string().required()
+      })
+    )
+    .nullable(),
     specifications: Yup.array()
       .of(
         Yup.object().shape({

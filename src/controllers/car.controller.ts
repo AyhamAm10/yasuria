@@ -231,7 +231,6 @@ export const createCar = async (
           entity: "car",
           entity_id: savedCar.id,
           value: attr.value,
-          // selected_options: attr.selected_options || null 
         };
 
         return attributeValueRepository.create(attributeValue);
