@@ -17,6 +17,7 @@ import { createSuperAdmin } from "./config/createSuperAdmin";
 import officeRouter from "./routes/office.router";
 import serviceCategoryRouter from "./routes/serviceCategory.router";
 import productsRouter from "./routes/products.router";
+import requesteRouter from "./routes/request.router";
 
 
 
@@ -53,7 +54,7 @@ router.use("/service-category", serviceCategoryRouter);
 router.use("/attributes", attributeRouter);
 router.use("/broker-offices", officeRouter);
 router.use("/products", productsRouter);
-router.use("/requests", productsRouter);
+router.use("/requests", requesteRouter);
 
 app.use(process.env.BASE_URL, router);
 
