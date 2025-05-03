@@ -1,0 +1,179 @@
+openapi: 3.0.0
+info:
+  title: Car Type API
+  description: API for managing car types
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/api
+    description: Development server
+tags:
+  - name: Car Types
+    description: Operations related to car types
+
+paths:
+  /car-types:
+    post:
+      tags: [Car Types]
+      summary: Create a new car type
+      operationId: createCarType
+      description: Create a new car type in the system
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "SUV"
+      responses:
+        '201':
+          description: Car type created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+      security:
+        - bearerAuth: []
+
+    get:
+      tags: [Car Types]
+      summary: Get all car types
+      operationId: getAllCarTypes
+      description: Retrieve all car types (without pagination)
+      responses:
+        '200':
+          description: List of car types retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '500':
+          description: Internal server error
+
+  /car-types/{id}:
+    get:
+      tags: [Car Types]
+      summary: Get a car type by ID
+      operationId: getCarTypeById
+      description: Retrieve a specific car type by its ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Car type retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '404':
+          description: Car type not found
+        '500':
+          description: Internal server error
+
+    put:
+      tags: [Car Types]
+      summary: Update a car type
+      operationId: updateCarType
+      description: Update an existing car type
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Sedan"
+      responses:
+        '200':
+          description: Car type updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '400':
+          description: Bad request
+        '404':
+          description: Car type not found
+        '500':
+          description: Internal server error
+      security:
+        - bearerAuth: []
+
+    delete:
+      tags: [Car Types]
+      summary: Delete a car type
+      operationId: deleteCarType
+      description: Delete an existing car type
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Car type deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '404':
+          description: Car type not found
+        '500':
+          description: Internal server error
+      security:
+        - bearerAuth: []
+
+components:
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Operation succeeded"
+        data:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 1
+            name:
+              type: string
+              example: "SUV"
+            properties:
+              type: array
+              items:
+                type: object
+                properties:
+                  id: 
+                    type: integer
+                  model:
+                    type: string
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

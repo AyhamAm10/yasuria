@@ -7,16 +7,7 @@ export class PropertyType {
   id: number;
 
   @Column()
-  name_ar: string;
-
-  @Column()
-  name_en: string;
-
-  @Column()
-  icon: string;
-
-  @CreateDateColumn()
-  created_at: Date;
+  name: string;
 
   @OneToMany(() => Property, (property) => property.property_type)
   properties: Property[];

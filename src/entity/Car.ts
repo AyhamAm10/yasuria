@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne } from 'typeorm';
 import { User } from './User';
 import { BrokerOffice } from './BrokerOffice';
+import { CarType } from './CarType';
 
 @Entity('cars')
 export class Car {
@@ -10,23 +11,17 @@ export class Car {
   @Column()
   title_ar: string;
 
-  @Column()
+  @Column({nullable:true})
   title_en: string;
 
   @Column('text')
   desc_ar: string;
 
-  @Column('text')
+  @Column({nullable:true})
   desc_en: string;
 
   @Column('jsonb', { default: [] })
   images: string[];
-
-  @Column()
-  model: string;
-
-  @Column()
-  brand: string;
 
   @Column()
   location: string;
@@ -63,6 +58,9 @@ export class Car {
 
   @ManyToOne(() => User)
   user: User;
+
+  @ManyToOne(() => CarType)
+    car_type: CarType;
 
   @CreateDateColumn()
   created_at: Date;

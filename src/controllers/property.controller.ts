@@ -1,7 +1,6 @@
-
 import { NextFunction, Request, Response } from "express";
 import { AppDataSource } from "../config/data_source";
-import { Property } from "../entity/Property"; 
+import { Property } from "../entity/Property";
 import { User } from "../entity/User";
 import { APIError } from "../error/api.error";
 import { HttpStatusCode } from "../error/api.error";
@@ -10,17 +9,25 @@ import { ErrorMessages } from "../error/ErrorMessages";
 import { AttributeValue } from "../entity/AttributeValue";
 import { Attribute, EntityAttribute } from "../entity/Attribute";
 import { Specifications } from "../entity/Specifications";
-import { EntitySpecification, SpecificationsValue } from "../entity/SpecificationsValue";
+import {
+  EntitySpecification,
+  SpecificationsValue,
+} from "../entity/SpecificationsValue";
 import { validator } from "../helper/validation/validator";
 import { addPropertySchema } from "../helper/validation/schema/addPropertySchema";
 import { BrokerOffice } from "../entity/BrokerOffice";
+import { CarType } from "../entity/CarType";
+import { PropertyType } from "../entity/PropertyType";
 
 const propertyRepository = AppDataSource.getRepository(Property);
 const attributeRepository = AppDataSource.getRepository(Attribute);
 const attributeValueRepository = AppDataSource.getRepository(AttributeValue);
 const specificationRepository = AppDataSource.getRepository(Specifications);
-const specificationValueRepository = AppDataSource.getRepository(SpecificationsValue);
-const brokerOfficeRepository = AppDataSource.getRepository(BrokerOffice)
+const specificationValueRepository =
+  AppDataSource.getRepository(SpecificationsValue);
+const brokerOfficeRepository = AppDataSource.getRepository(BrokerOffice);
+const propertyTypeReposetry = AppDataSource.getRepository(PropertyType);
+
 
 export const getProperties = async (
   req: Request,
@@ -45,7 +52,8 @@ export const getProperties = async (
 
     const query = propertyRepository.createQueryBuilder("property");
 
-    if (title) query.andWhere("property.title LIKE :title", { title: `%${title}%` });
+    if (title)
+      query.andWhere("property.title LIKE :title", { title: `%${title}%` });
     if (location) query.andWhere("property.location = :location", { location });
     if (minPrice) query.andWhere("property.price >= :minPrice", { minPrice });
     if (maxPrice) query.andWhere("property.price <= :maxPrice", { maxPrice });
@@ -70,29 +78,36 @@ export const getProperties = async (
     //   );
     // }
 
-    const data = await Promise.all(properties.map(async (property) => {
-      const attributes = await attributeValueRepository.find({
-        where: { entity: EntityAttribute.properties, entity_id: property.id },
-      });
+    const data = await Promise.all(
+      properties.map(async (property) => {
+        const attributes = await attributeValueRepository.find({
+          where: { entity: EntityAttribute.properties, entity_id: property.id },
+        });
 
-      const specifications = await specificationValueRepository.find({
-        where: { entity: EntitySpecification.properties, entity_id: property.id },
-      });
+        const specifications = await specificationValueRepository.find({
+          where: {
+            entity: EntitySpecification.properties,
+            entity_id: property.id,
+          },
+        });
 
-      return {
-        property,
-        attributes,
-        specifications,
-      };
-    }));
-
-    res.status(HttpStatusCode.OK).json(
-      ApiResponse.success(
-        data,
-        ErrorMessages.generateErrorMessage(entity, "retrieved", lang),
-        pagination
-      )
+        return {
+          property,
+          attributes,
+          specifications,
+        };
+      })
     );
+
+    res
+      .status(HttpStatusCode.OK)
+      .json(
+        ApiResponse.success(
+          data,
+          ErrorMessages.generateErrorMessage(entity, "retrieved", lang),
+          pagination
+        )
+      );
   } catch (error) {
     next(error);
   }
@@ -110,7 +125,7 @@ export const getPropertyById = async (
 
     const property = await propertyRepository.findOne({
       where: { id: Number(id) },
-      relations: ["user"],
+      relations: ["user" , "broker_office" , "property_type"],
     });
 
     if (!property) {
@@ -128,12 +143,14 @@ export const getPropertyById = async (
       where: { entity: EntitySpecification.properties, entity_id: property.id },
     });
 
-    res.status(HttpStatusCode.OK).json(
-      ApiResponse.success(
-        { property, attributes, specifications },
-        ErrorMessages.generateErrorMessage(entity, "retrieved", lang)
-      )
-    );
+    res
+      .status(HttpStatusCode.OK)
+      .json(
+        ApiResponse.success(
+          { property, attributes, specifications },
+          ErrorMessages.generateErrorMessage(entity, "retrieved", lang)
+        )
+      );
   } catch (error) {
     next(error);
   }
@@ -160,10 +177,11 @@ export const createProperty = async (
       status,
       price,
       area,
-      attributes, 
+      attributes,
       specifications,
       long,
       lat,
+      type_id,
     } = req.body;
 
     const userId = req["currentUser"].id;
@@ -178,9 +196,17 @@ export const createProperty = async (
       );
     }
 
+    const propertyType = await propertyTypeReposetry.findOneBy({ id: type_id });
+
+    if (!propertyType && type_id) {
+      throw new APIError(
+        HttpStatusCode.NOT_FOUND,
+        ErrorMessages.generateErrorMessage("type id", "not found", lang)
+      );
+    }
 
     const isBrokerOffice = await brokerOfficeRepository.findOne({
-      where: { user }
+      where: { user },
     });
 
     const images = req.files
@@ -202,16 +228,16 @@ export const createProperty = async (
       lat,
       long,
       images,
-      broker_office: isBrokerOffice || null
+      broker_office: isBrokerOffice || null,
+      property_type:propertyType
     });
 
     const savedProperty = await propertyRepository.save(newProperty);
 
-
     let attributeValues = [];
     if (attributes && attributes.length > 0) {
       const attributePromises = attributes.map(async (attr) => {
-        const attribute = await attributeRepository.findOne({ 
+        const attribute = await attributeRepository.findOne({
           where: { id: attr.id },
         });
 
@@ -230,13 +256,17 @@ export const createProperty = async (
         });
       });
 
-      attributeValues = await attributeValueRepository.save(await Promise.all(attributePromises));
+      attributeValues = await attributeValueRepository.save(
+        await Promise.all(attributePromises)
+      );
     }
 
     let specificationValues = [];
     if (specifications && specifications.length > 0) {
       const specPromises = specifications.map(async (spec) => {
-        const specification = await specificationRepository.findOneBy({ id: spec.id });
+        const specification = await specificationRepository.findOneBy({
+          id: spec.id,
+        });
         if (!specification) {
           throw new APIError(
             HttpStatusCode.NOT_FOUND,
@@ -252,12 +282,14 @@ export const createProperty = async (
         });
       });
 
-      specificationValues = await specificationValueRepository.save(await Promise.all(specPromises));
+      specificationValues = await specificationValueRepository.save(
+        await Promise.all(specPromises)
+      );
     }
 
     const propertyWithRelations = await propertyRepository.findOne({
       where: { id: savedProperty.id },
-      relations: ["attribute_value", "specification_value"]
+      relations: ["attribute_value", "specification_value"],
     });
 
     res.status(HttpStatusCode.OK_CREATED).json(
@@ -265,7 +297,7 @@ export const createProperty = async (
         {
           property: propertyWithRelations,
           attributes: attributeValues,
-          specifications: specificationValues
+          specifications: specificationValues,
         },
         ErrorMessages.generateErrorMessage(entity, "created", lang)
       )
@@ -298,7 +330,7 @@ export const updateProperty = async (
       specifications,
       lat,
       long,
-      keptImages
+      keptImages,
     } = req.body;
 
     const userId = req["currentUser"].id;
@@ -332,7 +364,7 @@ export const updateProperty = async (
       price,
       area,
       lat,
-      long
+      long,
     });
 
     const newImages = req.files
@@ -345,12 +377,13 @@ export const updateProperty = async (
 
     property.images = [...keptImagesArray, ...newImages];
 
-
     const updatedProperty = await propertyRepository.save(property);
 
     if (attributes && attributes.length > 0) {
       const updatedAttributes = attributes.map(async (attr) => {
-        const attribute = await attributeValueRepository.findOneBy({ id: attr.id });
+        const attribute = await attributeValueRepository.findOneBy({
+          id: attr.id,
+        });
         if (!attribute) {
           throw new APIError(
             HttpStatusCode.NOT_FOUND,
@@ -368,7 +401,9 @@ export const updateProperty = async (
 
     if (specifications && specifications.length > 0) {
       const updatedSpecifications = specifications.map(async (spec) => {
-        const specification = await specificationValueRepository.findOneBy({ id: spec.id });
+        const specification = await specificationValueRepository.findOneBy({
+          id: spec.id,
+        });
         if (!specification) {
           throw new APIError(
             HttpStatusCode.NOT_FOUND,
@@ -381,15 +416,19 @@ export const updateProperty = async (
         });
       });
 
-      await specificationValueRepository.save(await Promise.all(updatedSpecifications));
+      await specificationValueRepository.save(
+        await Promise.all(updatedSpecifications)
+      );
     }
 
-    res.status(HttpStatusCode.OK).json(
-      ApiResponse.success(
-        updatedProperty,
-        ErrorMessages.generateErrorMessage(entity, "updated", lang)
-      )
-    );
+    res
+      .status(HttpStatusCode.OK)
+      .json(
+        ApiResponse.success(
+          updatedProperty,
+          ErrorMessages.generateErrorMessage(entity, "updated", lang)
+        )
+      );
   } catch (error) {
     next(error);
   }
@@ -429,14 +468,15 @@ export const deleteProperty = async (
     });
     await specificationValueRepository.remove(specifications);
 
-    res.status(HttpStatusCode.OK).json(
-      ApiResponse.success(
-        [],
-        ErrorMessages.generateErrorMessage(entity, "deleted", lang)
-      )
-    );
+    res
+      .status(HttpStatusCode.OK)
+      .json(
+        ApiResponse.success(
+          [],
+          ErrorMessages.generateErrorMessage(entity, "deleted", lang)
+        )
+      );
   } catch (error) {
     next(error);
   }
 };
-

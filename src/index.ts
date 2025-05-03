@@ -18,6 +18,8 @@ import officeRouter from "./routes/office.router";
 import serviceCategoryRouter from "./routes/serviceCategory.router";
 import productsRouter from "./routes/products.router";
 import requesteRouter from "./routes/request.router";
+import carTypeRouter from "./routes/carTyoe.router";
+import propertyTypeRouter from "./routes/propertyTyoe.router";
 
 
 
@@ -55,6 +57,8 @@ router.use("/attributes", attributeRouter);
 router.use("/broker-offices", officeRouter);
 router.use("/products", productsRouter);
 router.use("/requests", requesteRouter);
+router.use("/type-c", carTypeRouter);
+router.use("/type-p", propertyTypeRouter);
 
 app.use(process.env.BASE_URL, router);
 

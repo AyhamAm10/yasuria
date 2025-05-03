@@ -14,6 +14,8 @@ import { Specifications } from "../entity/Specifications";
 import { EntitySpecification, SpecificationsValue } from "../entity/SpecificationsValue";
 import { addCarSchema } from "../helper/validation/schema/addCarSchema";
 import { BrokerOffice } from "../entity/BrokerOffice";
+import { Favorite } from "../entity/Favorites";
+import { CarType } from "../entity/CarType";
 
 const carRepository = AppDataSource.getRepository(Car);
 const attributeRepository = AppDataSource.getRepository(Attribute);
@@ -21,7 +23,7 @@ const attributeValueRepository =AppDataSource.getRepository(AttributeValue);
 const specificationRepostry = AppDataSource.getRepository(Specifications)
 const specificationValueRepostry = AppDataSource.getRepository(SpecificationsValue)
 const brokerOfficeRepository = AppDataSource.getRepository(BrokerOffice)
-
+const carTypeReposetry = AppDataSource.getRepository(CarType)
 export const getCars = async (
   req: Request,
   res: Response,
@@ -42,8 +44,20 @@ export const getCars = async (
     const pageNumber = Math.max(Number(page), 1);
     const pageSize = Math.max(Number(limit), 1);
     const skip = (pageNumber - 1) * pageSize;
-
+    const userId = req.currentUser?.id
     const query = carRepository.createQueryBuilder("car");
+
+    if (userId) {
+      query.leftJoin(
+        Favorite,
+        "fav",
+        "fav.item_id = car.id AND fav.item_type = 'car' AND fav.user_id = :userId",
+        { userId }
+      );
+      query.addSelect("fav.id IS NOT NULL", "is_favorite");
+    } else {
+      query.addSelect("false", "is_favorite");
+    }
 
     if (brand) query.andWhere("car.brand = :brand", { brand });
     if (model) query.andWhere("car.model = :model", { model });
@@ -51,10 +65,12 @@ export const getCars = async (
     if (minPrice) query.andWhere("car.price >= :minPrice", { minPrice });
     if (maxPrice) query.andWhere("car.price <= :maxPrice", { maxPrice });
 
-    const [cars, totalCount] = await query
+    const queryResult = await query
       .skip(skip)
       .take(pageSize)
-      .getManyAndCount();
+      .getRawMany();
+
+      const totalCount = await query.getCount();
 
     const pagination = {
       total: totalCount,
@@ -63,28 +79,45 @@ export const getCars = async (
       totalPages: Math.ceil(totalCount / pageSize),
     };
 
-    if (!cars) {
+      if (!queryResult || queryResult.length === 0) {
       throw new APIError(
         HttpStatusCode.NOT_FOUND,
         ErrorMessages.generateErrorMessage(entity, "not found", lang)
       );
     }
 
-    const data = await Promise.all(cars.map(async (car) => {
-      const attribute = await attributeValueRepository.find({
-        where: { entity: EntityAttribute.car, entity_id: car.id },
-      });
+    const carIds = queryResult.map(c => c.car_id);
     
-      const specifications = await specificationValueRepostry.find({
-        where: { entity: EntitySpecification.car, entity_id: car.id }
-      });
-    
-      return {
-        car,
-        attributes: attribute,
-        specifications
+    const [allAttributes, allSpecifications] = await Promise.all([
+      attributeValueRepository.find({
+        where: { 
+          entity: EntityAttribute.car, 
+          entity_id: In(carIds) 
+        }
+      }),
+      specificationValueRepostry.find({
+        where: { 
+          entity: EntitySpecification.car, 
+          entity_id: In(carIds) 
+        }
+      })
+    ]);
+
+    const data = queryResult.map(rawCar => {
+
+      const car = {
+        // {...rawCar},
+        // is_favorite: Boolean(rawCar.is_favorite),
+        ...rawCar
       };
-    }));
+
+      return {
+        ...car,
+        attributes: allAttributes.filter(attr => attr.entity_id === rawCar.car_id),
+        specifications: allSpecifications.filter(spec => spec.entity_id === rawCar.car_id)
+      };
+    });
+
 
     res
       .status(HttpStatusCode.OK)
@@ -109,34 +142,65 @@ export const getCarById = async (
     const { id } = req.params;
     const lang = req.headers["accept-language"] || "ar";
     const entity = lang == "ar" ? "السيارات" : "items";
+    const userId = req.currentUser?.id
 
-    const car = await carRepository.findOne({
-      where: { id: Number(id) },
-      relations: ["user"],
-    });
 
-    if (!car)
+    const carQuery = carRepository.createQueryBuilder("car")
+      .where("car.id = :id", { id: Number(id) })
+      .leftJoinAndSelect("car.user", "user")
+      .leftJoinAndSelect("car.broker_office", "broker_office")
+      .leftJoinAndSelect("car.car_type", "car_type")
+
+    if (userId) {
+      carQuery.leftJoin(
+        Favorite,
+        "fav",
+        "fav.item_id = car.id AND fav.item_type = 'car' AND fav.user_id = :userId",
+        { userId }
+      );
+      carQuery.addSelect("fav.id IS NOT NULL", "is_favorite");
+    } else {
+      carQuery.addSelect("false", "is_favorite");
+    }
+
+    const carResult = await carQuery.getRawOne();
+
+    if (!carResult) {
       throw new APIError(
         HttpStatusCode.NOT_FOUND,
         ErrorMessages.generateErrorMessage(entity, "not found", lang)
       );
+    }
 
-    const attributes = await attributeValueRepository.find({
-      where: { entity: EntityAttribute.car, entity_id: car.id },
-    });
+    const { is_favorite, ...carRawData } = carResult;
+    const car = {
+      ...carRawData,
+      id: carRawData.car_id,
+      user: {
+        id: carRawData.user_id,
+      }
+    };
 
-    const specifications = await specificationValueRepostry.find({
-      where:{entity: EntitySpecification.car , entity_id:car.id}
-    })
+    const [attributes, specifications] = await Promise.all([
+      attributeValueRepository.find({
+        where: { entity: EntityAttribute.car, entity_id: car.id },
+      }),
+      specificationValueRepostry.find({
+        where: { entity: EntitySpecification.car, entity_id: car.id }
+      })
+    ]);
 
-    res
-      .status(HttpStatusCode.OK)
-      .json(
-        ApiResponse.success(
-          { car, attributes , specifications },
-          ErrorMessages.generateErrorMessage(entity, "retrieved", lang)
-        )
-      );
+    res.status(HttpStatusCode.OK).json(
+      ApiResponse.success(
+        { 
+          ...car,
+          is_favorite: Boolean(is_favorite),
+          attributes,
+          specifications 
+        },
+        ErrorMessages.generateErrorMessage(entity, "retrieved", lang)
+      )
+    );
   } catch (error) {
     next(error);
   }
@@ -157,8 +221,6 @@ export const createCar = async (
       desc_ar,
       desc_en,
       attributes, 
-      model,
-      brand,
       location,
       status,
       price,
@@ -166,9 +228,10 @@ export const createCar = async (
       lat,
       long,
       listing_type,
+      type_id
     } = req.body;
 
-    await validator(addCarSchema(lang), req.body);
+    // await validator(addCarSchema(lang), req.body);
 
     const userId = req["currentUser"]?.id;
 
@@ -184,6 +247,16 @@ export const createCar = async (
       );
     }
 
+      const carType = await carTypeReposetry.findOneBy({id:type_id})
+
+      if(!carType && type_id){
+        throw new APIError(
+          HttpStatusCode.NOT_FOUND,
+          ErrorMessages.generateErrorMessage("type id", "not found", lang)
+        );
+      }
+
+
     const isOffice = await brokerOfficeRepository.findOne({
       where: { user }
     });
@@ -194,14 +267,12 @@ export const createCar = async (
         )
       : [];
 
-    // إنشاء السيارة
+    
     const newCar = carRepository.create({
       title_ar,
       title_en,
       desc_ar,
       desc_en,
-      model,
-      brand,
       location,
       status,
       price,
@@ -210,7 +281,8 @@ export const createCar = async (
       lat,
       long,
       listing_type,
-      broker_office: isOffice || null
+      broker_office: isOffice || null,
+      car_type: carType
     });
 
     const savedCar = await carRepository.save(newCar);
@@ -293,8 +365,6 @@ export const updateCar = async (
       desc_ar,
       desc_en,
       attributes,
-      model,
-      brand,
       location,
       status,
       price,
@@ -327,8 +397,8 @@ export const updateCar = async (
       title_en,
       desc_ar,
       desc_en,
-      model,
-      brand,
+      // model,
+      // brand,
       location,
       status,
       price,
@@ -369,7 +439,6 @@ export const updateCar = async (
       await attributeValueRepository.save(newAttributes);
     }
 
-    // تحديث المواصفات (Specifications)
     if (specifications && specifications.length > 0) {
       const newSpecifications = await Promise.all(
         specifications.map(async (item) => {

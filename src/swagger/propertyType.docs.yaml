@@ -1,0 +1,170 @@
+openapi: 3.0.0
+info:
+  title: Property Type API
+  description: API for managing property types (with CarType functions)
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/api
+    description: Development server
+tags:
+  - name: Property Types
+    description: Operations related to property types
+
+paths:
+  /property-types:
+    post:
+      tags: [Property Types]
+      summary: Create a new property type
+      operationId: createCarType
+      description: Create a new property type in the system
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "شقة"
+      responses:
+        '201':
+          description: Property type created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+      security:
+        - bearerAuth: []
+
+    get:
+      tags: [Property Types]
+      summary: Get all property types
+      operationId: getAllCarTypes
+      description: Retrieve all property types (without pagination)
+      responses:
+        '200':
+          description: List of property types retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '500':
+          description: Internal server error
+
+  /property-types/{id}:
+    get:
+      tags: [Property Types]
+      summary: Get a property type by ID
+      operationId: getCarTypeById
+      description: Retrieve a specific property type by its ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Property type retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '404':
+          description: Property type not found
+        '500':
+          description: Internal server error
+
+    put:
+      tags: [Property Types]
+      summary: Update a property type
+      operationId: updateCarType
+      description: Update an existing property type
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "فيلا"
+      responses:
+        '200':
+          description: Property type updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '400':
+          description: Bad request
+        '404':
+          description: Property type not found
+        '500':
+          description: Internal server error
+      security:
+        - bearerAuth: []
+
+    delete:
+      tags: [Property Types]
+      summary: Delete a property type
+      operationId: deleteCarType
+      description: Delete an existing property type
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Property type deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '404':
+          description: Property type not found
+        '500':
+          description: Internal server error
+      security:
+        - bearerAuth: []
+
+components:
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "تمت العملية بنجاح"
+        data:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 1
+            name:
+              type: string
+              example: "شقة"
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
