@@ -159,6 +159,7 @@ export class BrokerController {
         governorate,
         minRating,
         maxRating,
+        service_id,
         page = "1",
         limit = "10",
       } = req.query;
@@ -172,7 +173,9 @@ export class BrokerController {
 
       const query = brokerRepository
         .createQueryBuilder("broker")
-        .leftJoinAndSelect("broker.user", "user");
+        .leftJoinAndSelect("broker.user", "user")
+        .leftJoinAndSelect("broker.broker_services", "brokerService") // هذه هي العلاقة مع broker_service
+        .leftJoinAndSelect("brokerService.service", "service"); // هذه هي العلاقة مع الخدمة
 
       if (office_name)
         query.andWhere("broker.office_name ILIKE :office_name", {
@@ -189,6 +192,10 @@ export class BrokerController {
 
       if (maxRating)
         query.andWhere("broker.rating_avg <= :maxRating", { maxRating });
+
+      if (service_id) {
+        query.andWhere("service.id = :service_id", { service_id: Number(service_id) });
+      }
 
       const [brokers, totalCount] = await query
         .skip(skip)
