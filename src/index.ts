@@ -20,6 +20,7 @@ import productsRouter from "./routes/products.router";
 import requesteRouter from "./routes/request.router";
 import carTypeRouter from "./routes/carTyoe.router";
 import propertyTypeRouter from "./routes/propertyTyoe.router";
+import specificationRouter from "./routes/specification.router";
 
 
 
@@ -54,6 +55,7 @@ router.use("/property", propertyRouter);
 router.use("/service", serviceRouter);
 router.use("/service-category", serviceCategoryRouter);
 router.use("/attributes", attributeRouter);
+router.use("/specifications", specificationRouter);
 router.use("/broker-offices", officeRouter);
 router.use("/products", productsRouter);
 router.use("/requests", requesteRouter);
