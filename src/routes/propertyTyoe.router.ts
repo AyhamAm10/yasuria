@@ -3,7 +3,7 @@ import { authMiddleware } from "../middleware/auth.middleware";
 import { checkRole } from "../middleware/checkRole.middleware";
 import { UserRole } from "../entity/User";
 
-import { createCarType, deleteCarType, getAllCarTypes, getCarTypeById, updateCarType } from "../controllers/carType.controller";
+import { createCarType, deleteCarType, getAllCarTypes, getCarTypeById, updateCarType } from "../controllers/propertyType.controller";
 
 const propertyTypeRouter: Router = Router();
 

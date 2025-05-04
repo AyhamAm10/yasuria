@@ -137,8 +137,7 @@ export const deleteCarType = async (
 ) => {
   try {
     const lang = req.headers["accept-language"] || "ar";
-    const entity = lang == "ar" ? "نوع العقار" : "property type";
-
+    const entity = lang == "ar" ? "نوع السيارة" : "car type";
     const id = parseInt(req.params.id);
 
     const carType = await propertyRepository.findOneBy({ id });
