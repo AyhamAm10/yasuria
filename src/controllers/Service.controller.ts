@@ -110,7 +110,7 @@ export const createService = async (
     const lang = req.headers["accept-language"] || "ar";
     const entity = lang == "ar" ? "الخدمة" : "service";
     const { category_id } = req.body;
-    await validator(addServiceSchema, req.body);
+    // await validator(addServiceSchema, req.body);
 
     const icon = req.file ? req.file.filename : "";
 
