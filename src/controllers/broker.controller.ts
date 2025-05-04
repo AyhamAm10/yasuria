@@ -174,8 +174,8 @@ export class BrokerController {
       const query = brokerRepository
         .createQueryBuilder("broker")
         .leftJoinAndSelect("broker.user", "user")
-        .leftJoinAndSelect("broker.broker_services", "brokerService") // هذه هي العلاقة مع broker_service
-        .leftJoinAndSelect("brokerService.service", "service"); // هذه هي العلاقة مع الخدمة
+        .leftJoinAndSelect("broker.broker_service", "brokerService")  
+        .leftJoinAndSelect("brokerService.service", "service"); 
 
       if (office_name)
         query.andWhere("broker.office_name ILIKE :office_name", {

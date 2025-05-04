@@ -13,14 +13,12 @@ officeRouter.post("/",
 );
 
 officeRouter.get("/", 
-    authMiddleware,
-    checkRole([UserRole.vendor , UserRole.user , UserRole.admin , UserRole.superAdmin]),
     BrokerController.getBrokerOffices
 );
 
 officeRouter.get("/:id", 
-    authMiddleware,
-    checkRole([UserRole.vendor , UserRole.user , UserRole.admin , UserRole.superAdmin]),
+    // authMiddleware,
+    // checkRole([UserRole.vendor , UserRole.user , UserRole.admin , UserRole.superAdmin]),
     BrokerController.getBrokerProfile
 );
 
