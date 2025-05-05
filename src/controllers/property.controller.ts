@@ -71,13 +71,6 @@ export const getProperties = async (
       totalPages: Math.ceil(totalCount / pageSize),
     };
 
-    // if (!properties || properties.length === 0) {
-    //   throw new APIError(
-    //     HttpStatusCode.NOT_FOUND,
-    //     ErrorMessages.generateErrorMessage(entity, "not found", lang)
-    //   );
-    // }
-
     const data = await Promise.all(
       properties.map(async (property) => {
         const attributes = await attributeValueRepository.find({
