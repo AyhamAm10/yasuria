@@ -1,9 +1,15 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne } from 'typeorm';
-import { User } from './User';
-import { BrokerOffice } from './BrokerOffice';
-import { CarType } from './CarType';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  ManyToOne,
+} from "typeorm";
+import { User } from "./User";
+import { BrokerOffice } from "./BrokerOffice";
+import { CarType } from "./CarType";
 
-@Entity('cars')
+@Entity("cars")
 export class Car {
   @PrimaryGeneratedColumn()
   id: number;
@@ -11,45 +17,42 @@ export class Car {
   @Column()
   title_ar: string;
 
-  @Column({nullable:true})
+  @Column({ nullable: true })
   title_en: string;
 
-  @Column('text')
+  @Column("text")
   desc_ar: string;
 
-  @Column({nullable:true})
+  @Column({ nullable: true })
   desc_en: string;
 
-  @Column('jsonb', { default: [] })
+  @Column("jsonb", { default: [] })
   images: string[];
 
   @Column()
   location: string;
 
-  @Column('double precision', { nullable: true })
+  @Column("double precision", { nullable: true })
   lat: number;
 
-  @Column('double precision', { nullable: true })
+  @Column("double precision", { nullable: true })
   long: number;
 
-  @Column()
-  status: string;
-
-  @Column({ default: false })
+  @Column({ default: true })
   isActive: boolean;
 
-  @Column('decimal')
+  @Column("decimal")
   price: number;
 
   @Column({
-    type: 'enum',
-    enum: ['sale', 'rent'],
+    type: "enum",
+    enum: ["sale", "rent"],
   })
   listing_type: string;
 
   @Column({
-    type: 'enum',
-    enum: ['owner', 'broker'],
+    type: "enum",
+    enum: ["owner", "broker"],
   })
   seller_type: string;
 
@@ -60,7 +63,7 @@ export class Car {
   user: User;
 
   @ManyToOne(() => CarType)
-    car_type: CarType;
+  car_type: CarType;
 
   @CreateDateColumn()
   created_at: Date;

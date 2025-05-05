@@ -1,6 +1,5 @@
 import * as Yup from "yup";
 import { ErrorMessages } from "../../../error/ErrorMessages";
-import { EntityAttribute } from "../../../entity/Attribute";
 
 export const attributeSchema = (lang: string) =>
   Yup.object().shape({
@@ -16,11 +15,8 @@ export const attributeSchema = (lang: string) =>
       ),
 
     entity: Yup.string()
-      .required(ErrorMessages.generateErrorMessage("Entity", "required", lang))
-      .oneOf(
-        Object.values(EntityAttribute),
-        ErrorMessages.generateErrorMessage("Entity", "invalid", lang)
-      ),
+          .oneOf(["car", "property"], ErrorMessages.generateErrorMessage("Entity", "invalid", lang))
+          .required(ErrorMessages.generateErrorMessage("Entity", "required", lang)),
 
     parent_id: Yup.number()
       .nullable()
@@ -36,19 +32,19 @@ export const attributeSchema = (lang: string) =>
         )
       }),
 
-    options: Yup.array()
-      .nullable()
-      .optional()
-      .when('input_type', {
-        is: (value: string) => ['dropdown', 'nested_dropdown'].includes(value),
-        then: (schema) => schema
-          .of(
-            Yup.object().shape({
-              value: Yup.string().required(),
-              label: Yup.string().required()
-            })
-          )
-          .min(1, ErrorMessages.generateErrorMessage("Options", "min", lang))
-      }),
+    // options: Yup.array()
+    //   .nullable()
+    //   .optional()
+    //   .when('input_type', {
+    //     is: (value: string) => ['dropdown', 'nested_dropdown'].includes(value),
+    //     then: (schema) => schema
+    //       .of(
+    //         Yup.object().shape({
+    //           value: Yup.string().required(),
+    //           label: Yup.string().required()
+    //         })
+    //       )
+    //       .min(1, ErrorMessages.generateErrorMessage("Options", "min", lang))
+    //   }),
 
   });

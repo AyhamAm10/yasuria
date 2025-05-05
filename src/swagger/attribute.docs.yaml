@@ -13,6 +13,8 @@ paths:
         - entityType (car/properties)
         - parent_id (for nested attributes)
         - parent_value (for specific nested values)
+        - purpose (sale/rent/both)
+        - show_in_search (boolean)
       tags:
         - attribute
       parameters:
@@ -34,6 +36,18 @@ paths:
           required: false
           schema:
             type: string
+        - name: purpose
+          in: query
+          description: Filter by attribute purpose (sale/rent/both)
+          required: false
+          schema:
+            $ref: '#/components/schemas/AttributePurpose'
+        - name: showInSearch
+          in: query
+          description: Filter by visibility in search (true/false)
+          required: false
+          schema:
+            type: boolean
       responses:
         200:
           description: Attributes retrieved successfully
@@ -61,6 +75,8 @@ paths:
         - Text input
         - Dropdown
         - Nested dropdown
+        - Purpose (sale/rent/both)
+        - Search visibility
       tags:
         - attribute
       requestBody:
@@ -91,6 +107,14 @@ paths:
                   type: string
                   description: JSON string of options array
                   example: '[{"value":"kia","label":"KIA"},{"value":"honda","label":"Honda"}]'
+                has_child:
+                  type: boolean
+                  default: false
+                show_in_search:
+                  type: boolean
+                  default: true
+                purpose:
+                  $ref: '#/components/schemas/AttributePurpose'
                 icon:
                   type: string
                   format: binary
@@ -198,6 +222,12 @@ components:
       enum: [car, properties]
       example: car
 
+    AttributePurpose:
+      type: string
+      enum: [sale, rent, both]
+      default: both
+      example: both
+
     AttributeBase:
       type: object
       properties:
@@ -217,6 +247,16 @@ components:
           type: string
           nullable: true
           example: "car-icon.png"
+        show_in_search:
+          type: boolean
+          default: true
+          example: true
+        purpose:
+          $ref: '#/components/schemas/AttributePurpose'
+        has_child:
+          type: boolean
+          default: false
+          example: false
         created_at:
           type: string
           format: date-time
@@ -303,6 +343,15 @@ components:
         options:
           type: string
           description: JSON string of options array
+          nullable: true
+        has_child:
+          type: boolean
+          nullable: true
+        show_in_search:
+          type: boolean
+          nullable: true
+        purpose:
+          $ref: '#/components/schemas/AttributePurpose'
           nullable: true
         icon:
           type: string

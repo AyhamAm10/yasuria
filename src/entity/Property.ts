@@ -21,16 +21,16 @@ export class Property {
   @Column()
   title_ar: string;
 
-  @Column()
+  @Column({nullable:true})
   title_en: string;
 
   @Column('text')
   desc_ar: string;
 
-  @Column('text')
+  @Column('text' , {nullable:true})
   desc_en: string;
 
-  @Column({ default: false })
+  @Column({ default: true })
   isActive: boolean;
 
   @Column()
@@ -45,14 +45,14 @@ export class Property {
   @Column('double precision', { nullable: true })
   long: number;
 
-  @Column()
-  status: string;
-
   @Column('decimal')
   price: number;
 
   @Column()
-  area: string;
+  area: number;
+
+  @Column()
+  floors: number;
 
   @Column({
     type: 'enum',

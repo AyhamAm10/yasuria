@@ -16,7 +16,7 @@ export const getAttributes = async (
   next: NextFunction
 ) => {
   try {
-    const { entityType, parentId, parentValue } = req.query;
+    const { entityType, parentId, parentValue, purpose, showInSearch } = req.query;
     const lang = req.headers["accept-language"] || "ar";
     const entity = lang === "ar" ? "الخصائص" : "attributes";
 
@@ -25,6 +25,19 @@ export const getAttributes = async (
     if (entityType) {
       queryBuilder = queryBuilder.where("attribute.entity = :entityType", {
         entityType,
+      });
+    }
+
+    if (purpose) {
+      queryBuilder = queryBuilder.andWhere("attribute.purpose = :purpose OR attribute.purpose = 'both'", {
+        purpose,
+      });
+    }
+
+    if (showInSearch !== undefined) {
+      const showInSearchBool = showInSearch === 'true';
+      queryBuilder = queryBuilder.andWhere("attribute.show_in_search = :showInSearch", {
+        showInSearch: showInSearchBool,
       });
     }
 
@@ -95,17 +108,65 @@ export const getAttributeById = async (
   }
 };
 
+export const getChildattribute = async(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) =>{
+  try {
+    const id= Number(req.params.id)
+    const lang = req.headers["accept-language"] || "ar";
+    const entity = lang === "ar" ? "الخاصية" : "attribute";
+    const message = lang === "ar" ? "لايوجد خاصية مرتبطة بهذا ال id" : "attribute nested not found";
+
+    const attributeParent =  attributeRepository.findOneBy({id})
+
+    if (!attributeParent) {
+      throw new APIError(
+        HttpStatusCode.NOT_FOUND,
+        ErrorMessages.generateErrorMessage(entity, "not found", lang)
+      );
+    }
+
+    const attribute = await attributeRepository.findOne({
+      where: { parent_id:id },
+    });
+
+    if (!attribute) {
+      throw new APIError(HttpStatusCode.NOT_FOUND,message);
+    }
+    
+    res.status(HttpStatusCode.OK).json(
+      ApiResponse.success(
+        attribute,
+        ErrorMessages.generateErrorMessage(entity, "retrieved", lang)
+      )
+    );
+
+  } catch (error) {
+    next(error)
+  }
+}
+
 export const createAttribute = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const { title, input_type, entity, parent_id, parent_value, options } = req.body;
+    const { title, input_type, entity, parent_id, parent_value, options , has_child= false , show_in_search , purpose   } = req.body;
     const lang = req.headers["accept-language"] || "ar";
     const entityName = lang === "ar" ? "الخاصية" : "attribute";
     
     await validator(attributeSchema(lang), req.body);
+
+    const showInSearchBoolean = typeof show_in_search === 'string' 
+    ? show_in_search === 'true' 
+    : Boolean(show_in_search);
+
+    const has_childhBoolean = typeof show_in_search === 'string' 
+    ? has_child === 'true' 
+    : Boolean(show_in_search);
 
     const requiredFields = ['title', 'input_type', 'entity'];
     const missingFields = requiredFields.filter(field => !req.body[field]);
@@ -133,9 +194,12 @@ export const createAttribute = async (
       title,
       input_type,
       entity,
+      has_child:has_childhBoolean,
       parent_id: parent_id || null,
       parent_value: parent_value || null,
       options: options ? JSON.parse(options) : null,
+      show_in_search:showInSearchBoolean , 
+      purpose ,
       icon,
     });
 

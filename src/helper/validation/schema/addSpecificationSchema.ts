@@ -11,7 +11,7 @@ export const addSpecificationSchema = (lang: string) =>
       .required(ErrorMessages.generateErrorMessage("Type", "required", lang)),
 
     entity: Yup.string()
-      .oneOf(["car", "properties"], ErrorMessages.generateErrorMessage("Entity", "invalid", lang))
+      .oneOf(["car", "property"], ErrorMessages.generateErrorMessage("Entity", "invalid", lang))
       .required(ErrorMessages.generateErrorMessage("Entity", "required", lang)),
 
     icon: Yup.mixed()

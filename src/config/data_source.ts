@@ -25,7 +25,7 @@ import { brokerService } from "../entity/BrokerService";
 import { CarType } from "../entity/CarType";
 
 dotenv.config();
-const { DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME, NODE_ENV } =
+const { DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME } =
   process.env;
 
 

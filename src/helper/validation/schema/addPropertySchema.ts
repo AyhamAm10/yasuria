@@ -13,33 +13,12 @@ export const addPropertySchema = (lang: string) =>
         ErrorMessages.generateErrorMessage("العنوان العربي", "min", lang)
       ),
 
-    title_en: Yup.string()
-      .required(
-        ErrorMessages.generateErrorMessage(
-          "العنوان الإنجليزي",
-          "required",
-          lang
-        )
-      )
-      .min(
-        3,
-        ErrorMessages.generateErrorMessage("العنوان الإنجليزي", "min", lang)
-      ),
 
     desc_ar: Yup.string()
       .required(
         ErrorMessages.generateErrorMessage("الوصف العربي", "required", lang)
       )
       .min(10, ErrorMessages.generateErrorMessage("الوصف العربي", "min", lang)),
-
-    desc_en: Yup.string()
-      .required(
-        ErrorMessages.generateErrorMessage("الوصف الإنجليزي", "required", lang)
-      )
-      .min(
-        10,
-        ErrorMessages.generateErrorMessage("الوصف الإنجليزي", "min", lang)
-      ),
 
     location: Yup.string().required(
       ErrorMessages.generateErrorMessage("الموقع", "required", lang)
@@ -67,10 +46,6 @@ export const addPropertySchema = (lang: string) =>
       .required(ErrorMessages.generateErrorMessage("السعر", "required", lang))
       .positive(ErrorMessages.generateErrorMessage("السعر", "invalid", lang)),
 
-    area: Yup.number()
-      .required(ErrorMessages.generateErrorMessage("المساحة", "required", lang))
-      .positive(ErrorMessages.generateErrorMessage("المساحة", "invalid", lang)),
-
     attributes:Yup.array()
     .of(
       Yup.object().shape({
@@ -79,6 +54,7 @@ export const addPropertySchema = (lang: string) =>
       })
     )
     .nullable(),
+
     specifications: Yup.array()
       .of(
         Yup.object().shape({
@@ -88,12 +64,6 @@ export const addPropertySchema = (lang: string) =>
       )
       .nullable(),
 
-    status: Yup.string()
-      .required(ErrorMessages.generateErrorMessage("الحالة", "required", lang))
-      .oneOf(
-        ["new", "used", "under_construction"],
-        ErrorMessages.generateErrorMessage("الحالة", "invalid", lang)
-      ),
 
     listing_type: Yup.string()
       .required(

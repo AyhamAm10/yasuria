@@ -21,6 +21,7 @@ import requesteRouter from "./routes/request.router";
 import carTypeRouter from "./routes/carTyoe.router";
 import propertyTypeRouter from "./routes/propertyTyoe.router";
 import specificationRouter from "./routes/specification.router";
+import SearchRouter from "./routes/searchRouter";
 
 
 
@@ -61,6 +62,7 @@ router.use("/products", productsRouter);
 router.use("/requests", requesteRouter);
 router.use("/type-c", carTypeRouter);
 router.use("/type-p", propertyTypeRouter);
+router.use("/search", SearchRouter);
 
 app.use(process.env.BASE_URL, router);
 

@@ -3,7 +3,7 @@ import { Specifications } from "./Specifications";
 
 export enum EntitySpecification {
   car = "car",
-  properties = "properties"
+  properties = "property"
 }
 
 @Entity("specifications_value")

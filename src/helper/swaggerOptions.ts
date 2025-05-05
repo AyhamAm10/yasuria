@@ -43,6 +43,8 @@ const options: swaggerJsdoc.Options = {
     "./src/swagger/request.docs.yaml",
     "./src/swagger/propertyType.docs.yaml",
     "./src/swagger/carType.docs.yaml",
+    "./src/swagger/propertySearch.docs.yaml",
+    "./src/swagger/carSearch.docs.yaml",
   ],
 };
 

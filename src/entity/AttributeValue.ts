@@ -1,5 +1,16 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne } from "typeorm";
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  ManyToOne,
+} from "typeorm";
 import { Attribute } from "./Attribute";
+
+export enum EntityAttribute {
+  car = "car",
+  properties = "property",
+}
 
 @Entity("attribute_value")
 export class AttributeValue {
@@ -9,17 +20,17 @@ export class AttributeValue {
   @ManyToOne(() => Attribute, (attribute) => attribute.values)
   attribute: Attribute;
 
-  @Column()
-  entity: string; 
+  @Column({
+    type: "enum",
+    enum: EntityAttribute,
+  })
+  entity: EntityAttribute;
 
   @Column()
   entity_id: number;
 
   @Column()
   value: string;
-
-  // @Column({ type: "json", nullable: true })
-  // selected_options: any;
 
   @CreateDateColumn()
   created_at: Date;

@@ -222,7 +222,6 @@ export const createCar = async (
       desc_en,
       attributes, 
       location,
-      status,
       price,
       specifications,
       lat,
@@ -274,7 +273,6 @@ export const createCar = async (
       desc_ar,
       desc_en,
       location,
-      status,
       price,
       user,
       images,
@@ -298,14 +296,13 @@ export const createCar = async (
           );
         }
 
-        const attributeValue = {
+
+        return attributeValueRepository.create({
           attribute: attribute,
-          entity: "car",
+          entity: EntityAttribute.car,
           entity_id: savedCar.id,
           value: attr.value,
-        };
-
-        return attributeValueRepository.create(attributeValue);
+        });
       });
 
       attributeList = await attributeValueRepository.save(await Promise.all(attributePromises));
@@ -366,7 +363,6 @@ export const updateCar = async (
       desc_en,
       attributes,
       location,
-      status,
       price,
       specifications,
       keptImages, 
@@ -397,10 +393,7 @@ export const updateCar = async (
       title_en,
       desc_ar,
       desc_en,
-      // model,
-      // brand,
       location,
-      status,
       price,
     });
 

@@ -10,7 +10,13 @@ import { AttributeValue } from "./AttributeValue";
 
 export enum EntityAttribute {
   car = "car",
-  properties = "properties",
+  properties = "property",
+}
+
+export enum AttributeFor {
+  sale = "sale",       
+  rent = "rent",       
+  both = "both",     
 }
 @Entity("attribute")
 export class Attribute {
@@ -23,7 +29,7 @@ export class Attribute {
   @OneToMany(() => AttributeValue, (value) => value.attribute)
   values: AttributeValue[];
 
-  @Column()
+  @Column({nullable:true})
   icon: string;
 
   @Column({
@@ -36,11 +42,24 @@ export class Attribute {
   @Column({ type: "json", nullable: true })
   options: any;
 
+  @Column({ default: false }) 
+  show_in_search: boolean; 
+
+  @Column({
+    type: "enum",
+    enum: AttributeFor,
+    default: AttributeFor.both, 
+  })
+  purpose: AttributeFor; 
+
   @Column({ nullable: true })
   parent_id: number;
 
   @Column({ nullable: true })
   parent_value: string;
+
+  @Column({ default: false })
+  has_child: Boolean;
 
   @ManyToOne(() => Attribute, { nullable: true })
   parent: Attribute;
