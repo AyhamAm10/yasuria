@@ -21,7 +21,7 @@ attributeRouter.get("/",
     getAttributes
 );
 
-attributeRouter.get("/child/:id", 
+attributeRouter.post("/child/:id", 
     getChildattribute
 );
 

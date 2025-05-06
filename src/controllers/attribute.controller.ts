@@ -118,8 +118,9 @@ export const getChildattribute = async(
     const lang = req.headers["accept-language"] || "ar";
     const entity = lang === "ar" ? "الخاصية" : "attribute";
     const message = lang === "ar" ? "لايوجد خاصية مرتبطة بهذا ال id" : "attribute nested not found";
+    const {value} = req.body
 
-    const attributeParent =  attributeRepository.findOneBy({id})
+    const attributeParent =  attributeRepository.findOne({where:{parent_value:value , parent_id:id}})
 
     if (!attributeParent) {
       throw new APIError(
