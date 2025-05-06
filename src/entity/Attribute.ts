@@ -7,6 +7,8 @@ import {
   OneToMany,
 } from "typeorm";
 import { AttributeValue } from "./AttributeValue";
+import { CarType } from "./CarType";
+import { PropertyType } from "./PropertyType";
 
 export enum EntityAttribute {
   car = "car",
@@ -69,6 +71,12 @@ export class Attribute {
     enum: EntityAttribute,
   })
   entity: EntityAttribute;
+
+  @ManyToOne(() => CarType, { nullable: true })
+  car_type: CarType;
+
+  @ManyToOne(() => PropertyType, { nullable: true })
+  property_type: PropertyType;
 
   @CreateDateColumn()
   created_at: Date;

@@ -10,63 +10,71 @@ paths:
       summary: Retrieve a list of attributes
       description: |
         Fetches a list of attributes with support for filtering by:
-        - entityType (car/properties)
-        - parent_id (for nested attributes)
-        - parent_value (for specific nested values)
+        - entityType (car/property)
         - purpose (sale/rent/both)
         - show_in_search (boolean)
+        - car_type_id (integer)
+        - property_type_id (integer)
       tags:
         - attribute
       parameters:
         - name: entityType
           in: query
-          description: Filter by entity type (car/properties)
+          description: Filter by entity type (car/property)
           required: false
           schema:
             $ref: '#/components/schemas/EntityAttribute'
-        - name: parent_id
-          in: query
-          description: Filter by parent attribute ID
-          required: false
-          schema:
-            type: integer
-        - name: parent_value
-          in: query
-          description: Filter by parent attribute value
-          required: false
-          schema:
-            type: string
         - name: purpose
           in: query
           description: Filter by attribute purpose (sale/rent/both)
           required: false
           schema:
-            $ref: '#/components/schemas/AttributePurpose'
+            $ref: '#/components/schemas/AttributeFor'
         - name: showInSearch
           in: query
           description: Filter by visibility in search (true/false)
           required: false
           schema:
             type: boolean
+        - name: carTypeId
+          in: query
+          description: Filter by car type ID
+          required: false
+          schema:
+            type: integer
+        - name: propertyTypeId
+          in: query
+          description: Filter by property type ID
+          required: false
+          schema:
+            type: integer
+        - name: accept-language
+          in: header
+          description: Language preference (ar/en)
+          required: false
+          schema:
+            type: string
+            enum: [ar, en]
+            default: ar
       responses:
         200:
           description: Attributes retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AttributeListResponse'
+                $ref: '#/components/schemas/ApiResponse'
         404:
           description: No attributes found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/APIError'
         500:
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/APIError'
 
     post:
       summary: Create a new attribute
@@ -77,6 +85,7 @@ paths:
         - Nested dropdown
         - Purpose (sale/rent/both)
         - Search visibility
+        - Association with car type or property type
       tags:
         - attribute
       requestBody:
@@ -92,21 +101,25 @@ paths:
               properties:
                 title:
                   type: string
+                  example: "Engine Size"
                 input_type:
                   type: string
                   enum: [text, dropdown, nested_dropdown]
+                  example: "dropdown"
                 entity:
                   $ref: '#/components/schemas/EntityAttribute'
                 parent_id:
                   type: integer
                   nullable: true
+                  example: 1
                 parent_value:
                   type: string
                   nullable: true
+                  example: "Sedan"
                 options:
                   type: string
                   description: JSON string of options array
-                  example: '[{"value":"kia","label":"KIA"},{"value":"honda","label":"Honda"}]'
+                  example: '[{"value":"1.6","label":"1.6L"},{"value":"2.0","label":"2.0L"}]'
                 has_child:
                   type: boolean
                   default: false
@@ -114,7 +127,15 @@ paths:
                   type: boolean
                   default: true
                 purpose:
-                  $ref: '#/components/schemas/AttributePurpose'
+                  $ref: '#/components/schemas/AttributeFor'
+                car_type_id:
+                  type: integer
+                  nullable: true
+                  example: 1
+                property_type_id:
+                  type: integer
+                  nullable: true
+                  example: 2
                 icon:
                   type: string
                   format: binary
@@ -125,13 +146,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AttributeResponse'
+                $ref: '#/components/schemas/ApiResponse'
         400:
           description: Missing required fields or validation error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ValidationErrorResponse'
+                $ref: '#/components/schemas/APIError'
 
   /attributes/{id}:
     get:
@@ -145,19 +166,27 @@ paths:
           required: true
           schema:
             type: integer
+        - name: accept-language
+          in: header
+          description: Language preference (ar/en)
+          required: false
+          schema:
+            type: string
+            enum: [ar, en]
+            default: ar
       responses:
         200:
           description: Attribute retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AttributeWithValuesResponse'
+                $ref: '#/components/schemas/ApiResponse'
         404:
           description: Attribute not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/APIError'
 
     put:
       summary: Update an existing attribute
@@ -170,25 +199,70 @@ paths:
           required: true
           schema:
             type: integer
+        - name: accept-language
+          in: header
+          description: Language preference (ar/en)
+          required: false
+          schema:
+            type: string
+            enum: [ar, en]
+            default: ar
       requestBody:
         required: true
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/AttributeUpdateRequest'
+              type: object
+              properties:
+                title:
+                  type: string
+                  nullable: true
+                input_type:
+                  type: string
+                  enum: [text, dropdown, nested_dropdown]
+                  nullable: true
+                entity:
+                  $ref: '#/components/schemas/EntityAttribute'
+                  nullable: true
+                parent_id:
+                  type: integer
+                  nullable: true
+                parent_value:
+                  type: string
+                  nullable: true
+                options:
+                  type: string
+                  description: JSON string of options array
+                  nullable: true
+                show_in_search:
+                  type: boolean
+                  nullable: true
+                purpose:
+                  $ref: '#/components/schemas/AttributeFor'
+                  nullable: true
+                car_type_id:
+                  type: integer
+                  nullable: true
+                property_type_id:
+                  type: integer
+                  nullable: true
+                icon:
+                  type: string
+                  format: binary
+                  nullable: true
       responses:
         200:
           description: Attribute updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AttributeResponse'
+                $ref: '#/components/schemas/ApiResponse'
         404:
           description: Attribute not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/APIError'
 
     delete:
       summary: Delete an attribute
@@ -201,34 +275,88 @@ paths:
           required: true
           schema:
             type: integer
+        - name: accept-language
+          in: header
+          description: Language preference (ar/en)
+          required: false
+          schema:
+            type: string
+            enum: [ar, en]
+            default: ar
       responses:
         200:
           description: Attribute deleted successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse'
+                $ref: '#/components/schemas/ApiResponse'
         404:
           description: Attribute not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/APIError'
+
+  /attributes/child/{id}:
+    get:
+      summary: Get child attributes
+      description: Get child attributes for a specific parent attribute and value
+      tags:
+        - attribute
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: accept-language
+          in: header
+          description: Language preference (ar/en)
+          required: false
+          schema:
+            type: string
+            enum: [ar, en]
+            default: ar
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - value
+              properties:
+                value:
+                  type: string
+                  description: The parent attribute value to filter by
+      responses:
+        200:
+          description: Child attributes retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        404:
+          description: No child attributes found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
 
 components:
   schemas:
     EntityAttribute:
       type: string
-      enum: [car, properties]
+      enum: [car, property]
       example: car
 
-    AttributePurpose:
+    AttributeFor:
       type: string
       enum: [sale, rent, both]
       default: both
       example: both
 
-    AttributeBase:
+    Attribute:
       type: object
       properties:
         id:
@@ -236,7 +364,7 @@ components:
           example: 1
         title:
           type: string
-          example: "Car Type"
+          example: "Engine Size"
         input_type:
           type: string
           enum: [text, dropdown, nested_dropdown]
@@ -246,24 +374,25 @@ components:
         icon:
           type: string
           nullable: true
-          example: "car-icon.png"
+          example: "engine-icon.png"
         show_in_search:
           type: boolean
-          default: true
+          default: false
           example: true
         purpose:
-          $ref: '#/components/schemas/AttributePurpose'
+          $ref: '#/components/schemas/AttributeFor'
         has_child:
           type: boolean
           default: false
           example: false
-        created_at:
+        parent_id:
+          type: integer
+          nullable: true
+          example: 1
+        parent_value:
           type: string
-          format: date-time
-
-    AttributeOptions:
-      type: object
-      properties:
+          nullable: true
+          example: "Sedan"
         options:
           type: array
           items:
@@ -273,39 +402,43 @@ components:
                 type: string
               label:
                 type: string
-              children:
-                type: array
-                items:
-                  type: object
-
-    AttributeResponse:
-      allOf:
-        - $ref: '#/components/schemas/AttributeBase'
-        - $ref: '#/components/schemas/AttributeOptions'
-
-    AttributeWithValuesResponse:
-      type: object
-      properties:
-        attribute:
-          $ref: '#/components/schemas/AttributeResponse'
+          nullable: true
+        car_type:
+          $ref: '#/components/schemas/CarType'
+          nullable: true
+        property_type:
+          $ref: '#/components/schemas/PropertyType'
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
         values:
           type: array
           items:
             $ref: '#/components/schemas/AttributeValue'
+          nullable: true
 
-    AttributeListResponse:
+    CarType:
       type: object
       properties:
-        success:
-          type: boolean
-          example: true
-        message:
+        id:
+          type: integer
+        name:
           type: string
-          example: "Attributes retrieved successfully"
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/AttributeResponse'
+        created_at:
+          type: string
+          format: date-time
+
+    PropertyType:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
 
     AttributeValue:
       type: object
@@ -314,51 +447,13 @@ components:
           type: integer
         value:
           type: string
-        selected_options:
-          type: object
-          nullable: true
+        attribute_id:
+          type: integer
         created_at:
           type: string
           format: date-time
 
-    AttributeUpdateRequest:
-      type: object
-      properties:
-        title:
-          type: string
-          nullable: true
-        input_type:
-          type: string
-          enum: [text, dropdown, nested_dropdown]
-          nullable: true
-        entity:
-          $ref: '#/components/schemas/EntityAttribute'
-          nullable: true
-        parent_id:
-          type: integer
-          nullable: true
-        parent_value:
-          type: string
-          nullable: true
-        options:
-          type: string
-          description: JSON string of options array
-          nullable: true
-        has_child:
-          type: boolean
-          nullable: true
-        show_in_search:
-          type: boolean
-          nullable: true
-        purpose:
-          $ref: '#/components/schemas/AttributePurpose'
-          nullable: true
-        icon:
-          type: string
-          format: binary
-          nullable: true
-
-    SuccessResponse:
+    ApiResponse:
       type: object
       properties:
         success:
@@ -367,27 +462,25 @@ components:
         message:
           type: string
           example: "Operation completed successfully"
+        data:
+          oneOf:
+            - $ref: '#/components/schemas/Attribute'
+            - type: array
+              items:
+                $ref: '#/components/schemas/Attribute'
+            - type: null
 
-    ErrorResponse:
+    APIError:
       type: object
       properties:
-        success:
-          type: boolean
-          example: false
+        statusCode:
+          type: integer
+          example: 404
         message:
           type: string
-          example: "Error message"
+          example: "Attribute not found"
         errors:
           type: array
           items:
             type: string
           nullable: true
-
-    ValidationErrorResponse:
-      allOf:
-        - $ref: '#/components/schemas/ErrorResponse'
-        - type: object
-          properties:
-            validation:
-              type: object
-              additionalProperties: true
