@@ -61,7 +61,7 @@ export const getAttributes = async (
 
     if (carTypeId) {
       queryBuilder = queryBuilder.andWhere(
-        "attribute.car_type_id = :carTypeId",
+        "attribute.car_type = :carTypeId",
         {
           carTypeId: Number(carTypeId),
         }
@@ -70,7 +70,7 @@ export const getAttributes = async (
 
     if (propertyTypeId) {
       queryBuilder = queryBuilder.andWhere(
-        "attribute.property_type_id = :propertyTypeId",
+        "attribute.property_type = :propertyTypeId",
         {
           propertyTypeId: Number(propertyTypeId),
         }
