@@ -16,8 +16,8 @@ attributeRouter.post("/",
 );
 
 attributeRouter.get("/", 
-    authMiddleware,
-    checkRole([UserRole.vendor, UserRole.user, UserRole.admin, UserRole.superAdmin]),
+    // authMiddleware,
+    // checkRole([UserRole.vendor, UserRole.user, UserRole.admin, UserRole.superAdmin]),
     getAttributes
 );
 
@@ -26,8 +26,8 @@ attributeRouter.post("/child/:id",
 );
 
 attributeRouter.get("/:id", 
-    authMiddleware,
-    checkRole([UserRole.vendor, UserRole.user, UserRole.admin, UserRole.superAdmin]),
+    // authMiddleware,
+    // checkRole([UserRole.vendor, UserRole.user, UserRole.admin, UserRole.superAdmin]),
     getAttributeById
 );
 
@@ -40,7 +40,7 @@ attributeRouter.put("/:id",
 
 attributeRouter.delete("/:id", 
     authMiddleware,
-    checkRole([UserRole.vendor, UserRole.admin, UserRole.superAdmin]),
+    checkRole([UserRole.superAdmin]),
     deleteAttribute
 );
 

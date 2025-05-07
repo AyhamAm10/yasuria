@@ -35,7 +35,7 @@ export const getAttributes = async (
     queryBuilder = queryBuilder.andWhere("attribute.parent_id IS NULL");
 
     if (entityType) {
-      queryBuilder = queryBuilder.where("attribute.entity = :entityType", {
+      queryBuilder = queryBuilder.andWhere("attribute.entity = :entityType", {
         entityType,
       });
     }
@@ -141,41 +141,33 @@ export const getChildattribute = async (
 ) => {
   try {
     const id = Number(req.params.id);
+    const { value } = req.body;
     const lang = req.headers["accept-language"] || "ar";
     const entity = lang === "ar" ? "الخاصية" : "attribute";
-    const message =
-      lang === "ar"
-        ? "لايوجد خاصية مرتبطة بهذا ال id"
-        : "attribute nested not found";
-    const { value } = req.body;
+    const message = lang === "ar" 
+      ? "لايوجد خاصية مرتبطة بهذا ال id" 
+      : "attribute nested not found";
 
-    const attributeParent = attributeRepository.findOne({
-      where: { parent_value: value, parent_id: id },
-    });
+    const queryBuilder = attributeRepository.createQueryBuilder("attribute");
+    console.log(value)
+    queryBuilder.where("attribute.parent_id = :id", { id });
 
-    if (!attributeParent) {
-      throw new APIError(
-        HttpStatusCode.NOT_FOUND,
-        ErrorMessages.generateErrorMessage(entity, "not found", lang)
-      );
+    if (value) {
+      queryBuilder.andWhere("attribute.parent_value = :value", { value });
     }
 
-    const attribute = await attributeRepository.findOne({
-      where: { parent_id: id },
-    });
+    const attributes = await queryBuilder.getMany();
 
-    if (!attribute) {
+    if (!attributes.length) {
       throw new APIError(HttpStatusCode.NOT_FOUND, message);
     }
 
-    res
-      .status(HttpStatusCode.OK)
-      .json(
-        ApiResponse.success(
-          attribute,
-          ErrorMessages.generateErrorMessage(entity, "retrieved", lang)
-        )
-      );
+    res.status(HttpStatusCode.OK).json(
+      ApiResponse.success(
+        attributes,
+        ErrorMessages.generateErrorMessage(entity, "retrieved", lang)
+      )
+    );
   } catch (error) {
     next(error);
   }
