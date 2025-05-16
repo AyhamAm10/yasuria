@@ -8,8 +8,8 @@ import { UserRole } from "../entity/User";
 const carRouter: Router = Router();
 
 carRouter.post("/", 
-    // authMiddleware,
-    // checkRole([UserRole.vendor]),
+    authMiddleware,
+    checkRole([UserRole.vendor]),
     upload.array("images", 5),
     createCar
 );

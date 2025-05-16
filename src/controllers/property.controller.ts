@@ -159,7 +159,7 @@ export const createProperty = async (
     const entity = lang === "ar" ? "العقار" : "property";
     const userMessage = lang === "ar" ? "المستخدم" : "user";
 
-    await validator(addPropertySchema(lang), req.body);
+    // await validator(addPropertySchema(lang), req.body);
 
     const {
       title_ar,
@@ -174,6 +174,8 @@ export const createProperty = async (
       long,
       lat,
       type_id,
+      seller_type,
+      listing_type
     } = req.body;
 
     const userId = req["currentUser"].id;
@@ -221,7 +223,8 @@ export const createProperty = async (
       images,
       broker_office: isBrokerOffice || null,
       property_type:propertyType,
-      // seller_type:""
+      seller_type,
+      listing_type
     });
 
     const savedProperty = await propertyRepository.save(newProperty);
