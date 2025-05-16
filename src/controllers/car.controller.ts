@@ -222,12 +222,14 @@ export const createCar = async (
       desc_en,
       attributes, 
       location,
-      price,
+      price_usd,
+      price_sy,
       specifications,
       lat,
       long,
       listing_type,
-      type_id
+      type_id,
+      seller_type
     } = req.body;
 
     // await validator(addCarSchema(lang), req.body);
@@ -273,12 +275,14 @@ export const createCar = async (
       desc_ar,
       desc_en,
       location,
-      price,
+      price_sy,
+      price_usd,
       user,
       images,
       lat,
       long,
       listing_type,
+      seller_type,
       broker_office: isOffice || null,
       car_type: carType
     });
@@ -363,7 +367,8 @@ export const updateCar = async (
       desc_en,
       attributes,
       location,
-      price,
+      price_sy,
+      price_usd,
       specifications,
       keptImages, 
     } = req.body;
@@ -394,7 +399,8 @@ export const updateCar = async (
       desc_ar,
       desc_en,
       location,
-      price,
+      price_sy,
+      price_usd,
     });
 
     const newImages = req.files

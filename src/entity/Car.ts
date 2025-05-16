@@ -42,7 +42,10 @@ export class Car {
   isActive: boolean;
 
   @Column("decimal")
-  price: number;
+  price_usd: number;
+
+  @Column("decimal" , {nullable: true})
+  price_sy: number;
 
   @Column({
     type: "enum",

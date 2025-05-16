@@ -45,8 +45,11 @@ export class Property {
   @Column('double precision', { nullable: true })
   long: number;
 
-  @Column('decimal')
-  price: number;
+  @Column("decimal")
+  price_usd: number;
+
+  @Column("decimal" , {nullable: true})
+  price_sy: number;
 
   @Column()
   area: number;
