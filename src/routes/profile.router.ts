@@ -13,7 +13,7 @@ const profileRouter: Router = Router();
 
 const propertyController = new PropertySearchController();
 
-profileRouter.put("/",
+profileRouter.put("/profile",
     authMiddleware,
     checkRole([UserRole.admin , UserRole.superAdmin , UserRole.vendor , UserRole.user]),
     upload.single("image"),

@@ -22,6 +22,7 @@ import carTypeRouter from "./routes/carTyoe.router";
 import propertyTypeRouter from "./routes/propertyTyoe.router";
 import specificationRouter from "./routes/specification.router";
 import SearchRouter from "./routes/searchRouter";
+import profileRouter from "./routes/profile.router";
 
 
 
@@ -63,6 +64,7 @@ router.use("/requests", requesteRouter);
 router.use("/type-c", carTypeRouter);
 router.use("/type-p", propertyTypeRouter);
 router.use("/search", SearchRouter);
+router.use("/user", profileRouter);
 
 app.use(process.env.BASE_URL, router);
 
