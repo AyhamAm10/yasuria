@@ -218,7 +218,8 @@ export const createProperty = async (
       long,
       images,
       broker_office: isBrokerOffice || null,
-      property_type:propertyType
+      property_type:propertyType,
+      // seller_type:""
     });
 
     const savedProperty = await propertyRepository.save(newProperty);

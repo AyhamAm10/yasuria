@@ -14,10 +14,4 @@ export const addSpecificationSchema = (lang: string) =>
       .oneOf(["car", "property"], ErrorMessages.generateErrorMessage("Entity", "invalid", lang))
       .required(ErrorMessages.generateErrorMessage("Entity", "required", lang)),
 
-    icon: Yup.mixed()
-      .nullable()
-      .test("fileFormat", ErrorMessages.generateErrorMessage("Icon", "invalid", lang), (value) => {
-        if (!value) return true;
-        return typeof value === "string";
-      }),
   });

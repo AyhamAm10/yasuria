@@ -1,0 +1,97 @@
+paths:
+  /user/profile:
+    put:
+      tags:
+        - User
+      summary: تحديث الملف الشخصي للمستخدم
+      description: يقوم المستخدم بتحديث بياناته الشخصية مثل الاسم ورقم الهاتف والصورة والمدينة.
+      operationId: updateUserProfile
+      consumes:
+        - multipart/form-data
+      produces:
+        - application/json
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Ayham"
+                phone:
+                  type: string
+                  example: "0987654321"
+                city:
+                  type: string
+                  example: "Aleppo"
+                image:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: تم تحديث الملف الشخصي بنجاح
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: تم تحديث الملف الشخصي بنجاح
+                  data:
+                    $ref: "#/components/schemas/User"
+        "400":
+          description: رقم الهاتف موجود مسبقًا
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: غير مصرح
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: خطأ داخلي في الخادم
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        phone:
+          type: string
+        city:
+          type: string
+        image_url:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
