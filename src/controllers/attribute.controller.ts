@@ -46,7 +46,6 @@ export const getAttributes = async (
         }
       );
     }
-    
 
     if (showInSearch !== undefined) {
       const showInSearchBool = showInSearch === "true";
