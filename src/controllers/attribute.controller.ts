@@ -20,8 +20,6 @@ export const getAttributes = async (
   try {
     const {
       entityType,
-      parentId,
-      parentValue,
       purpose,
       showInSearch,
       carTypeId,
@@ -42,12 +40,13 @@ export const getAttributes = async (
 
     if (purpose) {
       queryBuilder = queryBuilder.andWhere(
-        "attribute.purpose = :purpose OR attribute.purpose = 'both'",
+        "(attribute.purpose = :purpose OR attribute.purpose = 'both')",
         {
           purpose,
         }
       );
     }
+    
 
     if (showInSearch !== undefined) {
       const showInSearchBool = showInSearch === "true";
