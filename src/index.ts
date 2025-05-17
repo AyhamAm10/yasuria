@@ -23,6 +23,7 @@ import propertyTypeRouter from "./routes/propertyTyoe.router";
 import specificationRouter from "./routes/specification.router";
 import SearchRouter from "./routes/searchRouter";
 import profileRouter from "./routes/profile.router";
+import officeProtfolioRouter from "./routes/officeProtfolio.router";
 
 
 
@@ -59,6 +60,7 @@ router.use("/service-category", serviceCategoryRouter);
 router.use("/attributes", attributeRouter);
 router.use("/specifications", specificationRouter);
 router.use("/broker-offices", officeRouter);
+router.use("/broker-portfolios", officeProtfolioRouter);
 router.use("/products", productsRouter);
 router.use("/requests", requesteRouter);
 router.use("/type-c", carTypeRouter);

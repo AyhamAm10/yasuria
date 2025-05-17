@@ -1,0 +1,66 @@
+paths:
+  /broker-portfolios:
+    post:
+      tags:
+        - Broker Portfolios
+      summary: Add broker portfolio
+      description: Add a new portfolio for a broker office
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                broker_office_id:
+                  type: integer
+                description:
+                  type: string
+                images:
+                  type: array
+                  items:
+                    type: string
+            example:
+              broker_office_id: 1
+              description: "تصميم داخلي حديث"
+              images: ["img1.jpg", "img2.jpg"]
+      responses:
+        '201':
+          description: Portfolio created successfully
+        '404':
+          description: Broker office not found
+
+  /broker-portfolios/{id}:
+    delete:
+      tags:
+        - Broker Portfolios
+      summary: Delete broker portfolio
+      description: Delete a portfolio by its ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Portfolio deleted successfully
+        '404':
+          description: Portfolio not found
+
+    get:
+      tags:
+        - Broker Portfolios
+      summary: Get broker office portfolios
+      description: Get all portfolios for a given broker office by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Portfolios fetched successfully
+        '404':
+          description: Broker office not found

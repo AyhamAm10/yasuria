@@ -171,8 +171,8 @@ export const createProperty = async (
       price_usd,
       attributes,
       specifications,
-      long,
-      lat,
+      longitude,
+      latitude,
       type_id,
       seller_type,
       listing_type
@@ -218,8 +218,8 @@ export const createProperty = async (
       price_sy,
       price_usd,
       user,
-      lat,
-      long,
+      latitude,
+      longitude,
       images,
       broker_office: isBrokerOffice || null,
       property_type:propertyType,
@@ -283,8 +283,7 @@ export const createProperty = async (
     }
 
     const propertyWithRelations = await propertyRepository.findOne({
-      where: { id: savedProperty.id },
-      relations: ["attribute_value", "specification_value"],
+      where: { id: savedProperty.id }
     });
 
     res.status(HttpStatusCode.OK_CREATED).json(
@@ -301,6 +300,7 @@ export const createProperty = async (
     next(error);
   }
 };
+
 export const updateProperty = async (
   req: Request,
   res: Response,
@@ -322,8 +322,8 @@ export const updateProperty = async (
       price_usd,
       attributes,
       specifications,
-      lat,
-      long,
+      latitude,
+      longitude,
       keptImages,
     } = req.body;
 
@@ -356,8 +356,8 @@ export const updateProperty = async (
       location,
       price_sy,
       price_usd,
-      lat,
-      long,
+      latitude,
+      longitude,
     });
 
     const newImages = req.files

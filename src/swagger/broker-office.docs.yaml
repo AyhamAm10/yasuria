@@ -1,0 +1,102 @@
+openapi: 3.0.0
+info:
+  title: Broker Offices API
+  version: 1.0.0
+  description: API endpoints for following/unfollowing and rating a broker office
+
+paths:
+  /broker-offices/follow:
+    post:
+      tags:
+        - Broker Offices
+      summary: Follow or unfollow a broker office
+      description: Allows the user to follow or unfollow a broker office. If already followed, unfollows. Otherwise, follows.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - brokerOfficeId
+              properties:
+                brokerOfficeId:
+                  type: string
+                  example: "5f1a6d58b1234"
+      responses:
+        '200':
+          description: Unfollowed or followed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '404':
+          description: Broker office or user not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /broker-offices/rate:
+    post:
+      tags:
+        - Broker Offices
+      summary: Rate a broker office
+      description: Allows the user to submit a rating and optional comment for a broker office
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - brokerOfficeId
+                - rating
+              properties:
+                brokerOfficeId:
+                  type: string
+                  example: "5f1a6d58b1234"
+                rating:
+                  type: number
+                  format: float
+                  example: 4.5
+                comment:
+                  type: string
+                  example: "Excellent service!"
+      responses:
+        '201':
+          description: Rated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '404':
+          description: Broker office or user not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "تم التقييم بنجاح"
+        data:
+          type: object
+          nullable: true
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "الوسيط غير موجود"
+        error:
+          type: string
+          example: "Internal server error"

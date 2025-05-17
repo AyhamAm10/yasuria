@@ -1,19 +1,26 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, Index } from 'typeorm';
-import { User } from './User';
-import { PropertyType } from './PropertyType';
-import { BrokerOffice } from './BrokerOffice';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  ManyToOne,
+  Index,
+} from "typeorm";
+import { User } from "./User";
+import { PropertyType } from "./PropertyType";
+import { BrokerOffice } from "./BrokerOffice";
 
 export enum ListingType {
-  SALE = 'sale',
-  RENT = 'rent'
+  SALE = "sale",
+  RENT = "rent",
 }
 
 export enum SellerType {
-  OWNER = 'owner',
-  BROKER = 'broker'
+  OWNER = "owner",
+  BROKER = "broker",
 }
 
-@Entity('properties')
+@Entity("properties")
 export class Property {
   @PrimaryGeneratedColumn()
   id: number;
@@ -21,13 +28,13 @@ export class Property {
   @Column()
   title_ar: string;
 
-  @Column({nullable:true})
+  @Column({ nullable: true })
   title_en: string;
 
-  @Column('text')
+  @Column("text")
   desc_ar: string;
 
-  @Column('text' , {nullable:true})
+  @Column("text", { nullable: true })
   desc_en: string;
 
   @Column({ default: true })
@@ -36,35 +43,29 @@ export class Property {
   @Column()
   location: string;
 
-  @Column('jsonb', { default: [] })
+  @Column("jsonb", { default: [] })
   images: string[];
 
-  @Column('double precision', { nullable: true })
-  lat: number;
+  @Column("double precision", { nullable: true })
+  latitude: number;
 
-  @Column('double precision', { nullable: true })
-  long: number;
+  @Column("double precision", { nullable: true })
+  longitude: number;
 
   @Column("decimal")
   price_usd: number;
 
-  @Column("decimal" , {nullable: true})
+  @Column("decimal", { nullable: true })
   price_sy: number;
 
-  @Column()
-  area: number;
-
-  @Column()
-  floors: number;
-
   @Column({
-    type: 'enum',
+    type: "enum",
     enum: ListingType,
   })
   listing_type: ListingType;
 
   @Column({
-    type: 'enum',
+    type: "enum",
     enum: SellerType,
   })
   seller_type: SellerType;

@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { createCar, deleteCar, getCarById, getCars, updateCar } from "../controllers/car.controller";
 import { authMiddleware } from "../middleware/auth.middleware";
 import { upload } from "../middleware/uploadProfile";
 import { checkRole } from "../middleware/checkRole.middleware";
