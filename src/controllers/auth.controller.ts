@@ -33,7 +33,7 @@ export class AuthController {
       const accessToken = jwt.sign(
         { userId: user.id, phone: user.phone, role: user.role },
         process.env.ACCESS_TOKEN_SECRET!,
-        { expiresIn: "20m" }
+        { expiresIn: "7d" }
       );
 
       const refreshToken = jwt.sign(
@@ -84,7 +84,7 @@ export class AuthController {
       const accessToken = jwt.sign(
         { userId: savedUser.id, phone: savedUser.phone, role: savedUser.role },
         process.env.ACCESS_TOKEN_SECRET!,
-        { expiresIn: "20m" }
+        { expiresIn: "7d" }
       );
 
       const refreshToken = jwt.sign(
