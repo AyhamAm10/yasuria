@@ -31,8 +31,6 @@ export const getCars = async (
 ) => {
   try {
     const {
-      brand,
-      model,
       location,
       minPrice,
       maxPrice,
@@ -59,8 +57,6 @@ export const getCars = async (
       query.addSelect("false", "is_favorite");
     }
 
-    if (brand) query.andWhere("car.brand = :brand", { brand });
-    if (model) query.andWhere("car.model = :model", { model });
     if (location) query.andWhere("car.location = :location", { location });
     if (minPrice) query.andWhere("car.price >= :minPrice", { minPrice });
     if (maxPrice) query.andWhere("car.price <= :maxPrice", { maxPrice });
@@ -86,35 +82,33 @@ export const getCars = async (
       );
     }
 
-    const carIds = queryResult.map(c => c.car_id);
-    
-    const [allAttributes, allSpecifications] = await Promise.all([
-      attributeValueRepository.find({
-        where: { 
-          entity: EntityAttribute.car, 
-          entity_id: In(carIds) 
-        }
-      }),
-      specificationValueRepostry.find({
-        where: { 
-          entity: EntitySpecification.car, 
-          entity_id: In(carIds) 
-        }
-      })
-    ]);
+    // const carIds = queryResult.map(c => c.car_id);
+    // 
+    // const [allAttributes, allSpecifications] = await Promise.all([
+    //   attributeValueRepository.find({
+    //     where: { 
+    //       entity: EntityAttribute.car, 
+    //       entity_id: In(carIds) 
+    //     }
+    //   }),
+    //   specificationValueRepostry.find({
+    //     where: { 
+    //       entity: EntitySpecification.car, 
+    //       entity_id: In(carIds) 
+    //     }
+    //   })
+    // ]);
 
     const data = queryResult.map(rawCar => {
 
       const car = {
-        // {...rawCar},
-        // is_favorite: Boolean(rawCar.is_favorite),
         ...rawCar
       };
 
       return {
         ...car,
-        attributes: allAttributes.filter(attr => attr.entity_id === rawCar.car_id),
-        specifications: allSpecifications.filter(spec => spec.entity_id === rawCar.car_id)
+        // attributes: allAttributes.filter(attr => attr.entity_id === rawCar.car_id),
+        // specifications: allSpecifications.filter(spec => spec.entity_id === rawCar.car_id)
       };
     });
 

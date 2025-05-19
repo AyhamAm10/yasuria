@@ -252,11 +252,18 @@ export class BrokerController {
         );
       }
 
+      const services = await Promise.all(
+        broker.broker_service.map(async (serBrokect) => {
+          const service = await serviceRepository.findOne({ where: { id: serBrokect.service.id } });
+          return service;
+        })
+      );
+
       res
         .status(HttpStatusCode.OK)
         .json(
           ApiResponse.success(
-            broker,
+            {broker, services},
             ErrorMessages.generateErrorMessage(entity, "retrieved", lang)
           )
         );

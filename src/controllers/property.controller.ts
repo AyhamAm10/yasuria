@@ -270,7 +270,7 @@ export const createProperty = async (
         }
 
         return specificationValueRepository.create({
-          specifications: specification,
+          specification: specification,
           entity: EntitySpecification.properties,
           entity_id: savedProperty.id,
           value: spec.value,
