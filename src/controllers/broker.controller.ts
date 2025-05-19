@@ -242,7 +242,7 @@ export class BrokerController {
       
       const broker = await brokerRepository.findOne({
         where: { id: Number(brokerId) },
-        relations: ["user", "portfolios", "properties", "cars", "broker_service"],
+        relations: ["user", "portfolios", "properties", "cars", "broker_service" ,  "broker_service.service"],
       });
 
       if (!broker) {
