@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany, ManyToOne } from "typeorm";
 import { Specifications } from "./Specifications";
 
 export enum EntitySpecification {
@@ -11,8 +11,8 @@ export class SpecificationsValue {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @OneToMany(() => Specifications, (specifications) => specifications.id)
-  specifications: Specifications;
+  @ManyToOne(() => Specifications, (spec) => spec.values)
+  specification: Specifications;
 
   @Column({
     type:"enum",

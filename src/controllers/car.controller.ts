@@ -184,9 +184,12 @@ export const getCarById = async (
     const [attributes, specifications] = await Promise.all([
       attributeValueRepository.find({
         where: { entity: EntityAttribute.car, entity_id: car.id },
+        relations:["attribute"]
       }),
+
       specificationValueRepostry.find({
-        where: { entity: EntitySpecification.car, entity_id: car.id }
+        where: { entity: EntitySpecification.car, entity_id: car.id },
+        relations: ["specification"]
       })
     ]);
 
@@ -324,7 +327,7 @@ export const createCar = async (
         }
 
         return specificationValueRepostry.create({
-          specifications: spec,
+          specification: spec,
           entity: EntitySpecification.car,
           entity_id: savedCar.id,
           value: item.value
