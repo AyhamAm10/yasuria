@@ -10,7 +10,7 @@ export class BrokerFollower {
   @ManyToOne(() => BrokerOffice)
   broker_office: BrokerOffice;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
   user: User;
 
   @CreateDateColumn()

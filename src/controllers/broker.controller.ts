@@ -10,6 +10,7 @@ import { ApiResponse } from "../helper/apiResponse";
 import { brokerOfficeSchema } from "../helper/validation/schema/brokerSchema";
 import { brokerService } from "../entity/BrokerService";
 import { Service } from "../entity/Services";
+import { BrokerFollower } from "../entity/BrokerFollower";
 
 const userRepository = AppDataSource.getRepository(User);
 const brokerRepository = AppDataSource.getRepository(BrokerOffice);
@@ -84,12 +85,12 @@ export class BrokerController {
 
       const savedBroker = await brokerRepository.save(newBrokerOffice);
 
-      if(services){
+      if (services) {
         const servicePromises = services.map(async (id: number) => {
           const service = await serviceRepository.findOne({
             where: { id },
           });
-        
+
           if (!service) {
             throw new APIError(
               HttpStatusCode.NOT_FOUND,
@@ -98,12 +99,12 @@ export class BrokerController {
           }
           return brokerofficeServiceRepository.create({
             service,
-            broker_office: savedBroker
+            broker_office: savedBroker,
           });
         });
-        
+
         const servicesToSave = await Promise.all(servicePromises);
-        await brokerofficeServiceRepository.save(servicesToSave);  
+        await brokerofficeServiceRepository.save(servicesToSave);
       }
       const accessToken = jwt.sign(
         {
@@ -120,7 +121,6 @@ export class BrokerController {
           userId: user.id,
           phone: user.phone,
           role: UserRole.vendor,
-         
         },
         process.env.REFRESH_TOKEN_SECRET!,
         { expiresIn: "7d" }
@@ -166,6 +166,7 @@ export class BrokerController {
 
       const lang = req.headers["accept-language"] || "ar";
       const entity = lang === "ar" ? "المكاتب" : "broker offices";
+      const currentUserId = req["currentUser"]?.id;
 
       const pageNumber = Math.max(Number(page), 1);
       const pageSize = Math.max(Number(limit), 1);
@@ -174,8 +175,8 @@ export class BrokerController {
       const query = brokerRepository
         .createQueryBuilder("broker")
         .leftJoinAndSelect("broker.user", "user")
-        .leftJoinAndSelect("broker.broker_service", "brokerService")  
-        .leftJoinAndSelect("brokerService.service", "service"); 
+        .leftJoinAndSelect("broker.broker_service", "brokerService")
+        .leftJoinAndSelect("brokerService.service", "service");
 
       if (office_name)
         query.andWhere("broker.office_name ILIKE :office_name", {
@@ -194,13 +195,39 @@ export class BrokerController {
         query.andWhere("broker.rating_avg <= :maxRating", { maxRating });
 
       if (service_id) {
-        query.andWhere("service.id = :service_id", { service_id: Number(service_id) });
+        query.andWhere("service.id = :service_id", {
+          service_id: Number(service_id),
+        });
       }
 
       const [brokers, totalCount] = await query
         .skip(skip)
         .take(pageSize)
         .getManyAndCount();
+
+      const brokersWithFollow = await Promise.all(
+        brokers.map(async (broker) => {
+          let is_following = false;
+
+          if (currentUserId) {
+            const existingFollow = await AppDataSource.getRepository(
+              BrokerFollower
+            ).findOne({
+              where: {
+                broker_office: { id: broker.id },
+                user: { id: currentUserId },
+              },
+            });
+            is_following = !!existingFollow;
+          }
+
+          return {
+            ...broker,
+            is_following,
+            followers_count: broker.followers_count,
+          };
+        })
+      );
 
       const pagination = {
         total: totalCount,
@@ -209,7 +236,7 @@ export class BrokerController {
         totalPages: Math.ceil(totalCount / pageSize),
       };
 
-      if (!brokers || brokers.length === 0) {
+      if (brokers.length === 0) {
         throw new APIError(
           HttpStatusCode.NOT_FOUND,
           ErrorMessages.generateErrorMessage(entity, "not found", lang)
@@ -220,7 +247,7 @@ export class BrokerController {
         .status(HttpStatusCode.OK)
         .json(
           ApiResponse.success(
-            brokers,
+            brokersWithFollow,
             ErrorMessages.generateErrorMessage(entity, "retrieved", lang),
             pagination
           )
@@ -239,10 +266,18 @@ export class BrokerController {
       const lang = req.headers["accept-language"] || "ar";
       const brokerId = req.params.id;
       const entity = lang === "ar" ? "المكاتب" : "broker offices";
-      
+      const currentUserId = req["currentUser"]?.id;
+
       const broker = await brokerRepository.findOne({
         where: { id: Number(brokerId) },
-        relations: ["user", "portfolios", "properties", "cars", "broker_service" ,  "broker_service.service"],
+        relations: [
+          "user",
+          "portfolios",
+          "properties",
+          "cars",
+          "broker_service",
+          "broker_service.service",
+        ],
       });
 
       if (!broker) {
@@ -254,19 +289,38 @@ export class BrokerController {
 
       const services = await Promise.all(
         broker.broker_service.map(async (serBrokect) => {
-          const service = await serviceRepository.findOne({ where: { id: serBrokect.service.id } });
+          const service = await serviceRepository.findOne({
+            where: { id: serBrokect.service.id },
+          });
           return service;
         })
       );
 
-      res
-        .status(HttpStatusCode.OK)
-        .json(
-          ApiResponse.success(
-            {broker, services},
-            ErrorMessages.generateErrorMessage(entity, "retrieved", lang)
-          )
-        );
+      let is_following = false;
+
+      if (currentUserId) {
+        const existingFollow = await AppDataSource.getRepository(
+          BrokerFollower
+        ).findOne({
+          where: {
+            broker_office: { id: broker.id },
+            user: { id: currentUserId },
+          },
+        });
+        is_following = !!existingFollow;
+      }
+
+      res.status(HttpStatusCode.OK).json(
+        ApiResponse.success(
+          {
+            broker,
+            services,
+            is_following,
+            followers_count: broker.followers_count,
+          },
+          ErrorMessages.generateErrorMessage(entity, "retrieved", lang)
+        )
+      );
     } catch (error) {
       next(error);
     }
@@ -281,15 +335,15 @@ export class BrokerController {
       const lang = req.headers["accept-language"] || "ar";
       const serviceLang = lang === "ar" ? "ID الخدمة" : "ID service";
       const entity = lang === "ar" ? "المكاتب" : "broker offices";
-      
+
       await validator(brokerOfficeSchema(lang, true), req.body);
-  
+
       const user = req["currentUser"];
       const broker = await brokerRepository.findOne({
         where: { user },
         relations: ["user", "broker_service", "broker_service.service"],
       });
-  
+
       if (!broker) {
         throw new APIError(
           HttpStatusCode.NOT_FOUND,
@@ -303,46 +357,48 @@ export class BrokerController {
           ErrorMessages.generateErrorMessage(entity, "forbidden", lang)
         );
       }
-  
+
       if (req.file) broker.image = req.file.filename;
       brokerRepository.merge(broker, req.body);
-  
+
       if (req.body.services) {
         const { services } = req.body;
-  
+
         await brokerofficeServiceRepository.delete({
-          broker_office: { id: broker.id }
+          broker_office: { id: broker.id },
         });
 
         const servicePromises = services.map(async (id: number) => {
           const service = await serviceRepository.findOne({
             where: { id },
           });
-  
+
           if (!service) {
             throw new APIError(
               HttpStatusCode.NOT_FOUND,
               ErrorMessages.generateErrorMessage(serviceLang, "not found", lang)
             );
           }
-  
+
           return brokerofficeServiceRepository.create({
             service,
-            broker_office: broker
+            broker_office: broker,
           });
         });
-  
+
         const servicesToSave = await Promise.all(servicePromises);
         await brokerofficeServiceRepository.save(servicesToSave);
       }
-  
+
       const updatedBroker = await brokerRepository.save(broker);
-  
+
       res.status(HttpStatusCode.OK).json(
         ApiResponse.success(
           {
             broker: updatedBroker,
-            services: req.body.services || broker.broker_service?.map(bs => bs.service.id)
+            services:
+              req.body.services ||
+              broker.broker_service?.map((bs) => bs.service.id),
           },
           ErrorMessages.generateErrorMessage(entity, "updated", lang)
         )
@@ -362,10 +418,9 @@ export class BrokerController {
       const user = req["currentUser"];
       const entity = lang === "ar" ? "المكاتب" : "broker offices";
 
-
       const broker = await brokerRepository.findOne({
         where: { user },
-        relations:["user"]
+        relations: ["user"],
       });
 
       if (!broker) {
