@@ -124,7 +124,7 @@ export class PropertySearchController {
         })
       );
 
-      return res.status(HttpStatusCode.OK).json(
+       res.status(HttpStatusCode.OK).json(
         ApiResponse.success(
           data,
           ErrorMessages.generateErrorMessage(entity, "retrieved", lang),

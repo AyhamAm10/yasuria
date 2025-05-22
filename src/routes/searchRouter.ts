@@ -14,10 +14,14 @@ const propertyController = new PropertySearchController();
 const carControoler = new CarSearchController()
 
 SearchRouter.post("/properties",
+    authMiddleware,
+    checkRole([UserRole.admin , UserRole.superAdmin , UserRole.user , UserRole.vendor]),
     propertyController.search
 );
 
 SearchRouter.post("/cars",
+    authMiddleware,
+    checkRole([UserRole.admin , UserRole.superAdmin , UserRole.user , UserRole.vendor]),
     carControoler.search
 );
 
