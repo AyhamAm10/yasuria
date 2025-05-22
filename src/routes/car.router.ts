@@ -14,13 +14,13 @@ carRouter.post("/",
     createCar
 );
 carRouter.get("/", 
-    // authMiddleware,
-    // checkRole([UserRole.vendor, UserRole.user, UserRole.admin, UserRole.superAdmin]),
+    authMiddleware,
+    checkRole([UserRole.vendor, UserRole.user, UserRole.admin, UserRole.superAdmin]),
     getCars
 );
 carRouter.get("/:id", 
-    // authMiddleware,
-    // checkRole([UserRole.vendor, UserRole.user, UserRole.admin, UserRole.superAdmin]),
+    authMiddleware,
+    checkRole([UserRole.vendor, UserRole.user, UserRole.admin, UserRole.superAdmin]),
     getCarById
 );
 carRouter.put("/:id", 

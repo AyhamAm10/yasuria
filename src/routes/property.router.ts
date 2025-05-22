@@ -13,10 +13,15 @@ propertyRouter.post("/",
     upload.array("images", 5),
     createProperty
 );
+
 propertyRouter.get("/", 
+    authMiddleware,
+    checkRole([UserRole.vendor, UserRole.user, UserRole.admin, UserRole.superAdmin]),
     getProperties
 );
 propertyRouter.get("/:id", 
+    authMiddleware,
+    checkRole([UserRole.vendor, UserRole.user, UserRole.admin, UserRole.superAdmin]),
     getPropertyById
 );
 propertyRouter.put("/:id", 

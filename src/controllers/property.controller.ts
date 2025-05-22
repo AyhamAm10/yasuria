@@ -128,13 +128,25 @@ export const getPropertyById = async (
       );
     }
 
-    const attributes = await attributeValueRepository.find({
-      where: { entity: EntityAttribute.properties, entity_id: property.id },
-    });
+    // const attributes = await attributeValueRepository.find({
+    //   where: { entity: EntityAttribute.properties, entity_id: property.id },
+    // });
 
-    const specifications = await specificationValueRepository.find({
-      where: { entity: EntitySpecification.properties, entity_id: property.id },
-    });
+    // const specifications = await specificationValueRepository.find({
+    //   where: { entity: EntitySpecification.properties, entity_id: property.id },
+    // });
+
+      const [attributes, specifications] = await Promise.all([
+          attributeValueRepository.find({
+            where: { entity: EntityAttribute.properties, entity_id: property.id },
+            relations:["attribute"]
+          }),
+    
+          specificationValueRepository.find({
+            where: { entity: EntitySpecification.properties, entity_id: property.id },
+            relations: ["specification"]
+          })
+        ]);
 
     res
       .status(HttpStatusCode.OK)
