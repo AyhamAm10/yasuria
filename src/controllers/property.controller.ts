@@ -18,6 +18,7 @@ import { addPropertySchema } from "../helper/validation/schema/addPropertySchema
 import { BrokerOffice } from "../entity/BrokerOffice";
 import { CarType } from "../entity/CarType";
 import { PropertyType } from "../entity/PropertyType";
+import { Entity_Type, Favorite } from "../entity/Favorites";
 
 const propertyRepository = AppDataSource.getRepository(Property);
 const attributeRepository = AppDataSource.getRepository(Attribute);
@@ -27,7 +28,7 @@ const specificationValueRepository =
   AppDataSource.getRepository(SpecificationsValue);
 const brokerOfficeRepository = AppDataSource.getRepository(BrokerOffice);
 const propertyTypeReposetry = AppDataSource.getRepository(PropertyType);
-
+const favoriteRepository = AppDataSource.getRepository(Favorite)
 
 export const getProperties = async (
   req: Request,
@@ -49,8 +50,21 @@ export const getProperties = async (
     const pageNumber = Math.max(Number(page), 1);
     const pageSize = Math.max(Number(limit), 1);
     const skip = (pageNumber - 1) * pageSize;
+    const userId = req.currentUser?.id;
 
     const query = propertyRepository.createQueryBuilder("property");
+
+    if (userId) {
+      query.leftJoin(
+        Favorite,
+        "fav",
+        "fav.item_id = property.id AND fav.item_type = 'property' AND fav.user_id = :userId",
+        { userId }
+      );
+      query.addSelect("fav.id IS NOT NULL", "is_favorite");
+    } else {
+      query.addSelect("false", "is_favorite");
+    }
 
     if (title)
       query.andWhere("property.title LIKE :title", { title: `%${title}%` });
@@ -59,10 +73,12 @@ export const getProperties = async (
     if (maxPrice) query.andWhere("property.price <= :maxPrice", { maxPrice });
     if (area) query.andWhere("property.area = :area", { area });
 
-    const [properties, totalCount] = await query
-      .skip(skip)
-      .take(pageSize)
-      .getManyAndCount();
+    const rawResult = await query.skip(skip).take(pageSize).getRawAndEntities();
+
+    const properties = rawResult.entities;
+    const rawData = rawResult.raw;
+
+    const totalCount = await query.getCount();
 
     const pagination = {
       total: totalCount,
@@ -72,7 +88,7 @@ export const getProperties = async (
     };
 
     const data = await Promise.all(
-      properties.map(async (property) => {
+      properties.map(async (property, index) => {
         const attributes = await attributeValueRepository.find({
           where: { entity: EntityAttribute.properties, entity_id: property.id },
         });
@@ -84,23 +100,24 @@ export const getProperties = async (
           },
         });
 
+        const is_favorite = rawData[index]?.is_favorite === true;
+
         return {
           property,
           attributes,
           specifications,
+          is_favorite,
         };
       })
     );
 
-    res
-      .status(HttpStatusCode.OK)
-      .json(
-        ApiResponse.success(
-          data,
-          ErrorMessages.generateErrorMessage(entity, "retrieved", lang),
-          pagination
-        )
-      );
+    res.status(HttpStatusCode.OK).json(
+      ApiResponse.success(
+        data,
+        ErrorMessages.generateErrorMessage(entity, "retrieved", lang),
+        pagination
+      )
+    );
   } catch (error) {
     next(error);
   }
@@ -115,10 +132,11 @@ export const getPropertyById = async (
     const { id } = req.params;
     const lang = req.headers["accept-language"] || "ar";
     const entity = lang === "ar" ? "العقار" : "property";
+    const userId = req.currentUser
 
     const property = await propertyRepository.findOne({
       where: { id: Number(id) },
-      relations: ["user" , "broker_office" , "property_type"],
+      relations: ["user", "broker_office", "property_type"],
     });
 
     if (!property) {
@@ -128,34 +146,39 @@ export const getPropertyById = async (
       );
     }
 
-    // const attributes = await attributeValueRepository.find({
-    //   where: { entity: EntityAttribute.properties, entity_id: property.id },
-    // });
+    const [attributes, specifications] = await Promise.all([
+      attributeValueRepository.find({
+        where: { entity: EntityAttribute.properties, entity_id: property.id },
+        relations: ["attribute"],
+      }),
 
-    // const specifications = await specificationValueRepository.find({
-    //   where: { entity: EntitySpecification.properties, entity_id: property.id },
-    // });
+      specificationValueRepository.find({
+        where: {
+          entity: EntitySpecification.properties,
+          entity_id: property.id,
+        },
+        relations: ["specification"],
+      }),
+    ]);
 
-      const [attributes, specifications] = await Promise.all([
-          attributeValueRepository.find({
-            where: { entity: EntityAttribute.properties, entity_id: property.id },
-            relations:["attribute"]
-          }),
-    
-          specificationValueRepository.find({
-            where: { entity: EntitySpecification.properties, entity_id: property.id },
-            relations: ["specification"]
-          })
-        ]);
+    let is_favorite = false;
+    if (userId) {
+      const favorite = await favoriteRepository.findOne({
+        where: {
+          user: userId,
+          item_type:Entity_Type.properties,
+          item_id: property.id,
+        },
+      });
+      is_favorite = !!favorite;
+    }
 
-    res
-      .status(HttpStatusCode.OK)
-      .json(
-        ApiResponse.success(
-          { property, attributes, specifications },
-          ErrorMessages.generateErrorMessage(entity, "retrieved", lang)
-        )
-      );
+    res.status(HttpStatusCode.OK).json(
+      ApiResponse.success(
+        { property, attributes, specifications, is_favorite },
+        ErrorMessages.generateErrorMessage(entity, "retrieved", lang)
+      )
+    );
   } catch (error) {
     next(error);
   }

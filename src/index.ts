@@ -24,6 +24,7 @@ import specificationRouter from "./routes/specification.router";
 import SearchRouter from "./routes/searchRouter";
 import profileRouter from "./routes/profile.router";
 import officeProtfolioRouter from "./routes/officeProtfolio.router";
+import favoriteRoute from "./routes/favorite.route";
 
 
 
@@ -68,6 +69,7 @@ router.use("/type-c", carTypeRouter);
 router.use("/type-p", propertyTypeRouter);
 router.use("/search", SearchRouter);
 router.use("/user", profileRouter);
+router.use("/favorite", favoriteRoute);
 
 app.use(process.env.BASE_URL, router);
 

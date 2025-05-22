@@ -9,14 +9,16 @@ import { EntitySpecification, SpecificationsValue } from "../entity/Specificatio
 import { HttpStatusCode } from "../error/api.error";
 import { ApiResponse } from "../helper/apiResponse";
 import { ErrorMessages } from "../error/ErrorMessages";
+import { Entity_Type, Favorite } from "../entity/Favorites";
 
 
 const carRepository = AppDataSource.getRepository(Car);
 const propertyRepository = AppDataSource.getRepository(Property);
 const attributeValueRepository = AppDataSource.getRepository(AttributeValue);
 const specificationValueRepository = AppDataSource.getRepository(SpecificationsValue);
-
+const favoriteRepository = AppDataSource.getRepository(Favorite)
 export class productsController {
+  
   static async getProducts(
     req: Request,
     res: Response,
@@ -38,6 +40,8 @@ export class productsController {
 
       const lang = req.headers["accept-language"] || "ar";
       const entity = lang === "ar" ? "المنتجات" : "products";
+      const user = req.currentUser;
+      const userId = req.currentUser?.id;
 
       const carQuery = carRepository.createQueryBuilder("car");
 
@@ -61,11 +65,24 @@ export class productsController {
           where: { entity: EntitySpecification.car, entity_id: car.id },
         });
 
+        let is_favorite = false;
+        if (userId) {
+          const favorite = await favoriteRepository.findOne({
+            where: {
+              user: user,
+              item_type: Entity_Type.car,
+              item_id: car.id,
+            },
+          });
+          is_favorite = !!favorite;
+        }
+
         return {
           type: "car",
           data: car,
           attributes,
           specifications,
+          is_favorite,
           created_at: car.created_at,
         };
       }));
@@ -99,11 +116,24 @@ export class productsController {
           where: { entity: EntitySpecification.properties, entity_id: property.id },
         });
 
+        let is_favorite = false;
+        if (userId) {
+          const favorite = await favoriteRepository.findOne({
+            where: {
+              user: user,
+              item_type: Entity_Type.properties,
+              item_id: property.id,
+            },
+          });
+          is_favorite = !!favorite;
+        }
+
         return {
           type: "property",
           data: property,
           attributes,
           specifications,
+          is_favorite,
           created_at: property.created_at,
         };
       }));
@@ -123,3 +153,4 @@ export class productsController {
     }
   }
 }
+
