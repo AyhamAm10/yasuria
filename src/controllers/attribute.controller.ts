@@ -287,7 +287,7 @@ export const updateAttribute = async (
 ) => {
   try {
     const { id } = req.params;
-    const { title, input_type, entity, parent_id, parent_value, options } =
+    const { title, input_type, entity, parent_id, parent_value, options , show_in_search } =
       req.body;
     const lang = req.headers["accept-language"] || "ar";
     const entityName = lang === "ar" ? "الخاصية" : "attribute";
@@ -317,6 +317,7 @@ export const updateAttribute = async (
     attribute.input_type = input_type || attribute.input_type;
     attribute.entity = entity || attribute.entity;
     attribute.parent_id = parent_id || attribute.parent_id;
+    attribute.show_in_search = show_in_search || attribute.show_in_search;
     attribute.parent_value = parent_value || attribute.parent_value;
     attribute.options = options ? JSON.parse(options) : attribute.options;
     if (req.file) attribute.icon = req.file.filename;
