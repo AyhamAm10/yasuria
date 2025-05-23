@@ -336,11 +336,11 @@ export class BrokerController {
       const serviceLang = lang === "ar" ? "ID الخدمة" : "ID service";
       const entity = lang === "ar" ? "المكاتب" : "broker offices";
 
-      await validator(brokerOfficeSchema(lang, true), req.body);
+      // await validator(brokerOfficeSchema(lang, true), req.body);
 
       const user = req["currentUser"];
       const broker = await brokerRepository.findOne({
-        where: { user },
+        where: {user:{id:user.id} },
         relations: ["user", "broker_service", "broker_service.service"],
       });
 
@@ -351,7 +351,7 @@ export class BrokerController {
         );
       }
 
-      if (broker.user !== user) {
+      if (broker.user.id !== user.id) {
         throw new APIError(
           HttpStatusCode.FORBIDDEN,
           ErrorMessages.generateErrorMessage(entity, "forbidden", lang)
