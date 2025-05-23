@@ -292,6 +292,12 @@ export const updateAttribute = async (
     const lang = req.headers["accept-language"] || "ar";
     const entityName = lang === "ar" ? "الخاصية" : "attribute";
 
+    const parseBoolean = (value: any): boolean => {
+      if (typeof value === "boolean") return value;
+      if (typeof value === "string") return value.toLowerCase() === "true";
+      return false;
+    }
+
     const attribute = await attributeRepository.findOneBy({ id: Number(id) });
 
     if (!attribute) {
@@ -317,7 +323,9 @@ export const updateAttribute = async (
     attribute.input_type = input_type || attribute.input_type;
     attribute.entity = entity || attribute.entity;
     attribute.parent_id = parent_id || attribute.parent_id;
-    attribute.show_in_search = show_in_search || attribute.show_in_search;
+    attribute.show_in_search = show_in_search !== undefined
+  ? parseBoolean(show_in_search)
+  : attribute.show_in_search;
     attribute.parent_value = parent_value || attribute.parent_value;
     attribute.options = options ? JSON.parse(options) : attribute.options;
     if (req.file) attribute.icon = req.file.filename;
