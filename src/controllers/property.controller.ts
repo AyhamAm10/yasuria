@@ -19,6 +19,7 @@ import { BrokerOffice } from "../entity/BrokerOffice";
 import { CarType } from "../entity/CarType";
 import { PropertyType } from "../entity/PropertyType";
 import { Entity_Type, Favorite } from "../entity/Favorites";
+import { isFavorite } from "../helper/isFavorite";
 
 const propertyRepository = AppDataSource.getRepository(Property);
 const attributeRepository = AppDataSource.getRepository(Attribute);
@@ -28,7 +29,7 @@ const specificationValueRepository =
   AppDataSource.getRepository(SpecificationsValue);
 const brokerOfficeRepository = AppDataSource.getRepository(BrokerOffice);
 const propertyTypeReposetry = AppDataSource.getRepository(PropertyType);
-const favoriteRepository = AppDataSource.getRepository(Favorite)
+const favoriteRepository = AppDataSource.getRepository(Favorite);
 
 export const getProperties = async (
   req: Request,
@@ -53,18 +54,6 @@ export const getProperties = async (
     const userId = req.currentUser?.id;
 
     const query = propertyRepository.createQueryBuilder("property");
-
-    if (userId) {
-      query.leftJoin(
-        Favorite,
-        "fav",
-        "fav.item_id = property.id AND fav.item_type = 'property' AND fav.user_id = :userId",
-        { userId }
-      );
-      query.addSelect("fav.id IS NOT NULL", "is_favorite");
-    } else {
-      query.addSelect("false", "is_favorite");
-    }
 
     if (title)
       query.andWhere("property.title LIKE :title", { title: `%${title}%` });
@@ -100,7 +89,11 @@ export const getProperties = async (
           },
         });
 
-        const is_favorite = rawData[index]?.is_favorite === true;
+        const is_favorite = await isFavorite(
+          userId,
+          property.id,
+          Entity_Type.properties
+        );
 
         return {
           property,
@@ -111,13 +104,15 @@ export const getProperties = async (
       })
     );
 
-    res.status(HttpStatusCode.OK).json(
-      ApiResponse.success(
-        data,
-        ErrorMessages.generateErrorMessage(entity, "retrieved", lang),
-        pagination
-      )
-    );
+    res
+      .status(HttpStatusCode.OK)
+      .json(
+        ApiResponse.success(
+          data,
+          ErrorMessages.generateErrorMessage(entity, "retrieved", lang),
+          pagination
+        )
+      );
   } catch (error) {
     next(error);
   }
@@ -132,7 +127,7 @@ export const getPropertyById = async (
     const { id } = req.params;
     const lang = req.headers["accept-language"] || "ar";
     const entity = lang === "ar" ? "العقار" : "property";
-    const userId = req.currentUser
+    const userId = req.currentUser;
 
     const property = await propertyRepository.findOne({
       where: { id: Number(id) },
@@ -161,24 +156,23 @@ export const getPropertyById = async (
       }),
     ]);
 
-    let is_favorite = false;
-    if (userId) {
-      const favorite = await favoriteRepository.findOne({
-        where: {
-          user: userId,
-          item_type:Entity_Type.properties,
-          item_id: property.id,
-        },
-      });
-      is_favorite = !!favorite;
-    }
-
-    res.status(HttpStatusCode.OK).json(
-      ApiResponse.success(
-        { property, attributes, specifications, is_favorite },
-        ErrorMessages.generateErrorMessage(entity, "retrieved", lang)
-      )
-    );
+    res
+      .status(HttpStatusCode.OK)
+      .json(
+        ApiResponse.success(
+          {
+            property,
+            attributes,
+            specifications,
+            is_favorite: isFavorite(
+              userId.id,
+              property.id,
+              Entity_Type.properties
+            ),
+          },
+          ErrorMessages.generateErrorMessage(entity, "retrieved", lang)
+        )
+      );
   } catch (error) {
     next(error);
   }
@@ -210,7 +204,7 @@ export const createProperty = async (
       latitude,
       type_id,
       seller_type,
-      listing_type
+      listing_type,
     } = req.body;
 
     const userId = req["currentUser"].id;
@@ -257,9 +251,9 @@ export const createProperty = async (
       longitude,
       images,
       broker_office: isBrokerOffice || null,
-      property_type:propertyType,
+      property_type: propertyType,
       seller_type,
-      listing_type
+      listing_type,
     });
 
     const savedProperty = await propertyRepository.save(newProperty);
@@ -318,7 +312,7 @@ export const createProperty = async (
     }
 
     const propertyWithRelations = await propertyRepository.findOne({
-      where: { id: savedProperty.id }
+      where: { id: savedProperty.id },
     });
 
     res.status(HttpStatusCode.OK_CREATED).json(

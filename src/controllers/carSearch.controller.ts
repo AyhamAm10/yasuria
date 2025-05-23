@@ -8,6 +8,7 @@ import { AppDataSource } from "../config/data_source";
 import { ApiResponse } from "../helper/apiResponse";
 import { ErrorMessages } from "../error/ErrorMessages";
 import { Entity_Type, Favorite } from "../entity/Favorites";
+import { isFavorite } from "../helper/isFavorite";
 
 export class CarSearchController {
   async search(req: Request, res: Response, next: NextFunction) {
@@ -27,7 +28,7 @@ export class CarSearchController {
 
       const lang = req.headers["accept-language"] || "ar";
       const entity = lang === "ar" ? "السيارة" : "car";
-
+      const userId = req.currentUser.id;
       if (page < 1 || limit < 1) {
         throw new APIError(
           HttpStatusCode.BAD_REQUEST,
@@ -98,24 +99,14 @@ export class CarSearchController {
 
       const [cars, total] = await query.getManyAndCount();
 
-      // Append is_favorite
-      const userId = req["currentUser"]?.id;
-      let favoriteCarIds: number[] = [];
-
-      if (userId) {
-        const favorites = await AppDataSource.getRepository(Favorite).find({
-          where: {
-            user: { id: userId },
-            item_type: Entity_Type.car, 
-          },
-        });
-        favoriteCarIds = favorites.map((fav) => fav.item_id);
-      }
-
-      const carsWithFavorite = cars.map((car) => ({
-        ...car,
-        is_favorite: favoriteCarIds.includes(car.id),
-      }));
+      const carsWithFavorite = await Promise.all(
+        cars.map(async (car) => {
+          return {
+            ...car,
+            is_favorite: await isFavorite(userId, car.id, Entity_Type.car),
+          };
+        })
+      );
 
       const pagination = {
         total,

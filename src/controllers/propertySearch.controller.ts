@@ -8,6 +8,7 @@ import { AppDataSource } from '../config/data_source';
 import { ApiResponse } from '../helper/apiResponse';
 import { ErrorMessages } from '../error/ErrorMessages';
 import { Entity_Type, Favorite } from '../entity/Favorites';
+import { isFavorite } from '../helper/isFavorite';
 
 // const specificationValueRepository
 const favoriteRepository = AppDataSource.getRepository(Favorite)
@@ -105,21 +106,9 @@ export class PropertySearchController {
       // الآن نضيف is_favorite لكل عقار
       const data = await Promise.all(
         properties.map(async (property) => {
-          let is_favorite = false;
-          if (userId) {
-            const fav = await favoriteRepository.findOne({
-              where: {
-                user: { id: userId },
-                item_id: property.id,
-                item_type: Entity_Type.properties,
-              },
-            });
-            is_favorite = !!fav;
-          }
-
           return {
             ...property,
-            is_favorite,
+            is_favorite : isFavorite(userId , property.id , Entity_Type.properties),
           };
         })
       );

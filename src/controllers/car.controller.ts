@@ -14,8 +14,9 @@ import { Specifications } from "../entity/Specifications";
 import { EntitySpecification, SpecificationsValue } from "../entity/SpecificationsValue";
 import { addCarSchema } from "../helper/validation/schema/addCarSchema";
 import { BrokerOffice } from "../entity/BrokerOffice";
-import { Favorite } from "../entity/Favorites";
+import { Entity_Type, Favorite } from "../entity/Favorites";
 import { CarType } from "../entity/CarType";
+import { isFavorite } from "../helper/isFavorite";
 
 const carRepository = AppDataSource.getRepository(Car);
 const attributeRepository = AppDataSource.getRepository(Attribute);
@@ -45,18 +46,6 @@ export const getCars = async (
     const userId = req.currentUser?.id
     const query = carRepository.createQueryBuilder("car");
 
-    if (userId) {
-      query.leftJoin(
-        Favorite,
-        "fav",
-        "fav.item_id = car.id AND fav.item_type = 'car' AND fav.user_id = :userId",
-        { userId }
-      );
-      query.addSelect("fav.id IS NOT NULL", "is_favorite");
-    } else {
-      query.addSelect("false", "is_favorite");
-    }
-
     if (location) query.andWhere("car.location = :location", { location });
     if (minPrice) query.andWhere("car.price >= :minPrice", { minPrice });
     if (maxPrice) query.andWhere("car.price <= :maxPrice", { maxPrice });
@@ -82,35 +71,20 @@ export const getCars = async (
       );
     }
 
-    // const carIds = queryResult.map(c => c.car_id);
-    // 
-    // const [allAttributes, allSpecifications] = await Promise.all([
-    //   attributeValueRepository.find({
-    //     where: { 
-    //       entity: EntityAttribute.car, 
-    //       entity_id: In(carIds) 
-    //     }
-    //   }),
-    //   specificationValueRepostry.find({
-    //     where: { 
-    //       entity: EntitySpecification.car, 
-    //       entity_id: In(carIds) 
-    //     }
-    //   })
-    // ]);
+    const data =await Promise.all(
 
-    const data = queryResult.map(rawCar => {
-
-      const car = {
-        ...rawCar
-      };
-
-      return {
-        ...car,
-        // attributes: allAttributes.filter(attr => attr.entity_id === rawCar.car_id),
-        // specifications: allSpecifications.filter(spec => spec.entity_id === rawCar.car_id)
-      };
-    });
+      queryResult.map(async(rawCar) => {
+ 
+       const car = {
+         ...rawCar,
+         is_favorite: await isFavorite(userId , rawCar.id , Entity_Type.car)
+       };
+ 
+       return {
+         ...car,
+       };
+     })
+    )
 
 
     res
@@ -145,17 +119,6 @@ export const getCarById = async (
       .leftJoinAndSelect("car.broker_office", "broker_office")
       .leftJoinAndSelect("car.car_type", "car_type")
 
-    if (userId) {
-      carQuery.leftJoin(
-        Favorite,
-        "fav",
-        "fav.item_id = car.id AND fav.item_type = 'car' AND fav.user_id = :userId",
-        { userId }
-      );
-      carQuery.addSelect("fav.id IS NOT NULL", "is_favorite");
-    } else {
-      carQuery.addSelect("false", "is_favorite");
-    }
 
     const carResult = await carQuery.getRawOne();
 
@@ -166,7 +129,7 @@ export const getCarById = async (
       );
     }
 
-    const { is_favorite, ...carRawData } = carResult;
+    const { ...carRawData } = carResult;
     const car = {
       ...carRawData,
       id: carRawData.car_id,
@@ -191,7 +154,7 @@ export const getCarById = async (
       ApiResponse.success(
         { 
           ...car,
-          is_favorite: Boolean(is_favorite),
+          is_favorite:await isFavorite(userId , car.id , Entity_Type.car),
           attributes,
           specifications 
         },
