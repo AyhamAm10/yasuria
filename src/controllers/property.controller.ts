@@ -164,7 +164,7 @@ export const getPropertyById = async (
             property,
             attributes,
             specifications,
-            is_favorite: isFavorite(
+            is_favorite: await isFavorite(
               userId.id,
               property.id,
               Entity_Type.properties
