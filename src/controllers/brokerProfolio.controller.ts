@@ -146,3 +146,44 @@ export const getBrokerPortfolios = async (
     next(error);
   }
 };
+
+export const getBrokerPortfolioById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const lang = req.headers["accept-language"] || "ar";
+    const entity = lang === "ar" ? "الأعمال" : "portfolios";
+    const brokerOfficeId = Number(req.params.id);
+
+    const brokerOffice = await AppDataSource.getRepository(
+      BrokerOffice
+    ).findOne({
+      where: { id: brokerOfficeId },
+    });
+
+    if (!brokerOffice) {
+      throw new APIError(
+        HttpStatusCode.NOT_FOUND,
+        ErrorMessages.generateErrorMessage("broker office", "not found", lang)
+      );
+    }
+
+    const portfolios = await AppDataSource.getRepository(BrokerPortfolio).find({
+      where: { broker_office: { id: brokerOfficeId } },
+      order: { created_at: "DESC" },
+    });
+
+    res
+      .status(HttpStatusCode.OK)
+      .json(
+        ApiResponse.success(
+          portfolios,
+          ErrorMessages.generateErrorMessage(entity, "fetched", lang)
+        )
+      );
+  } catch (error) {
+    next(error);
+  }
+};

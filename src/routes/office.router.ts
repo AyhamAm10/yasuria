@@ -14,6 +14,7 @@ officeRouter.post("/",
 );
 
 officeRouter.get("/", 
+    authMiddleware,
     BrokerController.getBrokerOffices
 );
 
@@ -30,6 +31,7 @@ officeRouter.post("/rate",
 );
 
 officeRouter.get("/:id", 
+    authMiddleware,
     BrokerController.getBrokerProfile
 );
 
