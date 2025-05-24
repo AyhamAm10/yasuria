@@ -16,7 +16,7 @@ export const addBrokerPortfolio = async (
     const lang = req.headers["accept-language"] || "ar";
     const entity = lang === "ar" ? "العمل" : "portfolio";
 
-    const { broker_office_id, description, images } = req.body;
+    const { broker_office_id, description } = req.body;
 
     const brokerOffice = await AppDataSource.getRepository(
       BrokerOffice
@@ -31,15 +31,23 @@ export const addBrokerPortfolio = async (
       );
     }
 
+    const images = req.files
+    ? (req.files as Express.Multer.File[]).map(
+        (file) => `/src/public/uploads/${file.filename}`
+      )
+    : [];
+
     const portfolio = AppDataSource.getRepository(BrokerPortfolio).create({
       broker_office: brokerOffice,
       description,
-      images,
+      images
     });
 
     const saved = await AppDataSource.getRepository(BrokerPortfolio).save(
       portfolio
     );
+
+   
 
     res
       .status(HttpStatusCode.OK_CREATED)
