@@ -20,7 +20,7 @@ officeProtfolioRouter.get("/",
     getBrokerPortfolios
 );
 
-officeProtfolioRouter.get("/:id", 
+officeProtfolioRouter.delete("/:id", 
     authMiddleware,
     checkRole([UserRole.vendor , UserRole.superAdmin , UserRole.admin]),
     deleteBrokerPortfolio
