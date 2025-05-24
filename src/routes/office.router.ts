@@ -4,7 +4,7 @@ import { checkRole } from "../middleware/checkRole.middleware";
 import { UserRole } from "../entity/User";
 import { upload } from "../middleware/uploadProfile";
 import { BrokerController } from "../controllers/broker.controller";
-import { followOrUnfollowBroker, rateBroker } from "../controllers/brokerOficeApi.controller";
+import { toggleFollowBroker, rateBroker } from "../controllers/brokerOficeApi.controller";
 
 const officeRouter: Router = Router();
 
@@ -21,7 +21,7 @@ officeRouter.get("/",
 officeRouter.post("/follow", 
     authMiddleware,
     checkRole([UserRole.vendor , UserRole.user , UserRole.admin , UserRole.superAdmin]),
-    followOrUnfollowBroker
+    toggleFollowBroker
 );
 
 officeRouter.post("/rate", 

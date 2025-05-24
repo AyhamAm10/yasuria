@@ -10,6 +10,7 @@ import { HttpStatusCode } from "../error/api.error";
 import { ApiResponse } from "../helper/apiResponse";
 import { ErrorMessages } from "../error/ErrorMessages";
 import { Entity_Type, Favorite } from "../entity/Favorites";
+import { isFavorite } from "../helper/isFavorite";
 
 
 const carRepository = AppDataSource.getRepository(Car);
@@ -57,32 +58,21 @@ export class productsController {
         .getMany();
 
       const carData = await Promise.all(cars.map(async (car) => {
-        const attributes = await attributeValueRepository.find({
-          where: { entity: EntityAttribute.car, entity_id: car.id },
-        });
+        // const attributes = await attributeValueRepository.find({
+        //   where: { entity: EntityAttribute.car, entity_id: car.id },
+        // });
 
-        const specifications = await specificationValueRepository.find({
-          where: { entity: EntitySpecification.car, entity_id: car.id },
-        });
+        // const specifications = await specificationValueRepository.find({
+        //   where: { entity: EntitySpecification.car, entity_id: car.id },
+        // });
 
-        let is_favorite = false;
-        if (userId) {
-          const favorite = await favoriteRepository.findOne({
-            where: {
-              user: user,
-              item_type: Entity_Type.car,
-              item_id: car.id,
-            },
-          });
-          is_favorite = !!favorite;
-        }
 
         return {
           type: "car",
           data: car,
-          attributes,
-          specifications,
-          is_favorite,
+          // attributes,
+          // specifications,
+          is_favorite : await isFavorite(userId , car.id , Entity_Type.car),
           created_at: car.created_at,
         };
       }));
@@ -108,32 +98,21 @@ export class productsController {
         .getMany();
 
       const propertyData = await Promise.all(properties.map(async (property) => {
-        const attributes = await attributeValueRepository.find({
-          where: { entity: EntityAttribute.properties, entity_id: property.id },
-        });
+        // const attributes = await attributeValueRepository.find({
+        //   where: { entity: EntityAttribute.properties, entity_id: property.id },
+        // });
 
-        const specifications = await specificationValueRepository.find({
-          where: { entity: EntitySpecification.properties, entity_id: property.id },
-        });
+        // const specifications = await specificationValueRepository.find({
+        //   where: { entity: EntitySpecification.properties, entity_id: property.id },
+        // });
 
-        let is_favorite = false;
-        if (userId) {
-          const favorite = await favoriteRepository.findOne({
-            where: {
-              user: user,
-              item_type: Entity_Type.properties,
-              item_id: property.id,
-            },
-          });
-          is_favorite = !!favorite;
-        }
 
         return {
           type: "property",
           data: property,
-          attributes,
-          specifications,
-          is_favorite,
+          // attributes,
+          // specifications,
+          is_favorite : await isFavorite(userId , property.id , Entity_Type.properties),
           created_at: property.created_at,
         };
       }));

@@ -8,7 +8,7 @@ import { APIError, HttpStatusCode } from "../error/api.error";
 import { ErrorMessages } from "../error/ErrorMessages";
 import { ApiResponse } from "../helper/apiResponse";
 
-export const followOrUnfollowBroker = async (req: Request, res: Response, next: NextFunction) => {
+export const toggleFollowBroker = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const lang = req.headers["accept-language"] || "ar";
     const userId = req["currentUser"]?.id;
@@ -28,24 +28,25 @@ export const followOrUnfollowBroker = async (req: Request, res: Response, next: 
       );
     }
 
-    const existingFollow = await followerRepo.findOne({ where: { user, broker_office: brokerOffice } });
+    const existingFollow = await followerRepo.findOne({ where: { user: { id: userId }, broker_office: { id: brokerOfficeId } } });
 
+    let message: string;
     if (existingFollow) {
       await followerRepo.remove(existingFollow);
-       res.status(HttpStatusCode.OK).json(
-        ApiResponse.success(null, lang === "ar" ? "تم إلغاء المتابعة" : "Unfollowed successfully")
-      );
+      message = lang === "ar" ? "تم إلغاء المتابعة" : "Unfollowed successfully";
     } else {
       const newFollow = followerRepo.create({ user, broker_office: brokerOffice });
       await followerRepo.save(newFollow);
-      res.status(HttpStatusCode.OK_CREATED).json(
-        ApiResponse.success(null, lang === "ar" ? "تمت المتابعة بنجاح" : "Followed successfully")
-      );
+      message = lang === "ar" ? "تمت المتابعة بنجاح" : "Followed successfully";
     }
+
+    res.status(HttpStatusCode.OK).json(ApiResponse.success(null, message));
+
   } catch (error) {
     next(error);
   }
 };
+
 
 export const rateBroker = async (req: Request, res: Response, next: NextFunction) => {
   try {
