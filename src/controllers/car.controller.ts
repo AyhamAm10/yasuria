@@ -11,7 +11,10 @@ import { Equal, In } from "typeorm";
 import { AttributeValue } from "../entity/AttributeValue";
 import { Attribute, EntityAttribute } from "../entity/Attribute";
 import { Specifications } from "../entity/Specifications";
-import { EntitySpecification, SpecificationsValue } from "../entity/SpecificationsValue";
+import {
+  EntitySpecification,
+  SpecificationsValue,
+} from "../entity/SpecificationsValue";
 import { addCarSchema } from "../helper/validation/schema/addCarSchema";
 import { BrokerOffice } from "../entity/BrokerOffice";
 import { Entity_Type, Favorite } from "../entity/Favorites";
@@ -20,11 +23,12 @@ import { isFavorite } from "../helper/isFavorite";
 
 const carRepository = AppDataSource.getRepository(Car);
 const attributeRepository = AppDataSource.getRepository(Attribute);
-const attributeValueRepository =AppDataSource.getRepository(AttributeValue);
-const specificationRepostry = AppDataSource.getRepository(Specifications)
-const specificationValueRepostry = AppDataSource.getRepository(SpecificationsValue)
-const brokerOfficeRepository = AppDataSource.getRepository(BrokerOffice)
-const carTypeReposetry = AppDataSource.getRepository(CarType)
+const attributeValueRepository = AppDataSource.getRepository(AttributeValue);
+const specificationRepostry = AppDataSource.getRepository(Specifications);
+const specificationValueRepostry =
+  AppDataSource.getRepository(SpecificationsValue);
+const brokerOfficeRepository = AppDataSource.getRepository(BrokerOffice);
+const carTypeReposetry = AppDataSource.getRepository(CarType);
 export const getCars = async (
   req: Request,
   res: Response,
@@ -43,19 +47,16 @@ export const getCars = async (
     const pageNumber = Math.max(Number(page), 1);
     const pageSize = Math.max(Number(limit), 1);
     const skip = (pageNumber - 1) * pageSize;
-    const userId = req.currentUser?.id
+    const userId = req.currentUser?.id;
     const query = carRepository.createQueryBuilder("car");
 
     if (location) query.andWhere("car.location = :location", { location });
     if (minPrice) query.andWhere("car.price >= :minPrice", { minPrice });
     if (maxPrice) query.andWhere("car.price <= :maxPrice", { maxPrice });
 
-    const queryResult = await query
-      .skip(skip)
-      .take(pageSize)
-      .getRawMany();
+    const queryResult = await query.skip(skip).take(pageSize).getRawMany();
 
-      const totalCount = await query.getCount();
+    const totalCount = await query.getCount();
 
     const pagination = {
       total: totalCount,
@@ -64,28 +65,26 @@ export const getCars = async (
       totalPages: Math.ceil(totalCount / pageSize),
     };
 
-      if (!queryResult || queryResult.length === 0) {
+    if (!queryResult || queryResult.length === 0) {
       throw new APIError(
         HttpStatusCode.NOT_FOUND,
         ErrorMessages.generateErrorMessage(entity, "not found", lang)
       );
     }
 
-    const data =await Promise.all(
+    const data = await Promise.all(
+      queryResult.map(async (rawCar) => {
+        console.log(rawCar)
+        const car = {
+          ...rawCar,
+          is_favorite: await isFavorite(userId, rawCar.car_id, Entity_Type.car),
+        };
 
-      queryResult.map(async(rawCar) => {
- 
-       const car = {
-         ...rawCar,
-         is_favorite: await isFavorite(userId , rawCar.id , Entity_Type.car)
-       };
- 
-       return {
-         ...car,
-       };
-     })
-    )
-
+        return {
+          ...car,
+        };
+      })
+    );
 
     res
       .status(HttpStatusCode.OK)
@@ -110,15 +109,14 @@ export const getCarById = async (
     const { id } = req.params;
     const lang = req.headers["accept-language"] || "ar";
     const entity = lang == "ar" ? "السيارات" : "items";
-    const userId = req.currentUser?.id
+    const userId = req.currentUser?.id;
 
-
-    const carQuery = carRepository.createQueryBuilder("car")
+    const carQuery = carRepository
+      .createQueryBuilder("car")
       .where("car.id = :id", { id: Number(id) })
       .leftJoinAndSelect("car.user", "user")
       .leftJoinAndSelect("car.broker_office", "broker_office")
-      .leftJoinAndSelect("car.car_type", "car_type")
-
+      .leftJoinAndSelect("car.car_type", "car_type");
 
     const carResult = await carQuery.getRawOne();
 
@@ -135,28 +133,28 @@ export const getCarById = async (
       id: carRawData.car_id,
       user: {
         id: carRawData.user_id,
-      }
+      },
     };
 
     const [attributes, specifications] = await Promise.all([
       attributeValueRepository.find({
         where: { entity: EntityAttribute.car, entity_id: car.id },
-        relations:["attribute"]
+        relations: ["attribute"],
       }),
 
       specificationValueRepostry.find({
         where: { entity: EntitySpecification.car, entity_id: car.id },
-        relations: ["specification"]
-      })
+        relations: ["specification"],
+      }),
     ]);
 
     res.status(HttpStatusCode.OK).json(
       ApiResponse.success(
-        { 
+        {
           ...car,
-          is_favorite:await isFavorite(userId , car.id , Entity_Type.car),
+          is_favorite: await isFavorite(userId, car.id, Entity_Type.car),
           attributes,
-          specifications 
+          specifications,
         },
         ErrorMessages.generateErrorMessage(entity, "retrieved", lang)
       )
@@ -180,7 +178,7 @@ export const createCar = async (
       title_en,
       desc_ar,
       desc_en,
-      attributes, 
+      attributes,
       location,
       price_usd,
       price_sy,
@@ -189,14 +187,13 @@ export const createCar = async (
       long,
       listing_type,
       type_id,
-      seller_type
+      seller_type,
     } = req.body;
 
     // await validator(addCarSchema(lang), req.body);
 
     const userId = req["currentUser"]?.id;
 
-   
     const user = await AppDataSource.getRepository(User).findOne({
       where: { id: userId },
     });
@@ -208,18 +205,17 @@ export const createCar = async (
       );
     }
 
-      const carType = await carTypeReposetry.findOneBy({id:type_id})
+    const carType = await carTypeReposetry.findOneBy({ id: type_id });
 
-      if(!carType && type_id){
-        throw new APIError(
-          HttpStatusCode.NOT_FOUND,
-          ErrorMessages.generateErrorMessage("type id", "not found", lang)
-        );
-      }
-
+    if (!carType && type_id) {
+      throw new APIError(
+        HttpStatusCode.NOT_FOUND,
+        ErrorMessages.generateErrorMessage("type id", "not found", lang)
+      );
+    }
 
     const isOffice = await brokerOfficeRepository.findOne({
-      where: { user }
+      where: { user },
     });
 
     const images = req.files
@@ -228,7 +224,6 @@ export const createCar = async (
         )
       : [];
 
-    
     const newCar = carRepository.create({
       title_ar,
       title_en,
@@ -244,7 +239,7 @@ export const createCar = async (
       listing_type,
       seller_type,
       broker_office: isOffice || null,
-      car_type: carType
+      car_type: carType,
     });
 
     const savedCar = await carRepository.save(newCar);
@@ -260,7 +255,6 @@ export const createCar = async (
           );
         }
 
-
         return attributeValueRepository.create({
           attribute: attribute,
           entity: EntityAttribute.car,
@@ -269,7 +263,9 @@ export const createCar = async (
         });
       });
 
-      attributeList = await attributeValueRepository.save(await Promise.all(attributePromises));
+      attributeList = await attributeValueRepository.save(
+        await Promise.all(attributePromises)
+      );
     }
 
     let specificationsList = [];
@@ -279,7 +275,11 @@ export const createCar = async (
         if (!spec) {
           throw new APIError(
             HttpStatusCode.NOT_FOUND,
-            ErrorMessages.generateErrorMessage("Specification", "not found", lang)
+            ErrorMessages.generateErrorMessage(
+              "Specification",
+              "not found",
+              lang
+            )
           );
         }
 
@@ -287,11 +287,13 @@ export const createCar = async (
           specification: spec,
           entity: EntitySpecification.car,
           entity_id: savedCar.id,
-          value: item.value
+          value: item.value,
         });
       });
 
-      specificationsList = await specificationValueRepostry.save(await Promise.all(specPromises));
+      specificationsList = await specificationValueRepostry.save(
+        await Promise.all(specPromises)
+      );
     }
 
     res.status(HttpStatusCode.OK_CREATED).json(
@@ -299,7 +301,7 @@ export const createCar = async (
         {
           car: savedCar,
           attributes: attributeList,
-          specifications: specificationsList
+          specifications: specificationsList,
         },
         ErrorMessages.generateErrorMessage(entity, "created", lang)
       )
@@ -330,7 +332,7 @@ export const updateCar = async (
       price_sy,
       price_usd,
       specifications,
-      keptImages, 
+      keptImages,
     } = req.body;
 
     const userId = req["currentUser"];
@@ -422,17 +424,18 @@ export const updateCar = async (
       await specificationValueRepostry.save(newSpecifications);
     }
 
-    res.status(HttpStatusCode.OK).json(
-      ApiResponse.success(
-        updatedCar,
-        ErrorMessages.generateErrorMessage(entity, "updated", lang)
-      )
-    );
+    res
+      .status(HttpStatusCode.OK)
+      .json(
+        ApiResponse.success(
+          updatedCar,
+          ErrorMessages.generateErrorMessage(entity, "updated", lang)
+        )
+      );
   } catch (error) {
     next(error);
   }
 };
-
 
 export const deleteCar = async (
   req: Request,
@@ -444,7 +447,7 @@ export const deleteCar = async (
     const userId = req["currentUser"];
 
     const car = await carRepository.findOne({
-      where: { id: Number(id) , user: Equal(userId.id) },
+      where: { id: Number(id), user: Equal(userId.id) },
       relations: ["user"],
     });
 
@@ -456,16 +459,16 @@ export const deleteCar = async (
 
     await carRepository.delete(id);
 
-    const attribute =await attributeValueRepository.find({
-      where:{entity_id:car.id , entity:EntityAttribute.car}
-    })
-    await attributeValueRepository.remove(attribute)
+    const attribute = await attributeValueRepository.find({
+      where: { entity_id: car.id, entity: EntityAttribute.car },
+    });
+    await attributeValueRepository.remove(attribute);
 
     const specifications = await specificationValueRepostry.find({
-      where:{entity_id:car.id , entity:EntitySpecification.car}
-    })
+      where: { entity_id: car.id, entity: EntitySpecification.car },
+    });
 
-    await specificationValueRepostry.remove(specifications)
+    await specificationValueRepostry.remove(specifications);
 
     res
       .status(HttpStatusCode.OK)
@@ -475,7 +478,6 @@ export const deleteCar = async (
           ErrorMessages.generateErrorMessage("المنتج", "deleted")
         )
       );
-
   } catch (error) {
     next(error);
   }
