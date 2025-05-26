@@ -28,15 +28,33 @@ export const toggleFollowBroker = async (req: Request, res: Response, next: Next
       );
     }
 
-    const existingFollow = await followerRepo.findOne({ where: { user: { id: userId }, broker_office: { id: brokerOfficeId } } });
+    const existingFollow = await followerRepo.findOne({
+      where: {
+        user: { id: userId },
+        broker_office: { id: brokerOfficeId }
+      }
+    });
 
     let message: string;
+
     if (existingFollow) {
+      // إزالة المتابعة
       await followerRepo.remove(existingFollow);
+
+      // تحديث followers_count
+      brokerOffice.followers_count = Math.max(brokerOffice.followers_count - 1, 0);
+      await officeRepo.save(brokerOffice);
+
       message = lang === "ar" ? "تم إلغاء المتابعة" : "Unfollowed successfully";
     } else {
+      // إضافة المتابعة
       const newFollow = followerRepo.create({ user, broker_office: brokerOffice });
       await followerRepo.save(newFollow);
+
+      // تحديث followers_count
+      brokerOffice.followers_count += 1;
+      await officeRepo.save(brokerOffice);
+
       message = lang === "ar" ? "تمت المتابعة بنجاح" : "Followed successfully";
     }
 
@@ -46,6 +64,7 @@ export const toggleFollowBroker = async (req: Request, res: Response, next: Next
     next(error);
   }
 };
+
 
 
 export const rateBroker = async (req: Request, res: Response, next: NextFunction) => {
