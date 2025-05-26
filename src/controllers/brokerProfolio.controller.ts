@@ -16,13 +16,15 @@ export const addBrokerPortfolio = async (
     const lang = req.headers["accept-language"] || "ar";
     const entity = lang === "ar" ? "العمل" : "portfolio";
 
-    const { broker_office_id, description } = req.body;
-
+    const {  description } = req.body;
+    const userId = req.currentUser?.id;
     const brokerOffice = await AppDataSource.getRepository(
       BrokerOffice
     ).findOne({
-      where: { id: broker_office_id },
+      where: { user: {id: userId} },
     });
+    
+    console.log(brokerOffice)
 
     if (!brokerOffice) {
       throw new APIError(
@@ -33,7 +35,7 @@ export const addBrokerPortfolio = async (
 
     const images = req.files
     ? (req.files as Express.Multer.File[]).map(
-        (file) => `/src/public/uploads/${file.filename}`
+        (file) => `/uploads/${file.filename}`
       )
     : [];
 
@@ -114,12 +116,12 @@ export const getBrokerPortfolios = async (
     const lang = req.headers["accept-language"] || "ar";
     const entity = lang === "ar" ? "الأعمال" : "portfolios";
 
-    const brokerOfficeId = Number(req.params.id);
+    const userId = req.currentUser?.id
 
     const brokerOffice = await AppDataSource.getRepository(
       BrokerOffice
     ).findOne({
-      where: { id: brokerOfficeId },
+      where: { user: {id:userId} },
     });
 
     if (!brokerOffice) {
@@ -130,8 +132,7 @@ export const getBrokerPortfolios = async (
     }
 
     const portfolios = await AppDataSource.getRepository(BrokerPortfolio).find({
-      where: { broker_office: { id: brokerOfficeId } },
-      order: { created_at: "DESC" },
+      where: { broker_office: { id: brokerOffice.id } }
     });
 
     res
@@ -139,7 +140,7 @@ export const getBrokerPortfolios = async (
       .json(
         ApiResponse.success(
           portfolios,
-          ErrorMessages.generateErrorMessage(entity, "fetched", lang)
+          ErrorMessages.generateErrorMessage(entity, "retrieved", lang)
         )
       );
   } catch (error) {
@@ -180,7 +181,7 @@ export const getBrokerPortfolioById = async (
       .json(
         ApiResponse.success(
           portfolios,
-          ErrorMessages.generateErrorMessage(entity, "fetched", lang)
+          ErrorMessages.generateErrorMessage(entity, "retrieved", lang)
         )
       );
   } catch (error) {

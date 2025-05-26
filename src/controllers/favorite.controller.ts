@@ -60,6 +60,10 @@ export const getUserFavorites = async (req: Request, res: Response, next: NextFu
       likedItems = await carRepository.findBy({id: In(itemIds)});
     } else if (item_type === Entity_Type.properties || !item_type) {
       likedItems = await propertyRepository.findBy({id: In(itemIds)});
+    } else {
+      const properties = await propertyRepository.findBy({id: In(itemIds)});
+      const cars = await carRepository.findBy({id: In(itemIds)});
+      likedItems = [...properties , ...cars] 
     }
 
      res.status(200).json({
