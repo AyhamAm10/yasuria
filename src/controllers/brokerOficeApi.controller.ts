@@ -87,14 +87,40 @@ export const rateBroker = async (req: Request, res: Response, next: NextFunction
       );
     }
 
-    const newRating = ratingRepo.create({ user, broker_office: brokerOffice, rating, comment });
-    const savedRating = await ratingRepo.save(newRating);
+    // تحقق إذا المستخدم قيّم سابقًا
+    let existingRating = await ratingRepo.findOne({
+      where: { user: { id: userId }, broker_office: { id: brokerOfficeId } }
+    });
 
-     res.status(HttpStatusCode.OK_CREATED).json(
+    let savedRating;
+
+    if (existingRating) {
+      // تحديث التقييم القديم
+      existingRating.rating = rating;
+      existingRating.comment = comment;
+      savedRating = await ratingRepo.save(existingRating);
+    } else {
+      // إضافة تقييم جديد
+      const newRating = ratingRepo.create({ user, broker_office: brokerOffice, rating, comment });
+      savedRating = await ratingRepo.save(newRating);
+    }
+
+    // حساب المتوسط الجديد للتقييمات
+    const ratings = await ratingRepo.find({ where: { broker_office: { id: brokerOfficeId } } });
+    const totalRatings = ratings.length;
+    const totalScore = ratings.reduce((sum, r) => sum + r.rating, 0);
+    const newAvg = totalRatings > 0 ? totalScore / totalRatings : 0;
+
+    // تحديث المتوسط في BrokerOffice
+    brokerOffice.rating_avg = parseFloat(newAvg.toFixed(2));
+    await officeRepo.save(brokerOffice);
+
+    res.status(HttpStatusCode.OK_CREATED).json(
       ApiResponse.success(savedRating, lang === "ar" ? "تم التقييم بنجاح" : "Rated successfully")
     );
   } catch (error) {
     next(error);
   }
 };
+
 

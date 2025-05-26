@@ -12,6 +12,7 @@ import { brokerService } from "../entity/BrokerService";
 import { Service } from "../entity/Services";
 import { BrokerFollower } from "../entity/BrokerFollower";
 import { In } from "typeorm";
+import { BrokerRating } from "../entity/BrokerRating";
 
 const userRepository = AppDataSource.getRepository(User);
 const brokerRepository = AppDataSource.getRepository(BrokerOffice);
@@ -173,11 +174,15 @@ export class BrokerController {
       const pageSize = Math.max(Number(limit), 1);
       const skip = (pageNumber - 1) * pageSize;
 
+      // الأساس مع join للخدمات
       const query = brokerRepository
         .createQueryBuilder("broker")
         .leftJoinAndSelect("broker.user", "user")
         .leftJoinAndSelect("broker.broker_service", "brokerService")
-        .leftJoinAndSelect("brokerService.service", "service");
+        .leftJoinAndSelect("brokerService.service", "service")
+        .leftJoinAndSelect("broker.broker_ratings", "rating") // مهم لجلب التقييمات
+
+        .loadRelationCountAndMap("broker.followers_count", "broker.followers");
 
       if (office_name)
         query.andWhere("broker.office_name ILIKE :office_name", {
@@ -189,16 +194,20 @@ export class BrokerController {
           governorate: `%${governorate}%`,
         });
 
-      if (minRating)
-        query.andWhere("broker.rating_avg >= :minRating", { minRating });
-
-      if (maxRating)
-        query.andWhere("broker.rating_avg <= :maxRating", { maxRating });
-
       if (service_id) {
         query.andWhere("service.id = :service_id", {
           service_id: Number(service_id),
         });
+      }
+
+      // الفلترة حسب التقييم
+      if (minRating || maxRating) {
+        query.leftJoin("broker.broker_ratings", "r");
+        if (minRating)
+          query.having("AVG(r.rating) >= :minRating", { minRating });
+        if (maxRating)
+          query.having("AVG(r.rating) <= :maxRating", { maxRating });
+        query.groupBy("broker.id");
       }
 
       const [brokers, totalCount] = await query
@@ -206,8 +215,24 @@ export class BrokerController {
         .take(pageSize)
         .getManyAndCount();
 
-      const brokersWithFollow = await Promise.all(
+      // حساب المتوسط لكل مكتب
+      const brokersWithRating = await Promise.all(
         brokers.map(async (broker) => {
+          const { avg } = await AppDataSource.getRepository(BrokerRating)
+            .createQueryBuilder("r")
+            .select("AVG(r.rating)", "avg")
+            .where("r.broker_office = :brokerId", { brokerId: broker.id })
+            .getRawOne();
+          return {
+            ...broker,
+            rating_avg: avg ? parseFloat(avg).toFixed(2) : "0.00",
+          };
+        })
+      );
+
+      // إضافة حالة المتابعة
+      const brokersWithFollow = await Promise.all(
+        brokersWithRating.map(async (broker) => {
           let is_following = false;
 
           if (currentUserId) {
@@ -225,7 +250,6 @@ export class BrokerController {
           return {
             ...broker,
             is_following,
-            followers_count: broker.followers_count,
           };
         })
       );
@@ -278,6 +302,7 @@ export class BrokerController {
           "cars",
           "broker_service",
           "broker_service.service",
+          "broker_ratings", // إضافة التقييمات
         ],
       });
 
@@ -287,6 +312,14 @@ export class BrokerController {
           ErrorMessages.generateErrorMessage(entity, "not found", lang)
         );
       }
+
+      // احسب المتوسط
+      const { avg } = await AppDataSource.getRepository(BrokerRating)
+        .createQueryBuilder("r")
+        .select("AVG(r.rating)", "avg")
+        .where("r.broker_office = :brokerId", { brokerId: broker.id })
+        .getRawOne();
+      const rating_avg = avg ? parseFloat(avg).toFixed(2) : "0.00";
 
       const services = await Promise.all(
         broker.broker_service.map(async (serBrokect) => {
@@ -316,6 +349,7 @@ export class BrokerController {
           {
             broker,
             services,
+            rating_avg,
             is_following,
             followers_count: broker.followers_count,
           },
@@ -402,7 +436,7 @@ export class BrokerController {
           throw new Error("No valid services found");
         }
 
-        const brokerReference = { id: broker.id }; 
+        const brokerReference = { id: broker.id };
 
         const brokerServices = validServices.map((service) =>
           brokerofficeServiceRepository.create({
@@ -410,10 +444,10 @@ export class BrokerController {
             broker_office: brokerReference,
           })
         );
-        
+
         await brokerofficeServiceRepository.save(brokerServices);
       }
-      console.log("work")
+      console.log("work");
 
       const updatedBroker = await brokerRepository.save(broker);
 
