@@ -9,6 +9,9 @@ export const isFavorite = async (
   itemId: number,
   itemType: Entity_Type
 ): Promise<boolean> => {
+  if(!userId){
+    return false
+  }
   const favorite = await favoriteRepository.findOne({
     where: {
       user: { id: userId },

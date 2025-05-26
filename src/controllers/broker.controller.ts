@@ -11,6 +11,7 @@ import { brokerOfficeSchema } from "../helper/validation/schema/brokerSchema";
 import { brokerService } from "../entity/BrokerService";
 import { Service } from "../entity/Services";
 import { BrokerFollower } from "../entity/BrokerFollower";
+import { In } from "typeorm";
 
 const userRepository = AppDataSource.getRepository(User);
 const brokerRepository = AppDataSource.getRepository(BrokerOffice);
@@ -326,112 +327,114 @@ export class BrokerController {
     }
   }
 
-static async updateBrokerOffice(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
-  try {
-    const lang = req.headers["accept-language"] || "ar";
-    const serviceLang = lang === "ar" ? "ID الخدمة" : "ID service";
-    const entity = lang === "ar" ? "المكاتب" : "broker offices";
+  static async updateBrokerOffice(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const lang = req.headers["accept-language"] || "ar";
+      const serviceLang = lang === "ar" ? "ID الخدمة" : "ID service";
+      const entity = lang === "ar" ? "المكاتب" : "broker offices";
 
-    const user = req["currentUser"];
+      const user = req["currentUser"];
 
-    const broker = await brokerRepository.findOne({
-      where: { user: { id: user.id } },
-      relations: ["user", "broker_service", "broker_service.service"],
-    });
-
-    if (!broker) {
-      throw new APIError(
-        HttpStatusCode.NOT_FOUND,
-        ErrorMessages.generateErrorMessage(entity, "not found", lang)
-      );
-    }
-
-    if (broker.user.id !== user.id) {
-      throw new APIError(
-        HttpStatusCode.FORBIDDEN,
-        ErrorMessages.generateErrorMessage(entity, "forbidden", lang)
-      );
-    }
-
-    // استخرج الحقول يدوياً فقط
-    const { 
-      services, 
-      office_name, 
-      commercial_number, 
-      whatsapp_number, 
-      governorate, 
-      address, 
-      lat, 
-      long, 
-      working_hours_from, 
-      working_hours_to, 
-      description 
-    } = req.body;
-
-    // تحديث الحقول فقط إذا موجودة
-    if (typeof office_name === "string") broker.office_name = office_name;
-    if (typeof commercial_number === "string") broker.commercial_number = commercial_number;
-    if (typeof whatsapp_number === "string") broker.whatsapp_number = whatsapp_number;
-    if (typeof governorate === "string") broker.governorate = governorate;
-    if (typeof address === "string") broker.address = address;
-    if (typeof lat === "number") broker.lat = lat;
-    if (typeof long === "number") broker.long = long;
-    if (typeof working_hours_from === "string") broker.working_hours_from = working_hours_from;
-    if (typeof working_hours_to === "string") broker.working_hours_to = working_hours_to;
-    if (typeof description === "string") broker.description = description;
-
-    // تحديث الصورة إذا موجودة
-    if (req.file) broker.image = req.file.filename;
-
-    // التعامل مع الخدمات
-    if (Array.isArray(services)) {
-      await brokerofficeServiceRepository.delete({
-        broker_office: { id: broker.id },
+      const broker = await brokerRepository.findOne({
+        where: { user: { id: user.id } },
+        relations: ["user", "broker_service", "broker_service.service"],
       });
 
-      const validServices = await serviceRepository.findByIds(services);
-      if (validServices.length !== services.length) {
+      if (!broker) {
         throw new APIError(
           HttpStatusCode.NOT_FOUND,
-          ErrorMessages.generateErrorMessage(serviceLang, "not found", lang)
+          ErrorMessages.generateErrorMessage(entity, "not found", lang)
         );
       }
 
-      const brokerServices = validServices.map(service => 
-        brokerofficeServiceRepository.create({
-          service,
-          broker_office: broker,
-        })
+      if (broker.user.id !== user.id) {
+        throw new APIError(
+          HttpStatusCode.FORBIDDEN,
+          ErrorMessages.generateErrorMessage(entity, "forbidden", lang)
+        );
+      }
+
+      const {
+        services,
+        office_name,
+        commercial_number,
+        whatsapp_number,
+        governorate,
+        address,
+        lat,
+        long,
+        working_hours_from,
+        working_hours_to,
+        description,
+      } = req.body;
+
+      if (typeof office_name === "string") broker.office_name = office_name;
+      if (typeof commercial_number === "string")
+        broker.commercial_number = commercial_number;
+      if (typeof whatsapp_number === "string")
+        broker.whatsapp_number = whatsapp_number;
+      if (typeof governorate === "string") broker.governorate = governorate;
+      if (typeof address === "string") broker.address = address;
+      if (typeof lat === "number") broker.lat = lat;
+      if (typeof long === "number") broker.long = long;
+      if (typeof working_hours_from === "string")
+        broker.working_hours_from = working_hours_from;
+      if (typeof working_hours_to === "string")
+        broker.working_hours_to = working_hours_to;
+      if (typeof description === "string") broker.description = description;
+
+      if (req.file) broker.image = req.file.filename;
+
+      if (services) {
+        await brokerofficeServiceRepository.delete({
+          broker_office: { id: broker.id },
+        });
+
+        const validServices = await serviceRepository.find({
+          where: { id: In(services) },
+        });
+
+        if (validServices.length === 0) {
+          throw new Error("No valid services found");
+        }
+
+        const brokerReference = { id: broker.id }; 
+
+        const brokerServices = validServices.map((service) =>
+          brokerofficeServiceRepository.create({
+            service: { id: service.id },
+            broker_office: brokerReference,
+          })
+        );
+        
+        await brokerofficeServiceRepository.save(brokerServices);
+      }
+      console.log("work")
+
+      const updatedBroker = await brokerRepository.save(broker);
+
+      const result = await brokerRepository.findOne({
+        where: { id: updatedBroker.id },
+        relations: ["broker_service", "broker_service.service"],
+      });
+
+      res.status(HttpStatusCode.OK).json(
+        ApiResponse.success(
+          {
+            broker: result,
+            services: result.broker_service?.map((bs) => bs.service.id) || [],
+          },
+          ErrorMessages.generateErrorMessage(entity, "updated", lang)
+        )
       );
-
-      await brokerofficeServiceRepository.save(brokerServices);
+    } catch (error) {
+      next(error);
     }
-
-    const updatedBroker = await brokerRepository.save(broker);
-
-    const result = await brokerRepository.findOne({
-      where: { id: updatedBroker.id },
-      relations: ["broker_service", "broker_service.service"],
-    });
-
-    res.status(HttpStatusCode.OK).json(
-      ApiResponse.success(
-        {
-          broker: result,
-          services: result.broker_service?.map((bs) => bs.service.id) || [],
-        },
-        ErrorMessages.generateErrorMessage(entity, "updated", lang)
-      )
-    );
-  } catch (error) {
-    next(error);
   }
-}
-
 
   static async deleteBrokerOffice(
     req: Request,

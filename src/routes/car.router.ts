@@ -4,6 +4,7 @@ import { authMiddleware } from "../middleware/auth.middleware";
 import { upload } from "../middleware/uploadProfile";
 import { checkRole } from "../middleware/checkRole.middleware";
 import { UserRole } from "../entity/User";
+import { optionalAuthMiddleware } from "../middleware/optionalAuthMiddleware";
 
 const carRouter: Router = Router();
 
@@ -14,13 +15,11 @@ carRouter.post("/",
     createCar
 );
 carRouter.get("/", 
-    authMiddleware,
-    checkRole([UserRole.vendor, UserRole.user, UserRole.admin, UserRole.superAdmin]),
+   optionalAuthMiddleware,
     getCars
 );
 carRouter.get("/:id", 
-    authMiddleware,
-    checkRole([UserRole.vendor, UserRole.user, UserRole.admin, UserRole.superAdmin]),
+    optionalAuthMiddleware,
     getCarById
 );
 carRouter.put("/:id", 

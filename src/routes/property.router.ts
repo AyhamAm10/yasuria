@@ -4,6 +4,7 @@ import { upload } from "../middleware/uploadProfile";
 import { checkRole } from "../middleware/checkRole.middleware";
 import { UserRole } from "../entity/User";
 import { createProperty, deleteProperty, getProperties, getPropertyById, updateProperty } from "../controllers/property.controller";
+import { optionalAuthMiddleware } from "../middleware/optionalAuthMiddleware";
 
 const propertyRouter: Router = Router();
 
@@ -15,13 +16,13 @@ propertyRouter.post("/",
 );
 
 propertyRouter.get("/", 
-    authMiddleware,
-    checkRole([UserRole.vendor, UserRole.user, UserRole.admin, UserRole.superAdmin]),
+    optionalAuthMiddleware,
+    // checkRole([UserRole.vendor, UserRole.user, UserRole.admin, UserRole.superAdmin]),
     getProperties
 );
 propertyRouter.get("/:id", 
-    authMiddleware,
-    checkRole([UserRole.vendor, UserRole.user, UserRole.admin, UserRole.superAdmin]),
+    optionalAuthMiddleware,
+    // checkRole([UserRole.vendor, UserRole.user, UserRole.admin, UserRole.superAdmin]),
     getPropertyById
 );
 propertyRouter.put("/:id", 
