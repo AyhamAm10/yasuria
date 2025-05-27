@@ -20,6 +20,10 @@ requesteRouter.get("/:id",
     RequestController.getById
 );
 
+requesteRouter.get("/user/:id", 
+    RequestController.getByUserId
+);
+
 requesteRouter.put("/:id", 
     authMiddleware,
     checkRole([UserRole.vendor]),

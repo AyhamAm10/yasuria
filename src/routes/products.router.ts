@@ -10,4 +10,10 @@ productsRouter.get(
   productsController.getProducts
 );
 
+productsRouter.get(
+  "/user/:id",
+  optionalAuthMiddleware,
+  productsController.getUserProducts
+);
+
 export default productsRouter;
