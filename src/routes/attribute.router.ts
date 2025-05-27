@@ -33,7 +33,7 @@ attributeRouter.get("/:id",
 
 attributeRouter.put("/:id", 
     authMiddleware,
-    checkRole([UserRole.vendor]),
+    checkRole([UserRole.superAdmin]),
     uploadIcon.single("icon"),
     updateAttribute
 );
