@@ -24,7 +24,7 @@ export class PropertySearchController {
       max_price,
       location,
       attributes,
-      specifications,
+      // specifications,
       page = 1,
       limit = 20,
     } = req.body;
@@ -88,18 +88,18 @@ export class PropertySearchController {
       }
     }
 
-    if (specifications && specifications.length > 0) {
-      specifications.forEach((specId: number, index: number) => {
-        const alias = `sv${index}`;
-        query.innerJoin(
-          SpecificationsValue,
-          alias,
-          `${alias}.entity_id = p.id AND ${alias}.entity = 'property' AND ${alias}.specifications_id = :specId${index}`,
-          { [`specId${index}`]: specId }
-        );
-        query.andWhere(`${alias}.value = :specValue${index}`, { [`specValue${index}`]: 'true' });
-      });
-    }
+    // if (specifications && specifications.length > 0) {
+    //   specifications.forEach((specId: number, index: number) => {
+    //     const alias = `sv${index}`;
+    //     query.innerJoin(
+    //       SpecificationsValue,
+    //       alias,
+    //       `${alias}.entity_id = p.id AND ${alias}.entity = 'property' AND ${alias}.specifications_id = :specId${index}`,
+    //       { [`specId${index}`]: specId }
+    //     );
+    //     query.andWhere(`${alias}.value = :specValue${index}`, { [`specValue${index}`]: 'true' });
+    //   });
+    // }
 
     const [properties, total] = await query
       .skip((page - 1) * limit)

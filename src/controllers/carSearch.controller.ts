@@ -21,7 +21,7 @@ export class CarSearchController {
         max_price,
         location,
         attributes,
-        specifications,
+        // specifications,
         page = 1,
         limit = 20,
       } = req.body;
@@ -77,22 +77,22 @@ export class CarSearchController {
       }
 
       // Specifications Filters
-      if (specifications && specifications.length > 0) {
-        specifications.forEach((specId: number, index: number) => {
-          const alias = `sv${index}`;
+      // if (specifications && specifications.length > 0) {
+      //   specifications.forEach((specId: number, index: number) => {
+      //     const alias = `sv${index}`;
 
-          query.innerJoin(
-            SpecificationsValue,
-            alias,
-            `${alias}.entity_id = c.id AND ${alias}.entity = 'car' AND ${alias}.specifications.id = :specId${index}`,
-            { [`specId${index}`]: specId }
-          );
+      //     query.innerJoin(
+      //       SpecificationsValue,
+      //       alias,
+      //       `${alias}.entity_id = c.id AND ${alias}.entity = 'car' AND ${alias}.specifications.id = :specId${index}`,
+      //       { [`specId${index}`]: specId }
+      //     );
 
-          query.andWhere(`${alias}.value = :specValue${index}`, {
-            [`specValue${index}`]: "true",
-          });
-        });
-      }
+      //     query.andWhere(`${alias}.value = :specValue${index}`, {
+      //       [`specValue${index}`]: "true",
+      //     });
+      //   });
+      // }
 
       // Pagination
       query.skip((page - 1) * limit).take(limit);
