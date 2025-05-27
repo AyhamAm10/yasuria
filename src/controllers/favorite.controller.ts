@@ -63,7 +63,7 @@ export const getUserFavorites = async (req: Request, res: Response, next: NextFu
     } else {
       const properties = await propertyRepository.findBy({id: In(itemIds)});
       const cars = await carRepository.findBy({id: In(itemIds)});
-      likedItems = [...properties , ...cars] 
+      likedItems = [properties , cars] 
     }
 
      res.status(200).json({
