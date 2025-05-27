@@ -18,7 +18,7 @@ import { addPropertySchema } from "../helper/validation/schema/addPropertySchema
 import { BrokerOffice } from "../entity/BrokerOffice";
 import { CarType } from "../entity/CarType";
 import { PropertyType } from "../entity/PropertyType";
-import { Entity_Type, Favorite } from "../entity/Favorites";
+import { Entity_Type } from "../entity/Favorites";
 import { isFavorite } from "../helper/isFavorite";
 
 const propertyRepository = AppDataSource.getRepository(Property);
@@ -29,7 +29,6 @@ const specificationValueRepository =
   AppDataSource.getRepository(SpecificationsValue);
 const brokerOfficeRepository = AppDataSource.getRepository(BrokerOffice);
 const propertyTypeReposetry = AppDataSource.getRepository(PropertyType);
-const favoriteRepository = AppDataSource.getRepository(Favorite);
 
 export const getProperties = async (
   req: Request,
@@ -40,8 +39,7 @@ export const getProperties = async (
     const {
       title,
       location,
-      minPrice,
-      maxPrice,
+      sortByPrice, 
       area,
       page = "1",
       limit = "10",
@@ -58,14 +56,16 @@ export const getProperties = async (
     if (title)
       query.andWhere("property.title LIKE :title", { title: `%${title}%` });
     if (location) query.andWhere("property.location = :location", { location });
-    if (minPrice) query.andWhere("property.price >= :minPrice", { minPrice });
-    if (maxPrice) query.andWhere("property.price <= :maxPrice", { maxPrice });
+    if (sortByPrice === "asc") {
+      query.orderBy("property.price_usd", "ASC");
+    } else if (sortByPrice === "desc") {
+      query.orderBy("property.price_usd", "DESC");
+    }
     if (area) query.andWhere("property.area = :area", { area });
 
     const rawResult = await query.skip(skip).take(pageSize).getRawAndEntities();
 
     const properties = rawResult.entities;
-    const rawData = rawResult.raw;
 
     const totalCount = await query.getCount();
 

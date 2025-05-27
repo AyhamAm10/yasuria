@@ -37,10 +37,9 @@ export const getCars = async (
   try {
     const {
       location,
-      minPrice,
-      maxPrice,
       page = "1",
       limit = "10",
+      sortByPrice, // "asc" or "desc"
     } = req.query;
     const lang = req.headers["accept-language"] || "ar";
     const entity = lang == "ar" ? "السيارات" : "items";
@@ -51,9 +50,13 @@ export const getCars = async (
     const query = carRepository.createQueryBuilder("car");
 
     if (location) query.andWhere("car.location = :location", { location });
-    if (minPrice) query.andWhere("car.price >= :minPrice", { minPrice });
-    if (maxPrice) query.andWhere("car.price <= :maxPrice", { maxPrice });
 
+    if (sortByPrice === "asc") {
+      query.orderBy("car.price_usd", "ASC");
+    } else if (sortByPrice === "desc") {
+      query.orderBy("car.price_usd", "DESC");
+    }
+    
     const queryResult = await query.skip(skip).take(pageSize).getRawMany();
 
     const totalCount = await query.getCount();
