@@ -103,12 +103,11 @@ export class PropertySearchController {
         totalPages: Math.ceil(total / limit),
       };
 
-      // الآن نضيف is_favorite لكل عقار
       const data = await Promise.all(
         properties.map(async (property) => {
           return {
             ...property,
-            is_favorite : isFavorite(userId , property.id , Entity_Type.properties),
+            is_favorite :await isFavorite(userId , property.id , Entity_Type.properties),
           };
         })
       );

@@ -180,7 +180,7 @@ export class BrokerController {
         .leftJoinAndSelect("broker.user", "user")
         .leftJoinAndSelect("broker.broker_service", "brokerService")
         .leftJoinAndSelect("brokerService.service", "service")
-        .leftJoinAndSelect("broker.broker_ratings", "rating") // مهم لجلب التقييمات
+        .leftJoinAndSelect("broker.ratings", "rating") 
 
         .loadRelationCountAndMap("broker.followers_count", "broker.followers");
 
@@ -302,7 +302,7 @@ export class BrokerController {
           "cars",
           "broker_service",
           "broker_service.service",
-          "broker_ratings", // إضافة التقييمات
+          "ratings",
         ],
       });
 
@@ -368,9 +368,7 @@ export class BrokerController {
   ): Promise<void> {
     try {
       const lang = req.headers["accept-language"] || "ar";
-      const serviceLang = lang === "ar" ? "ID الخدمة" : "ID service";
       const entity = lang === "ar" ? "المكاتب" : "broker offices";
-
       const user = req["currentUser"];
 
       const broker = await brokerRepository.findOne({
@@ -385,7 +383,7 @@ export class BrokerController {
         );
       }
 
-      if (broker.user.id !== user.id) {
+      if (broker.user.id !== user?.id) {
         throw new APIError(
           HttpStatusCode.FORBIDDEN,
           ErrorMessages.generateErrorMessage(entity, "forbidden", lang)
@@ -404,6 +402,8 @@ export class BrokerController {
         working_hours_from,
         working_hours_to,
         description,
+        user_name,
+        user_phone,
       } = req.body;
 
       if (typeof office_name === "string") broker.office_name = office_name;
@@ -447,7 +447,17 @@ export class BrokerController {
 
         await brokerofficeServiceRepository.save(brokerServices);
       }
-      console.log("work");
+
+      const currentUser = await userRepository.findOneBy({ id: user.id });
+      if (user_name) {
+        currentUser.name = user_name;
+        await userRepository.save(currentUser);
+      }
+
+      if (user_phone) {
+        currentUser.phone = user_phone;
+        await userRepository.save(currentUser);
+      }
 
       const updatedBroker = await brokerRepository.save(broker);
 

@@ -5,6 +5,7 @@ import { UserRole } from "../entity/User";
 import { upload } from "../middleware/uploadProfile";
 import { BrokerController } from "../controllers/broker.controller";
 import { toggleFollowBroker, rateBroker } from "../controllers/brokerOficeApi.controller";
+import { optionalAuthMiddleware } from "../middleware/optionalAuthMiddleware";
 
 const officeRouter: Router = Router();
 
@@ -14,7 +15,7 @@ officeRouter.post("/",
 );
 
 officeRouter.get("/", 
-    authMiddleware,
+    optionalAuthMiddleware,
     BrokerController.getBrokerOffices
 );
 
@@ -31,7 +32,7 @@ officeRouter.post("/rate",
 );
 
 officeRouter.get("/:id", 
-    authMiddleware,
+    optionalAuthMiddleware,
     BrokerController.getBrokerProfile
 );
 

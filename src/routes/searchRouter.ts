@@ -5,6 +5,7 @@ import { checkRole } from "../middleware/checkRole.middleware";
 import { UserRole } from "../entity/User";
 import { PropertySearchController } from "../controllers/propertySearch.controller";
 import { CarSearchController } from "../controllers/carSearch.controller";
+import { optionalAuthMiddleware } from "../middleware/optionalAuthMiddleware";
 
 
 
@@ -14,14 +15,12 @@ const propertyController = new PropertySearchController();
 const carControoler = new CarSearchController()
 
 SearchRouter.post("/properties",
-    authMiddleware,
-    checkRole([UserRole.admin , UserRole.superAdmin , UserRole.user , UserRole.vendor]),
+    optionalAuthMiddleware,
     propertyController.search
 );
 
 SearchRouter.post("/cars",
-    authMiddleware,
-    checkRole([UserRole.admin , UserRole.superAdmin , UserRole.user , UserRole.vendor]),
+    optionalAuthMiddleware,
     carControoler.search
 );
 
