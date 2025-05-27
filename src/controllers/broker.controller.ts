@@ -164,6 +164,7 @@ export class BrokerController {
         service_id,
         page = "1",
         limit = "10",
+        orderByFollowers, 
       } = req.query;
 
       const lang = req.headers["accept-language"] || "ar";
@@ -174,14 +175,12 @@ export class BrokerController {
       const pageSize = Math.max(Number(limit), 1);
       const skip = (pageNumber - 1) * pageSize;
 
-      // الأساس مع join للخدمات
       const query = brokerRepository
         .createQueryBuilder("broker")
         .leftJoinAndSelect("broker.user", "user")
         .leftJoinAndSelect("broker.broker_service", "brokerService")
         .leftJoinAndSelect("brokerService.service", "service")
-        .leftJoinAndSelect("broker.ratings", "rating") 
-
+        .leftJoinAndSelect("broker.ratings", "rating")
         .loadRelationCountAndMap("broker.followers_count", "broker.followers");
 
       if (office_name)
@@ -200,7 +199,6 @@ export class BrokerController {
         });
       }
 
-      // الفلترة حسب التقييم
       if (minRating || maxRating) {
         query.leftJoin("broker.broker_ratings", "r");
         if (minRating)
@@ -210,12 +208,21 @@ export class BrokerController {
         query.groupBy("broker.id");
       }
 
+      if (orderByFollowers) {
+        if (orderByFollowers === "asc") {
+          query.orderBy("broker.followers_count", "ASC");
+        } else if (orderByFollowers === "desc") {
+          query.orderBy("broker.followers_count", "DESC");
+        }
+      } else {
+        query.orderBy("broker.created_at", "DESC");
+      }
+
       const [brokers, totalCount] = await query
         .skip(skip)
         .take(pageSize)
         .getManyAndCount();
 
-      // حساب المتوسط لكل مكتب
       const brokersWithRating = await Promise.all(
         brokers.map(async (broker) => {
           const { avg } = await AppDataSource.getRepository(BrokerRating)
@@ -230,7 +237,6 @@ export class BrokerController {
         })
       );
 
-      // إضافة حالة المتابعة
       const brokersWithFollow = await Promise.all(
         brokersWithRating.map(async (broker) => {
           let is_following = false;
@@ -313,7 +319,6 @@ export class BrokerController {
         );
       }
 
-      // احسب المتوسط
       const { avg } = await AppDataSource.getRepository(BrokerRating)
         .createQueryBuilder("r")
         .select("AVG(r.rating)", "avg")
