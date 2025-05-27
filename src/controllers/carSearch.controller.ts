@@ -48,7 +48,7 @@ export class CarSearchController {
       if (seller_type)
         query.andWhere("c.seller_type = :seller_type", { seller_type });
       if (car_type_id)
-        query.andWhere("c.car_type_id = :car_type_id", { car_type_id });
+        query.andWhere("c.car_type = :car_type_id", { car_type_id });
       if (min_price) query.andWhere("c.price >= :min_price", { min_price });
       if (max_price) query.andWhere("c.price <= :max_price", { max_price });
       if (location)

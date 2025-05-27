@@ -22,10 +22,6 @@ export class PropertySearchController {
       property_type_id,
       min_price,
       max_price,
-      min_area,
-      max_area,
-      min_floors,
-      max_floors,
       location,
       attributes,
       specifications,
@@ -52,13 +48,9 @@ export class PropertySearchController {
     // Filters...
     if (listing_type)      query.andWhere('p.listing_type = :listing_type', { listing_type });
     if (seller_type)       query.andWhere('p.seller_type = :seller_type',   { seller_type });
-    if (property_type_id)  query.andWhere('p.property_type_id = :property_type_id', { property_type_id });
-    if (min_price)         query.andWhere('p.price >= :min_price',        { min_price });
-    if (max_price)         query.andWhere('p.price <= :max_price',        { max_price });
-    if (min_area)          query.andWhere('p.area >= :min_area',          { min_area });
-    if (max_area)          query.andWhere('p.area <= :max_area',          { max_area });
-    if (min_floors)        query.andWhere('p.floors >= :min_floors',       { min_floors });
-    if (max_floors)        query.andWhere('p.floors <= :max_floors',       { max_floors });
+    if (property_type_id)  query.andWhere('p.property_type = :property_type_id', { property_type_id });
+    if (min_price)         query.andWhere('p.price_sy >= :min_price',        { min_price });
+    if (max_price)         query.andWhere('p.price_sy <= :max_price',        { max_price });
     if (location)          query.andWhere('p.location LIKE :location',     { location: `%${location}%` });
 
     // Attributes joins...
