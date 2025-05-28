@@ -144,22 +144,21 @@ export class productsController {
     try {
       const lang = req.headers["accept-language"] || "ar";
       const entity = lang === "ar" ? "المنتجات" : "products";
-      const userId  = Number(req.params.id);
+      const userId = Number(req.params.id);
 
-      // Pagination
+      // Pagination parameters
       const limit = parseInt(req.query.limit as string) || 10;
       const page = parseInt(req.query.page as string) || 1;
       const offset = (page - 1) * limit;
 
-      const [cars, carTotal] = await carRepository.findAndCount({
-        where: { user: {id: userId} },
+      // Fetch all cars (without skip/take)
+      const allCars = await carRepository.find({
+        where: { user: { id: userId } },
         order: { created_at: "DESC" },
-        skip: offset,
-        take: limit,
       });
 
       const carData = await Promise.all(
-        cars.map(async (car) => ({
+        allCars.map(async (car) => ({
           type: "car",
           data: car,
           is_favorite: await isFavorite(userId, car.id, Entity_Type.car),
@@ -167,17 +166,14 @@ export class productsController {
         }))
       );
 
-      const [properties, propertyTotal] = await propertyRepository.findAndCount(
-        {
-          where: { user:{id: userId} },
-          order: { created_at: "DESC" },
-          skip: offset,
-          take: limit,
-        }
-      );
+      
+      const allProperties = await propertyRepository.find({
+        where: { user: { id: userId } },
+        order: { created_at: "DESC" },
+      });
 
       const propertyData = await Promise.all(
-        properties.map(async (property) => ({
+        allProperties.map(async (property) => ({
           type: "property",
           data: property,
           is_favorite: await isFavorite(
@@ -189,21 +185,24 @@ export class productsController {
         }))
       );
 
+      // Merge and sort data by created_at descending
       const mergedData = [...carData, ...propertyData].sort(
         (a, b) =>
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
 
+      // Apply pagination after merging
+      const paginatedData = mergedData.slice(offset, offset + limit);
+
       res.status(HttpStatusCode.OK).json(
         ApiResponse.success(
           {
-            data: mergedData,
+            data: paginatedData,
             pagination: {
-              totalCars: carTotal,
-              totalProperties: propertyTotal,
-              total: carTotal + propertyTotal,
+              total: mergedData.length,
               page,
               limit,
+              totalPages: Math.ceil(mergedData.length / limit),
             },
           },
           ErrorMessages.generateErrorMessage(entity, "retrieved", lang)
