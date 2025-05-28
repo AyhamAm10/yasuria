@@ -129,7 +129,7 @@ export class RequestController {
         );
       }
 
-      if (request.user !== req.currentUser) {
+      if (request.user.id !== req.currentUser?.id) {
         throw new APIError(
           HttpStatusCode.FORBIDDEN,
           ErrorMessages.generateErrorMessage(entity, "forbidden", lang)
