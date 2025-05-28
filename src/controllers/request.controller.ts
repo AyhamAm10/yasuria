@@ -195,39 +195,63 @@ export class RequestController {
     }
   }
 
-  static async getByUserId(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const lang = req.headers["accept-language"] || "ar";
-      const entity = lang === "ar" ? "الطلبات" : "requests";
-      const userId = req.params.id
-      const page = Number(req.query.page) || 1;
-      const limit = Number(req.query.limit) || 10;
-      const skip = (page - 1) * limit;
+ static async getByUserId(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const lang = req.headers["accept-language"] || "ar";
+    const entity = lang === "ar" ? "الطلبات" : "requests";
+    const userId = Number(req.params.id);
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
 
-      const [requests, total] = await requestRepo.findAndCount({
-        where:{user:{id: Number(userId)}},
-        relations: ["user"],
-        order: { created_at: "DESC" },
-        take: limit,
-        skip,
-      });
+    // البحث مع العد
+    const [requests, total] = await requestRepo.findAndCount({
+      where: { user: { id: userId } },
+      relations: ["user"],
+      order: { created_at: "DESC" },
+      take: limit,
+      skip,
+    });
 
-      res.status(HttpStatusCode.OK).json(
+    // حساب العدد الكلي للصفحات
+    const totalPages = Math.ceil(total / limit);
+
+    // معالجة حالة page > totalPages
+    if (page > totalPages && total > 0) {
+       res.status(HttpStatusCode.OK).json(
         ApiResponse.success(
-          requests,
+          [],
           ErrorMessages.generateErrorMessage(entity, "retrieved", lang),
           {
             meta: {
               total,
               page,
               limit,
-              totalPages: Math.ceil(total / limit),
+              totalPages,
             },
           }
         )
       );
-    } catch (error) {
-      next(error);
     }
+
+    // إرسال النتيجة مع البيانات
+    res.status(HttpStatusCode.OK).json(
+      ApiResponse.success(
+        requests,
+        ErrorMessages.generateErrorMessage(entity, "retrieved", lang),
+        {
+          meta: {
+            total,
+            page,
+            limit,
+            totalPages,
+          },
+        }
+      )
+    );
+  } catch (error) {
+    next(error);
   }
+}
+
 }

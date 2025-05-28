@@ -44,29 +44,52 @@ export const toggleFavorite = async (req: Request, res: Response, next: NextFunc
 
 export const getUserFavorites = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const userId = req["currentUser"].id;
+    const userId = req.currentUser?.id;
     const { item_type } = req.query;
 
-    const favorites = await favoriteRepository.find({
-      where: {
-        user: { id: userId }
-      },
-    });
+    let favorites = [];
 
-    const itemIds = favorites.map(fav => fav.item_id);
+    if (item_type) {
+      favorites = await favoriteRepository.find({
+        where: {
+          user: { id: userId },
+          item_type: item_type as Entity_Type,
+        },
+      });
+    } else {
+      favorites = await favoriteRepository.find({
+        where: {
+          user: { id: userId },
+        },
+      });
+    }
+
+    const carIds = favorites
+      .filter(fav => fav.item_type === Entity_Type.car)
+      .map(fav => fav.item_id);
+
+    const propertyIds = favorites
+      .filter(fav => fav.item_type === Entity_Type.properties)
+      .map(fav => fav.item_id);
+
+    const carsPromise = carIds.length ? carRepository.findBy({ id: In(carIds) }) : Promise.resolve([]);
+    const propertiesPromise = propertyIds.length ? propertyRepository.findBy({ id: In(propertyIds) }) : Promise.resolve([]);
+
+    const [cars, properties] = await Promise.all([carsPromise, propertiesPromise]);
+
+    const carsWithType = cars.map(car => ({ ...car, product_type: Entity_Type.car }));
+    const propertiesWithType = properties.map(property => ({ ...property, product_type: Entity_Type.properties }));
 
     let likedItems = [];
     if (item_type === Entity_Type.car) {
-      likedItems = await carRepository.findBy({id: In(itemIds)});
-    } else if (item_type === Entity_Type.properties || !item_type) {
-      likedItems = await propertyRepository.findBy({id: In(itemIds)});
+      likedItems = carsWithType;
+    } else if (item_type === Entity_Type.properties) {
+      likedItems = propertiesWithType;
     } else {
-      const properties = await propertyRepository.findBy({id: In(itemIds)});
-      const cars = await carRepository.findBy({id: In(itemIds)});
-      likedItems = [properties , cars] 
+      likedItems = [...carsWithType, ...propertiesWithType]; // دمج مع تحديد النوع
     }
 
-     res.status(200).json({
+    res.status(200).json({
       data: likedItems,
       message: "Favorites retrieved successfully"
     });
@@ -74,3 +97,4 @@ export const getUserFavorites = async (req: Request, res: Response, next: NextFu
     next(error);
   }
 };
+
