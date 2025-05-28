@@ -354,6 +354,7 @@ export const updateProperty = async (
       latitude,
       longitude,
       keptImages,
+      type_id
     } = req.body;
 
     const userId = req["currentUser"].id;
@@ -398,6 +399,15 @@ export const updateProperty = async (
     const keptImagesArray = keptImages ? JSON.parse(keptImages) : [];
 
     property.images = [...keptImagesArray, ...newImages];
+
+    if(type_id){
+         const newType =  await propertyTypeReposetry.findOneBy({id:type_id})
+         if(!newType){
+          throw new APIError(HttpStatusCode.NOT_FOUND , ErrorMessages.generateErrorMessage("type car" , "not found" , lang))
+         }
+    
+         property.property_type = newType
+        }
 
     const updatedProperty = await propertyRepository.save(property);
 

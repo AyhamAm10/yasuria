@@ -56,7 +56,7 @@ export const getCars = async (
     } else if (sortByPrice === "desc") {
       query.orderBy("car.price_usd", "DESC");
     }
-    
+
     const queryResult = await query.skip(skip).take(pageSize).getRawMany();
 
     const totalCount = await query.getCount();
@@ -336,6 +336,7 @@ export const updateCar = async (
       price_usd,
       specifications,
       keptImages,
+      type_id
     } = req.body;
 
     const userId = req["currentUser"];
@@ -378,6 +379,15 @@ export const updateCar = async (
 
     car.images = [...keptImagesArray, ...newImages];
 
+    if(type_id){
+     const newType =  await carTypeReposetry.findOneBy({id:type_id})
+     if(!newType){
+      throw new APIError(HttpStatusCode.NOT_FOUND , ErrorMessages.generateErrorMessage("type car" , "not found" , lang))
+     }
+
+     car.car_type = newType
+    }
+    
     const updatedCar = await carRepository.save(car);
 
     if (attributes && attributes.length > 0) {
@@ -426,6 +436,8 @@ export const updateCar = async (
 
       await specificationValueRepostry.save(newSpecifications);
     }
+
+    
 
     res
       .status(HttpStatusCode.OK)
