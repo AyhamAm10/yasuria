@@ -7,9 +7,12 @@ import { ErrorMessages } from "../error/ErrorMessages";
 import { APIError } from "../error/api.error";
 import { HttpStatusCode } from "../error/api.error";
 import { validator } from "../helper/validation/validator";
+import { Governorate } from "../entity/governorate";
+import { User } from "../entity/User";
 
 const requestRepo = AppDataSource.getRepository(RequestEntity);
-
+const governorateReposetory = AppDataSource.getRepository(Governorate);
+const userReposetory = AppDataSource.getRepository(User);
 export class RequestController {
   static async createRequest(
     req: Request,
@@ -22,18 +25,39 @@ export class RequestController {
 
       await validator(getRequestSchema(lang), req.body);
 
-      const { description, budget, governorate } = req.body;
+      const { description, budget, governorate_id } = req.body;
 
+      const governorate = await governorateReposetory.findOneBy({
+        id: governorate_id,
+      });
+      if (!governorate) {
+        throw new APIError(
+          HttpStatusCode.NOT_FOUND,
+          ErrorMessages.generateErrorMessage("governorate", "not found", lang)
+        );
+      }
+
+      const user = await userReposetory.findOneBy({
+        id: req.currentUser?.id,
+      });
+      if (!user) {
+        throw new APIError(
+          HttpStatusCode.NOT_FOUND,
+          ErrorMessages.generateErrorMessage("user", "not found", lang)
+        );
+      }
       const newRequest = requestRepo.create({
         description,
         budget,
-        governorate,
-        user: req["currentUser"],
+        governorateId: governorate.id,
+        governorateInfo: governorate,
+        user,
       });
 
       const savedRequest = await requestRepo.save(newRequest);
 
-      res.status(HttpStatusCode.OK_CREATED)
+      res
+        .status(HttpStatusCode.OK_CREATED)
         .json(
           ApiResponse.success(
             savedRequest,
@@ -45,21 +69,34 @@ export class RequestController {
     }
   }
 
-  static async getAll(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async getAll(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     try {
       const lang = req.headers["accept-language"] || "ar";
       const entity = lang === "ar" ? "الطلبات" : "requests";
 
       const page = Number(req.query.page) || 1;
       const limit = Number(req.query.limit) || 10;
+      const { governorate_id } = req.query;
       const skip = (page - 1) * limit;
 
-      const [requests, total] = await requestRepo.findAndCount({
-        relations: ["user"],
-        order: { created_at: "DESC" },
-        take: limit,
-        skip,
-      });
+      const query = requestRepo
+        .createQueryBuilder("request")
+        .leftJoinAndSelect("request.user", "user")
+        .orderBy("request.created_at", "DESC")
+        .skip(skip)
+        .take(limit);
+
+      if (governorate_id) {
+        query.andWhere("request.governorateId = :governorate_id", {
+          governorate_id,
+        });
+      }
+
+      const [requests, total] = await query.getManyAndCount();
 
       res.status(HttpStatusCode.OK).json(
         ApiResponse.success(
@@ -80,7 +117,11 @@ export class RequestController {
     }
   }
 
-  static async getById(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async getById(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     try {
       const lang = req.headers["accept-language"] || "ar";
       const entity = lang === "ar" ? "الطلب" : "request";
@@ -88,7 +129,7 @@ export class RequestController {
 
       const request = await requestRepo.findOne({
         where: { id },
-        relations: ["user"],
+        relations: ["user", "governorateInfo"],
       });
 
       if (!request) {
@@ -98,7 +139,7 @@ export class RequestController {
         );
       }
 
-       res
+      res
         .status(HttpStatusCode.OK)
         .json(
           ApiResponse.success(
@@ -111,12 +152,16 @@ export class RequestController {
     }
   }
 
-  static async updateRequest(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async updateRequest(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     try {
       const lang = req.headers["accept-language"] || "ar";
       const entity = lang === "ar" ? "الطلب" : "request";
       const id = Number(req.params.id);
-
+      const { governorate_id, description, budget } = req.body;
       const request = await requestRepo.findOne({
         where: { id },
         relations: ["user"],
@@ -136,9 +181,24 @@ export class RequestController {
         );
       }
 
-      await getRequestSchema(lang).validate(req.body);
+      // await getRequestSchema(lang).validate(req.body);
 
-      requestRepo.merge(request, req.body);
+      const governorate = await governorateReposetory.findOneBy({
+        id: governorate_id,
+      });
+      if (!governorate) {
+        throw new APIError(
+          HttpStatusCode.NOT_FOUND,
+          ErrorMessages.generateErrorMessage("governorate", "not found", lang)
+        );
+      }
+
+      requestRepo.merge(request,{
+        budget,
+        description,
+        governorateInfo:governorate,
+        governorateId:governorate_id,
+      });
 
       const updatedRequest = await requestRepo.save(request);
 
@@ -155,7 +215,11 @@ export class RequestController {
     }
   }
 
-  static async deleteRequest(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async deleteRequest(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     try {
       const lang = req.headers["accept-language"] || "ar";
       const entity = lang === "ar" ? "الطلب" : "request";
@@ -182,7 +246,7 @@ export class RequestController {
 
       await requestRepo.remove(request);
 
-       res
+      res
         .status(HttpStatusCode.OK)
         .json(
           ApiResponse.success(
@@ -195,32 +259,49 @@ export class RequestController {
     }
   }
 
- static async getByUserId(req: Request, res: Response, next: NextFunction): Promise<void> {
-  try {
-    const lang = req.headers["accept-language"] || "ar";
-    const entity = lang === "ar" ? "الطلبات" : "requests";
-    const userId = Number(req.params.id);
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
+  static async getByUserId(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const lang = req.headers["accept-language"] || "ar";
+      const entity = lang === "ar" ? "الطلبات" : "requests";
+      const userId = Number(req.params.id);
+      const page = Number(req.query.page) || 1;
+      const limit = Number(req.query.limit) || 10;
+      const skip = (page - 1) * limit;
 
-    // البحث مع العد
-    const [requests, total] = await requestRepo.findAndCount({
-      where: { user: { id: userId } },
-      relations: ["user"],
-      order: { created_at: "DESC" },
-      take: limit,
-      skip,
-    });
+      const [requests, total] = await requestRepo.findAndCount({
+        where: { user: { id: userId } },
+        relations: ["user" , "governorateInfo"],
+        order: { created_at: "DESC" },
+        take: limit,
+        skip,
+      });
 
-    // حساب العدد الكلي للصفحات
-    const totalPages = Math.ceil(total / limit);
+      const totalPages = Math.ceil(total / limit);
 
-    // معالجة حالة page > totalPages
-    if (page > totalPages && total > 0) {
-       res.status(HttpStatusCode.OK).json(
+      if (page > totalPages && total > 0) {
+        res.status(HttpStatusCode.OK).json(
+          ApiResponse.success(
+            [],
+            ErrorMessages.generateErrorMessage(entity, "retrieved", lang),
+            {
+              meta: {
+                total,
+                page,
+                limit,
+                totalPages,
+              },
+            }
+          )
+        );
+      }
+
+      res.status(HttpStatusCode.OK).json(
         ApiResponse.success(
-          [],
+          requests,
           ErrorMessages.generateErrorMessage(entity, "retrieved", lang),
           {
             meta: {
@@ -232,26 +313,8 @@ export class RequestController {
           }
         )
       );
+    } catch (error) {
+      next(error);
     }
-
-    // إرسال النتيجة مع البيانات
-    res.status(HttpStatusCode.OK).json(
-      ApiResponse.success(
-        requests,
-        ErrorMessages.generateErrorMessage(entity, "retrieved", lang),
-        {
-          meta: {
-            total,
-            page,
-            limit,
-            totalPages,
-          },
-        }
-      )
-    );
-  } catch (error) {
-    next(error);
   }
-}
-
 }
