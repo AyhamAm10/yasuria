@@ -11,6 +11,8 @@ import {
   EntitySpecification,
   SpecificationsValue,
 } from "./SpecificationsValue";
+import { CarType } from "./CarType";
+import { PropertyType } from "./PropertyType";
 
 @Entity("specifications")
 export class Specifications {
@@ -34,6 +36,12 @@ export class Specifications {
     enum: EntitySpecification,
   })
   entity: EntitySpecification;
+
+  @ManyToOne(() => CarType, { nullable: true, onDelete: "SET NULL" })
+  carType: CarType | null;
+
+  @ManyToOne(() => PropertyType, { nullable: true, onDelete: "SET NULL" })
+  propertyType: PropertyType | null;
 
   @CreateDateColumn()
   created_at: Date;

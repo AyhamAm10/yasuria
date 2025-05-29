@@ -1,14 +1,23 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne } from 'typeorm';
-import { User } from './User';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
+} from "typeorm";
+import { User } from "./User";
+import { Governorate } from "./governorate";
 
 export enum RequestStatus {
-  PENDING = 'pending',
-  IN_PROGRESS = 'in_progress',
-  COMPLETED = 'completed',
-  CANCELLED = 'cancelled'
+  PENDING = "pending",
+  IN_PROGRESS = "in_progress",
+  COMPLETED = "completed",
+  CANCELLED = "cancelled",
 }
 
-@Entity('requests')
+@Entity("requests")
 export class Request {
   @PrimaryGeneratedColumn()
   id: number;
@@ -16,21 +25,25 @@ export class Request {
   @ManyToOne(() => User)
   user: User;
 
-  @Column('text')
+  @Column("text")
   description: string;
 
-  @Column('decimal')
+  @Column("decimal")
   budget: number;
 
-  @Column()
-  governorate: string;
+  @Column({ name: "governorate_id" })
+  governorateId: number;
 
   @Column({
-    type: 'enum',
+    type: "enum",
     enum: RequestStatus,
-    default: RequestStatus.PENDING
+    default: RequestStatus.PENDING,
   })
   status: RequestStatus;
+
+  @ManyToOne(() => Governorate)
+  @JoinColumn({ name: "governorate_id" })
+  governorateInfo: Governorate;
 
   @CreateDateColumn()
   created_at: Date;

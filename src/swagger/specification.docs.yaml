@@ -33,6 +33,11 @@ paths:
           description: Filter by entity type
           schema:
             type: string
+        - name: type_id
+          in: query
+          description: Filter by  Propert or Car id
+          schema:
+            type: number
       responses:
         200:
           description: Successfully retrieved specifications
@@ -54,6 +59,10 @@ paths:
                 type:
                   type: string
                 entity:
+                  type: string
+                carTypeId:
+                  type: string
+                propertyTypeId:
                   type: string
       responses:
         201:

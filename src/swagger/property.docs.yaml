@@ -81,6 +81,11 @@ paths:
           schema:
             type: integer
             default: 10
+        - name: governorate_id
+          in: query
+          schema:
+            type: integer
+            default: 1
       responses:
         '200':
           description: Successfully retrieved properties
@@ -220,6 +225,10 @@ paths:
                   type: number
                   format: float
                   nullable: true
+                governorate_id:
+                  type: number
+                  format: integer
+                  nullable: false
                 attributes:
                   type: array
                   items:

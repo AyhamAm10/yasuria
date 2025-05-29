@@ -5,10 +5,12 @@ import {
   CreateDateColumn,
   ManyToOne,
   Index,
+  JoinColumn,
 } from "typeorm";
 import { User } from "./User";
 import { PropertyType } from "./PropertyType";
 import { BrokerOffice } from "./BrokerOffice";
+import { Governorate } from "./governorate";
 
 export enum ListingType {
   SALE = "sale",
@@ -58,6 +60,9 @@ export class Property {
   @Column("decimal", { nullable: true })
   price_sy: number;
 
+  @Column({ name: "governorate_id" })
+  governorateId: number;
+
   @Column({
     type: "enum",
     enum: ListingType,
@@ -78,6 +83,10 @@ export class Property {
 
   @ManyToOne(() => User)
   user: User;
+
+  @ManyToOne(() => Governorate)
+  @JoinColumn({ name: "governorate_id" })
+  governorateInfo: Governorate;
 
   @CreateDateColumn()
   created_at: Date;

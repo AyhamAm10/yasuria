@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from 'typeorm';
 import { Property } from './Property';
+import { Specifications } from './Specifications';
 
 @Entity('property_type')
 export class PropertyType {
@@ -11,4 +12,6 @@ export class PropertyType {
 
   @OneToMany(() => Property, (property) => property.property_type)
   properties: Property[];
+
+
 }

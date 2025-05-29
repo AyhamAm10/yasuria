@@ -11,4 +11,6 @@ export class CarType {
 
   @OneToMany(() => Car, (car) => car.car_type)
   properties: Car[];
+
+
 }

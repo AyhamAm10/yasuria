@@ -4,10 +4,12 @@ import {
   Column,
   CreateDateColumn,
   ManyToOne,
+  JoinColumn,
 } from "typeorm";
 import { User } from "./User";
 import { BrokerOffice } from "./BrokerOffice";
 import { CarType } from "./CarType";
+import { Governorate } from "./governorate";
 
 @Entity("cars")
 export class Car {
@@ -41,6 +43,9 @@ export class Car {
   @Column({ default: true })
   isActive: boolean;
 
+  @Column({ name: "governorate_id" })
+  governorateId: number;
+  
   @Column("decimal")
   price_usd: number;
 
@@ -68,6 +73,13 @@ export class Car {
   @ManyToOne(() => CarType)
   car_type: CarType;
 
+
+  @ManyToOne(() => Governorate)
+  @JoinColumn({ name: "governorate_id" })
+  governorateInfo: Governorate;
+
   @CreateDateColumn()
   created_at: Date;
+
+
 }

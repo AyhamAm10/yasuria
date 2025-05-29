@@ -25,6 +25,7 @@ import SearchRouter from "./routes/searchRouter";
 import profileRouter from "./routes/profile.router";
 import officeProtfolioRouter from "./routes/officeProtfolio.router";
 import favoriteRoute from "./routes/favorite.route";
+import governorateRouter from "./routes/governorate.route";
 
 
 
@@ -70,6 +71,7 @@ router.use("/type-p", propertyTypeRouter);
 router.use("/search", SearchRouter);
 router.use("/user", profileRouter);
 router.use("/favorite", favoriteRoute);
+router.use("/governorates", governorateRouter);
 
 app.use(process.env.BASE_URL, router);
 

@@ -32,6 +32,9 @@ paths:
         - name: limit
           in: query
           schema: { type: string, default: "10" }
+        - name: governorate_id
+          in: query
+          schema: { type: number, default: "1" }
       responses:
         '200':
           description: Successfully retrieved the list of cars
@@ -186,6 +189,7 @@ components:
         - listing_type
         - seller_type
         - images
+        - governorate_id
       properties:
         title_ar:
           type: string
@@ -206,6 +210,9 @@ components:
         location:
           type: string
           example: "الرياض، السعودية"
+        governorate_id:
+          type: number
+          example: 2
         lat:
           type: number
           format: float

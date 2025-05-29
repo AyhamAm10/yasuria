@@ -21,14 +21,15 @@ export class CarSearchController {
         max_price,
         location,
         attributes,
-        // specifications,
+        specifications,
+        governorate_id,
         page = 1,
         limit = 20,
       } = req.body;
 
       const lang = req.headers["accept-language"] || "ar";
       const entity = lang === "ar" ? "السيارة" : "car";
-      const userId = req.currentUser.id;
+      const userId = req.currentUser?.id;
       if (page < 1 || limit < 1) {
         throw new APIError(
           HttpStatusCode.BAD_REQUEST,
@@ -55,6 +56,10 @@ export class CarSearchController {
         query.andWhere("c.location LIKE :location", {
           location: `%${location}%`,
         });
+      if (governorate_id)
+        query.andWhere("c.governorateId = :governorateId", {
+          governorateId: governorate_id,
+        });
 
       // Dynamic Attribute Filters
       if (attributes && attributes.length > 0) {
@@ -76,23 +81,22 @@ export class CarSearchController {
         });
       }
 
-      // Specifications Filters
-      // if (specifications && specifications.length > 0) {
-      //   specifications.forEach((specId: number, index: number) => {
-      //     const alias = `sv${index}`;
+      if (specifications && specifications.length > 0) {
+        specifications.forEach((specId: number, index: number) => {
+          const alias = `sv${index}`;
 
-      //     query.innerJoin(
-      //       SpecificationsValue,
-      //       alias,
-      //       `${alias}.entity_id = c.id AND ${alias}.entity = 'car' AND ${alias}.specifications.id = :specId${index}`,
-      //       { [`specId${index}`]: specId }
-      //     );
+          query.innerJoin(
+            SpecificationsValue,
+            alias,
+            `${alias}.entity_id = c.id AND ${alias}.entity = 'car' AND ${alias}.specification.id = :specId${index}`,
+            { [`specId${index}`]: specId }
+          );
 
-      //     query.andWhere(`${alias}.value = :specValue${index}`, {
-      //       [`specValue${index}`]: "true",
-      //     });
-      //   });
-      // }
+          query.andWhere(`${alias}.IsActive = :isActive${index}`, {
+            [`isActive${index}`]: true,
+          });
+        });
+      }
 
       // Pagination
       query.skip((page - 1) * limit).take(limit);

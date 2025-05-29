@@ -23,11 +23,8 @@ export class SpecificationsValue {
   @Column()
   entity_id: number;
 
-  @Column({nullable:true})
-  value: string;
-
   @Column({default:true})
-  IsActive: true;
+  IsActive: boolean;
 
   @CreateDateColumn()
   created_at: Date;

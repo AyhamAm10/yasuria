@@ -86,6 +86,8 @@ components:
         location:
           type: string
           description: Location search string
+        governorate_id:
+          type: number
         attributes:
           type: array
           items:

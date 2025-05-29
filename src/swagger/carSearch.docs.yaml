@@ -55,6 +55,9 @@ components:
         car_type_id:
           type: integer
           description: ID of car type
+        governorate_id:
+          type: integer
+          description: ID of governorate type
         min_price:
           type: number
           description: Minimum price

@@ -20,6 +20,7 @@ import { CarType } from "../entity/CarType";
 import { PropertyType } from "../entity/PropertyType";
 import { Entity_Type } from "../entity/Favorites";
 import { isFavorite } from "../helper/isFavorite";
+import { Governorate } from "../entity/governorate";
 
 const propertyRepository = AppDataSource.getRepository(Property);
 const attributeRepository = AppDataSource.getRepository(Attribute);
@@ -29,6 +30,7 @@ const specificationValueRepository =
   AppDataSource.getRepository(SpecificationsValue);
 const brokerOfficeRepository = AppDataSource.getRepository(BrokerOffice);
 const propertyTypeReposetry = AppDataSource.getRepository(PropertyType);
+const governorateReposetory = AppDataSource.getRepository(Governorate);
 
 export const getProperties = async (
   req: Request,
@@ -38,8 +40,8 @@ export const getProperties = async (
   try {
     const {
       title,
-      location,
-      sortByPrice, 
+      governorate_id,
+      sortByPrice,
       area,
       page = "1",
       limit = "10",
@@ -55,7 +57,11 @@ export const getProperties = async (
 
     if (title)
       query.andWhere("property.title LIKE :title", { title: `%${title}%` });
-    if (location) query.andWhere("property.location = :location", { location });
+    if (governorate_id) {
+      query.andWhere("property.governorateId = :governorateId", {
+        governorateId: governorate_id,
+      });
+    }
     if (sortByPrice === "asc") {
       query.orderBy("property.price_usd", "ASC");
     } else if (sortByPrice === "desc") {
@@ -131,7 +137,7 @@ export const getPropertyById = async (
 
     const property = await propertyRepository.findOne({
       where: { id: Number(id) },
-      relations: ["user", "broker_office", "property_type"],
+      relations: ["user", "broker_office", "property_type", "governorateInfo"],
     });
 
     if (!property) {
@@ -156,23 +162,21 @@ export const getPropertyById = async (
       }),
     ]);
 
-    res
-      .status(HttpStatusCode.OK)
-      .json(
-        ApiResponse.success(
-          {
-            property,
-            attributes,
-            specifications,
-            is_favorite: await isFavorite(
-              userId?.id,
-              property.id,
-              Entity_Type.properties
-            ),
-          },
-          ErrorMessages.generateErrorMessage(entity, "retrieved", lang)
-        )
-      );
+    res.status(HttpStatusCode.OK).json(
+      ApiResponse.success(
+        {
+          property,
+          attributes,
+          specifications,
+          is_favorite: await isFavorite(
+            userId?.id,
+            property.id,
+            Entity_Type.properties
+          ),
+        },
+        ErrorMessages.generateErrorMessage(entity, "retrieved", lang)
+      )
+    );
   } catch (error) {
     next(error);
   }
@@ -205,6 +209,7 @@ export const createProperty = async (
       type_id,
       seller_type,
       listing_type,
+      governorate_id,
     } = req.body;
 
     const userId = req["currentUser"].id;
@@ -238,6 +243,16 @@ export const createProperty = async (
         )
       : [];
 
+    const governorate = await governorateReposetory.findOneBy({
+      id: governorate_id,
+    });
+    if (!governorate) {
+      throw new APIError(
+        HttpStatusCode.NOT_FOUND,
+        ErrorMessages.generateErrorMessage("governorate", "not found", lang)
+      );
+    }
+
     const newProperty = propertyRepository.create({
       title_ar,
       title_en,
@@ -254,6 +269,8 @@ export const createProperty = async (
       property_type: propertyType,
       seller_type,
       listing_type,
+      governorateId: governorate.id,
+      governorateInfo: governorate,
     });
 
     const savedProperty = await propertyRepository.save(newProperty);
@@ -302,7 +319,7 @@ export const createProperty = async (
           specification: specification,
           entity: EntitySpecification.properties,
           entity_id: savedProperty.id,
-          value: spec.value,
+          IsActive: true,
         });
       });
 
@@ -354,7 +371,8 @@ export const updateProperty = async (
       latitude,
       longitude,
       keptImages,
-      type_id
+      type_id,
+      governorate_id,
     } = req.body;
 
     const userId = req["currentUser"].id;
@@ -378,6 +396,16 @@ export const updateProperty = async (
       );
     }
 
+     const governorate = await governorateReposetory.findOneBy({
+      id: governorate_id,
+    });
+    if (!governorate) {
+      throw new APIError(
+        HttpStatusCode.NOT_FOUND,
+        ErrorMessages.generateErrorMessage("governorate", "not found", lang)
+      );
+    }
+
     propertyRepository.merge(property, {
       title_ar,
       title_en,
@@ -388,6 +416,8 @@ export const updateProperty = async (
       price_usd,
       latitude,
       longitude,
+      governorateId: governorate_id,
+      governorateInfo: governorate,
     });
 
     const newImages = req.files
@@ -400,14 +430,17 @@ export const updateProperty = async (
 
     property.images = [...keptImagesArray, ...newImages];
 
-    if(type_id){
-         const newType =  await propertyTypeReposetry.findOneBy({id:type_id})
-         if(!newType){
-          throw new APIError(HttpStatusCode.NOT_FOUND , ErrorMessages.generateErrorMessage("type car" , "not found" , lang))
-         }
-    
-         property.property_type = newType
-        }
+    if (type_id) {
+      const newType = await propertyTypeReposetry.findOneBy({ id: type_id });
+      if (!newType) {
+        throw new APIError(
+          HttpStatusCode.NOT_FOUND,
+          ErrorMessages.generateErrorMessage("type car", "not found", lang)
+        );
+      }
+
+      property.property_type = newType;
+    }
 
     const updatedProperty = await propertyRepository.save(property);
 
@@ -444,7 +477,7 @@ export const updateProperty = async (
         }
 
         return specificationValueRepository.merge(specification, {
-          value: spec.value,
+          IsActive: spec.isActive,
         });
       });
 

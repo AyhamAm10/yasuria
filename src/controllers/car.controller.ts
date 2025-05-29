@@ -15,11 +15,11 @@ import {
   EntitySpecification,
   SpecificationsValue,
 } from "../entity/SpecificationsValue";
-import { addCarSchema } from "../helper/validation/schema/addCarSchema";
 import { BrokerOffice } from "../entity/BrokerOffice";
-import { Entity_Type, Favorite } from "../entity/Favorites";
+import { Entity_Type } from "../entity/Favorites";
 import { CarType } from "../entity/CarType";
 import { isFavorite } from "../helper/isFavorite";
+import { Governorate } from "../entity/governorate";
 
 const carRepository = AppDataSource.getRepository(Car);
 const attributeRepository = AppDataSource.getRepository(Attribute);
@@ -29,6 +29,8 @@ const specificationValueRepostry =
   AppDataSource.getRepository(SpecificationsValue);
 const brokerOfficeRepository = AppDataSource.getRepository(BrokerOffice);
 const carTypeReposetry = AppDataSource.getRepository(CarType);
+const governorateReposetory = AppDataSource.getRepository(Governorate);
+
 export const getCars = async (
   req: Request,
   res: Response,
@@ -36,7 +38,7 @@ export const getCars = async (
 ) => {
   try {
     const {
-      location,
+      governorate_id,
       page = "1",
       limit = "10",
       sortByPrice, // "asc" or "desc"
@@ -49,7 +51,11 @@ export const getCars = async (
     const userId = req.currentUser?.id;
     const query = carRepository.createQueryBuilder("car");
 
-    if (location) query.andWhere("car.location = :location", { location });
+    if (governorate_id) {
+      query.andWhere("car.governorateId = :governorateId", {
+        governorateId: governorate_id,
+      });
+    }
 
     if (sortByPrice === "asc") {
       query.orderBy("car.price_usd", "ASC");
@@ -77,7 +83,7 @@ export const getCars = async (
 
     const data = await Promise.all(
       queryResult.map(async (rawCar) => {
-        console.log(rawCar)
+        console.log(rawCar);
         const car = {
           ...rawCar,
           is_favorite: await isFavorite(userId, rawCar.car_id, Entity_Type.car),
@@ -119,7 +125,8 @@ export const getCarById = async (
       .where("car.id = :id", { id: Number(id) })
       .leftJoinAndSelect("car.user", "user")
       .leftJoinAndSelect("car.broker_office", "broker_office")
-      .leftJoinAndSelect("car.car_type", "car_type");
+      .leftJoinAndSelect("car.car_type", "car_type")
+      .leftJoinAndSelect("car.governorateInfo", "governorateInfo");
 
     const carResult = await carQuery.getRawOne();
 
@@ -191,6 +198,7 @@ export const createCar = async (
       listing_type,
       type_id,
       seller_type,
+      governorate_id,
     } = req.body;
 
     // await validator(addCarSchema(lang), req.body);
@@ -227,6 +235,16 @@ export const createCar = async (
         )
       : [];
 
+    const governorate = await governorateReposetory.findOneBy({
+      id: governorate_id,
+    });
+    if (!governorate) {
+      throw new APIError(
+        HttpStatusCode.NOT_FOUND,
+        ErrorMessages.generateErrorMessage("governorate", "not found", lang)
+      );
+    }
+
     const newCar = carRepository.create({
       title_ar,
       title_en,
@@ -243,6 +261,8 @@ export const createCar = async (
       seller_type,
       broker_office: isOffice || null,
       car_type: carType,
+      governorateId: governorate.id,
+      governorateInfo: governorate,
     });
 
     const savedCar = await carRepository.save(newCar);
@@ -290,7 +310,7 @@ export const createCar = async (
           specification: spec,
           entity: EntitySpecification.car,
           entity_id: savedCar.id,
-          value: item.value,
+          IsActive: true,
         });
       });
 
@@ -336,7 +356,8 @@ export const updateCar = async (
       price_usd,
       specifications,
       keptImages,
-      type_id
+      type_id,
+      governorate_id,
     } = req.body;
 
     const userId = req["currentUser"];
@@ -359,6 +380,16 @@ export const updateCar = async (
       );
     }
 
+    const governorate = await governorateReposetory.findOneBy({
+      id: governorate_id,
+    });
+    if (!governorate) {
+      throw new APIError(
+        HttpStatusCode.NOT_FOUND,
+        ErrorMessages.generateErrorMessage("governorate", "not found", lang)
+      );
+    }
+
     carRepository.merge(car, {
       title_ar,
       title_en,
@@ -367,6 +398,8 @@ export const updateCar = async (
       location,
       price_sy,
       price_usd,
+      governorateId: governorate_id,
+      governorateInfo: governorate,
     });
 
     const newImages = req.files
@@ -379,15 +412,18 @@ export const updateCar = async (
 
     car.images = [...keptImagesArray, ...newImages];
 
-    if(type_id){
-     const newType =  await carTypeReposetry.findOneBy({id:type_id})
-     if(!newType){
-      throw new APIError(HttpStatusCode.NOT_FOUND , ErrorMessages.generateErrorMessage("type car" , "not found" , lang))
-     }
+    if (type_id) {
+      const newType = await carTypeReposetry.findOneBy({ id: type_id });
+      if (!newType) {
+        throw new APIError(
+          HttpStatusCode.NOT_FOUND,
+          ErrorMessages.generateErrorMessage("type car", "not found", lang)
+        );
+      }
 
-     car.car_type = newType
+      car.car_type = newType;
     }
-    
+
     const updatedCar = await carRepository.save(car);
 
     if (attributes && attributes.length > 0) {
@@ -428,7 +464,6 @@ export const updateCar = async (
           }
 
           return specificationValueRepostry.merge(specification, {
-            value: item.value,
             IsActive: item.isActive,
           });
         })
@@ -436,8 +471,6 @@ export const updateCar = async (
 
       await specificationValueRepostry.save(newSpecifications);
     }
-
-    
 
     res
       .status(HttpStatusCode.OK)

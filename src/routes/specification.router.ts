@@ -16,8 +16,8 @@ specificationRouter.post("/",
 );
 
 specificationRouter.get("/", 
-    authMiddleware,
-    checkRole([UserRole.vendor, UserRole.user, UserRole.admin, UserRole.superAdmin]),
+    // authMiddleware,
+    // checkRole([UserRole.vendor, UserRole.user, UserRole.admin, UserRole.superAdmin]),
     getSpecifications
 );
 

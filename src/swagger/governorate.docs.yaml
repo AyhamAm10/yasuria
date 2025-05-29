@@ -1,0 +1,181 @@
+openapi: 3.0.0
+info:
+  title: Governorates Management API
+  description: API for managing governorates
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/api
+    description: Development server
+tags:
+  - name: Governorates
+    description: Operations related to governorates management
+
+paths:
+  /governorates:
+    get:
+      tags: [Governorates]
+      summary: Get all governorates
+      parameters:
+        - $ref: '#/components/parameters/acceptLanguage'
+      responses:
+        '200':
+          description: List of governorates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Governorate'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    post:
+      tags: [Governorates]
+      summary: Create a new governorate
+      parameters:
+        - $ref: '#/components/parameters/acceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+      responses:
+        '201':
+          description: Governorate created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Governorate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Conflict (Governorate already exists)
+
+  /governorates/{name}:
+    get:
+      tags: [Governorates]
+      summary: Get governorate by name
+      parameters:
+        - $ref: '#/components/parameters/acceptLanguage'
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Governorate details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Governorate'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags: [Governorates]
+      summary: Update a governorate
+      parameters:
+        - $ref: '#/components/parameters/acceptLanguage'
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                newName:
+                  type: string
+      responses:
+        '200':
+          description: Governorate updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Governorate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Conflict (New name already exists)
+
+    delete:
+      tags: [Governorates]
+      summary: Delete a governorate
+      parameters:
+        - $ref: '#/components/parameters/acceptLanguage'
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Governorate deleted successfully
+        '400':
+          description: Bad Request (Cannot delete governorate with associated cars)
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  schemas:
+    Governorate:
+      type: object
+      properties:
+        name:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        cars:
+          type: array
+          items:
+            $ref: '#/components/schemas/Car'
+
+    Car:
+      type: object
+      properties:
+        id:
+          type: integer
+        plateNumber:
+          type: string
+
+  parameters:
+    acceptLanguage:
+      name: accept-language
+      in: header
+      description: Language preference (ar/en)
+      schema:
+        type: string
+        enum: [ar, en]
+        default: ar
+
+  responses:
+    NotFound:
+      description: The requested resource was not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+    BadRequest:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string

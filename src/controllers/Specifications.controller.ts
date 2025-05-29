@@ -7,6 +7,8 @@ import { ErrorMessages } from "../error/ErrorMessages";
 import { ApiResponse } from "../helper/apiResponse";
 import { validator } from "../helper/validation/validator";
 import { addSpecificationSchema } from "../helper/validation/schema/addSpecificationSchema";
+import { CarType } from "../entity/CarType";
+import { PropertyType } from "../entity/PropertyType";
 
 const specificationRepository = AppDataSource.getRepository(Specifications);
 
@@ -16,7 +18,7 @@ export const getSpecifications = async (
   next: NextFunction
 ) => {
   try {
-    const { page = "1", limit = "10", entityType } = req.query;
+    const { page = "1", limit = "10", entityType, type_id } = req.query;
     const lang = req.headers["accept-language"] || "ar";
     const entity = lang === "ar" ? "المواصفات" : "specifications";
 
@@ -24,12 +26,31 @@ export const getSpecifications = async (
     const pageSize = Math.max(Number(limit), 1);
     const skip = (pageNumber - 1) * pageSize;
 
-    let queryBuilder = specificationRepository.createQueryBuilder("specification");
+    let queryBuilder =
+      specificationRepository.createQueryBuilder("specification");
 
     if (entityType) {
       queryBuilder = queryBuilder.where("specification.entity = :entityType", {
         entityType,
       });
+    }
+
+    if (type_id && entityType) {
+      if (entityType === "car") {
+        queryBuilder = queryBuilder.andWhere(
+          "specification.carType.id = :typeId",
+          {
+            typeId: Number(type_id),
+          }
+        );
+      } else if (entityType === "property") {
+        queryBuilder = queryBuilder.andWhere(
+          "specification.propertyType.id = :typeId",
+          {
+            typeId: Number(type_id),
+          }
+        );
+      }
     }
 
     const [specifications, totalCount] = await queryBuilder
@@ -75,7 +96,9 @@ export const getSpecificationById = async (
     const lang = req.headers["accept-language"] || "ar";
     const entity = lang === "ar" ? "المواصفة" : "specification";
 
-    const specification = await specificationRepository.findOneBy({ id: Number(id) });
+    const specification = await specificationRepository.findOneBy({
+      id: Number(id),
+    });
 
     if (!specification) {
       throw new APIError(
@@ -103,7 +126,7 @@ export const createSpecification = async (
   next: NextFunction
 ) => {
   try {
-    const { title, type, entity } = req.body;
+    const { title, type, entity, carTypeId, propertyTypeId } = req.body;
     const lang = req.headers["accept-language"] || "ar";
     const entityName = lang === "ar" ? "المواصفة" : "specification";
     await validator(addSpecificationSchema(lang), req.body);
@@ -117,11 +140,24 @@ export const createSpecification = async (
 
     const icon = req.file ? req.file.filename : "";
 
+    const carType = carTypeId
+      ? await AppDataSource.getRepository(CarType).findOneBy({
+          id: Number(carTypeId),
+        })
+      : null;
+    const propertyType = propertyTypeId
+      ? await AppDataSource.getRepository(PropertyType).findOneBy({
+          id: Number(propertyTypeId),
+        })
+      : null;
+
     const newSpecification = specificationRepository.create({
       title,
       type,
       entity,
       icon,
+      carType: carType || null,
+      propertyType: propertyType || null,
     });
     await specificationRepository.save(newSpecification);
 
@@ -145,11 +181,14 @@ export const updateSpecification = async (
 ) => {
   try {
     const { id } = req.params;
-    const { title, type, entity } = req.body;
+    const { title, type, entity, carTypeId, propertyTypeId } = req.body;
     const lang = req.headers["accept-language"] || "ar";
     const entityName = lang === "ar" ? "المواصفة" : "specification";
 
-    const specification = await specificationRepository.findOneBy({ id: Number(id) });
+    const specification = await specificationRepository.findOne({
+      where: { id: Number(id) },
+      relations: ["carType", "propertyType"], // نجيب العلاقات لو بدنا نعدلها
+    });
 
     if (!specification) {
       throw new APIError(
@@ -162,6 +201,24 @@ export const updateSpecification = async (
     specification.type = type || specification.type;
     specification.entity = entity || specification.entity;
     if (req.file) specification.icon = req.file.filename;
+
+    if (carTypeId !== undefined) {
+      const carType = carTypeId
+        ? await AppDataSource.getRepository(CarType).findOneBy({
+            id: Number(carTypeId),
+          })
+        : null;
+      specification.carType = carType || null;
+    }
+
+    if (propertyTypeId !== undefined) {
+      const propertyType = propertyTypeId
+        ? await AppDataSource.getRepository(PropertyType).findOneBy({
+            id: Number(propertyTypeId),
+          })
+        : null;
+      specification.propertyType = propertyType || null;
+    }
 
     await specificationRepository.save(specification);
 
@@ -188,7 +245,9 @@ export const deleteSpecification = async (
     const lang = req.headers["accept-language"] || "ar";
     const entity = lang === "ar" ? "المواصفة" : "specification";
 
-    const specification = await specificationRepository.findOneBy({ id: Number(id) });
+    const specification = await specificationRepository.findOneBy({
+      id: Number(id),
+    });
 
     if (!specification) {
       throw new APIError(
