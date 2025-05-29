@@ -408,7 +408,11 @@ export const updateCar = async (
         )
       : [];
 
-    const keptImagesArray = keptImages ? JSON.parse(keptImages) : [];
+    let keptImagesArray: string[] = [];
+
+    if (keptImages) {
+      keptImagesArray = JSON.parse(keptImages);
+    }
 
     car.images = [...keptImagesArray, ...newImages];
 
@@ -484,6 +488,7 @@ export const updateCar = async (
     next(error);
   }
 };
+
 
 export const deleteCar = async (
   req: Request,
