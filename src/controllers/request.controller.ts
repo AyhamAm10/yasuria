@@ -23,7 +23,7 @@ export class RequestController {
       const lang = req.headers["accept-language"] || "ar";
       const entity = lang === "ar" ? "الطلب" : "request";
 
-      await validator(getRequestSchema(lang), req.body);
+      // await validator(getRequestSchema(lang), req.body);
 
       const { description, budget, governorate_id } = req.body;
 

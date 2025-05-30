@@ -396,7 +396,7 @@ export const updateProperty = async (
       );
     }
 
-     const governorate = await governorateReposetory.findOneBy({
+    const governorate = await governorateReposetory.findOneBy({
       id: governorate_id,
     });
     if (!governorate) {
@@ -421,28 +421,27 @@ export const updateProperty = async (
     });
 
     // معالجة الصور القادمة من keptImages
-let keptImagesArray: string[] = [];
+    let keptImagesArray: string[] = [];
 
-if (keptImages) {
-  if (typeof keptImages === "string") {
-    try {
-      keptImagesArray = JSON.parse(keptImages);
-    } catch (err) {
-      keptImagesArray = keptImages.split(',').map(img => img.trim());
+    if (keptImages) {
+      if (typeof keptImages === "string") {
+        try {
+          keptImagesArray = JSON.parse(keptImages);
+        } catch (err) {
+          keptImagesArray = keptImages.split(",").map((img) => img.trim());
+        }
+      } else if (Array.isArray(keptImages)) {
+        keptImagesArray = keptImages;
+      }
     }
-  } else if (Array.isArray(keptImages)) {
-    keptImagesArray = keptImages;
-  }
-}
 
-const newImages = req.files
-  ? (req.files as Express.Multer.File[]).map(
-      (file) => `/src/public/uploads/${file.filename}`
-    )
-  : [];
+    const newImages = req.files
+      ? (req.files as Express.Multer.File[]).map(
+          (file) => `/src/public/uploads/${file.filename}`
+        )
+      : [];
 
-property.images = [...keptImagesArray, ...newImages];
-
+    property.images = [...keptImagesArray, ...newImages];
 
     if (type_id) {
       const newType = await propertyTypeReposetry.findOneBy({ id: type_id });
