@@ -155,7 +155,7 @@ export class AuthController {
         .json(
           ApiResponse.success(
             null,
-            ErrorMessages.generateErrorMessage(entity, "logged out", lang)
+            ErrorMessages.generateErrorMessage(entity, "unauthorized", lang)
           )
         );
     } catch (error) {

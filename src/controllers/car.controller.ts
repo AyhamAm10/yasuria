@@ -358,6 +358,8 @@ export const updateCar = async (
       keptImages,
       type_id,
       governorate_id,
+      latitude,
+      longitude
     } = req.body;
 
     const userId = req["currentUser"];
@@ -398,6 +400,8 @@ export const updateCar = async (
       location,
       price_sy,
       price_usd,
+      lat:latitude,
+      long:longitude,
       governorateId: governorate_id,
       governorateInfo: governorate,
     });
