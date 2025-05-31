@@ -432,24 +432,23 @@ export class BrokerController {
         await brokerofficeServiceRepository.delete({
           broker_office: { id: broker.id },
         });
-
+        
         const validServices = await serviceRepository.find({
           where: { id: In(services) },
         });
-
+        
         if (validServices.length === 0) {
           throw new Error("No valid services found");
         }
-
-        const brokerReference = { id: broker.id };
-
+        
         const brokerServices = validServices.map((service) =>
           brokerofficeServiceRepository.create({
-            service: { id: service.id },
-            broker_office: brokerReference,
+            service: service,
+            broker_office: { id: broker.id },
           })
         );
-
+        
+        console.log(broker)
         await brokerofficeServiceRepository.save(brokerServices);
       }
 

@@ -47,7 +47,8 @@ next-env.d.ts
 src/migrations/
 
 # public files
-src/public/
+src/public/*
 
 # system files
 Thumbs.db
+# src/config/firebaseServiceAccount.json
