@@ -10,11 +10,23 @@ export class Notification {
   @ManyToOne(() => User, { onDelete: "CASCADE" })
   user: User;
 
-  @Column("text")
-  message: string;
+  @Column({nullable: true})
+  title_en: string;
+
+  @Column({nullable: true})
+  title_ar: string;
 
   @Column()
-  status: string;
+  description_en: string;
+
+  @Column()
+  description_ar: string;
+
+  @Column()
+  type: string;
+
+  @Column({ type: "jsonb", nullable: true })
+  metaData: any; 
 
   @CreateDateColumn()
   created_at: Date;

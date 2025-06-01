@@ -51,4 +51,4 @@ src/public/*
 
 # system files
 Thumbs.db
-# src/config/firebaseServiceAccount.json
+src/config/firebaseServiceAccount.json
