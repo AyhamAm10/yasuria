@@ -35,7 +35,7 @@ export class NotificationController {
 
     const lang = req.headers["accept-language"] || "ar";
 
-    if (!userId ||!type || description_ar)
+    if (!userId ||!type || !description_ar)
       throw new APIError(HttpStatusCode.BAD_REQUEST , ErrorMessages.generateErrorMessage("field" , "bad request" , lang))
 
     try {
