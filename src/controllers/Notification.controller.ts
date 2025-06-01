@@ -35,20 +35,26 @@ export class NotificationController {
 
     const lang = req.headers["accept-language"] || "ar";
 
-    if (!userId ||!type || !description_ar)
-      throw new APIError(HttpStatusCode.BAD_REQUEST , ErrorMessages.generateErrorMessage("field" , "bad request" , lang))
+    if (!userId || !type || !description_ar)
+      throw new APIError(
+        HttpStatusCode.BAD_REQUEST,
+        ErrorMessages.generateErrorMessage("field", "bad request", lang)
+      );
 
     try {
       const userToken = await this.tokenService.getTokenByUserId(userId);
       if (!userToken) {
-        throw new APIError(HttpStatusCode.NOT_FOUND , ErrorMessages.generateErrorMessage("token" , "not found" , lang))
+        throw new APIError(
+          HttpStatusCode.NOT_FOUND,
+          ErrorMessages.generateErrorMessage("token", "not found", lang)
+        );
       }
 
       const message = {
         notification: {
-             title : lang == "ar"? title_ar : title_en,
-              description: lang == "ar"? description_ar : description_en,  
-            },
+          title: lang == "ar" ? title_ar : title_en,
+          body: lang == "ar" ? description_ar : description_en, 
+        },
         token: userToken.token,
       };
 
