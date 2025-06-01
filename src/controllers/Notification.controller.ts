@@ -1,6 +1,11 @@
 import { Request, Response } from "express";
 import { UserTokenService } from "../service/UserToken.service";
 import admin from "../config/firebase";
+import { AppDataSource } from "../config/data_source";
+import { Notification } from "../entity/Notifications";
+import { User } from "../entity/User";
+import { APIError, HttpStatusCode } from "../error/api.error";
+import { ErrorMessages } from "../error/ErrorMessages";
 
 export class NotificationController {
   private tokenService = new UserTokenService();
@@ -18,21 +23,57 @@ export class NotificationController {
   }
 
   async sendNotification(req: Request, res: Response) {
-    const { userId, title, body } = req.body;
-    if (!userId || !title || !body)
-      return res.status(400).json({ error: "Missing parameters" });
+    const {
+      userId,
+      title_en,
+      title_ar,
+      description_en,
+      description_ar,
+      type,
+      metaData,
+    } = req.body;
+
+    const lang = req.headers["accept-language"] || "ar";
+
+    if (!userId ||!type || description_ar)
+      throw new APIError(HttpStatusCode.BAD_REQUEST , ErrorMessages.generateErrorMessage("field" , "bad request" , lang))
 
     try {
       const userToken = await this.tokenService.getTokenByUserId(userId);
-      if (!userToken) return res.status(404).json({ error: "Token not found" });
+      if (!userToken) {
+        throw new APIError(HttpStatusCode.NOT_FOUND , ErrorMessages.generateErrorMessage("token" , "not found" , lang))
+      }
 
       const message = {
-        notification: { title, body },
+        notification: {
+             title : lang == "ar"? title_ar : title_en,
+              description: lang == "ar"? description_ar : description_en,  
+            },
         token: userToken.token,
       };
 
       const response = await admin.messaging().send(message);
-      res.json({ success: true, response });
+
+      const user = await AppDataSource.getRepository(User).findOneBy({
+        id: userId,
+      });
+      if (!user) return res.status(404).json({ error: "User not found" });
+
+      const newNotification = AppDataSource.getRepository(Notification).create({
+        user,
+        title_en,
+        title_ar,
+        description_en,
+        description_ar,
+        type,
+        metaData: metaData || {},
+      });
+
+      const savedNotification = await AppDataSource.getRepository(
+        Notification
+      ).save(newNotification);
+
+      res.json({ success: true, response, notification: savedNotification });
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
