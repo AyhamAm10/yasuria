@@ -161,6 +161,7 @@ export const getCarById = async (
     res.status(HttpStatusCode.OK).json(
       ApiResponse.success(
         {
+          type: "car" ,
           ...car,
           is_favorite: await isFavorite(userId, car.id, Entity_Type.car),
           attributes,

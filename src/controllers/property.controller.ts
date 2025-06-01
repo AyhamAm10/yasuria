@@ -165,6 +165,7 @@ export const getPropertyById = async (
     res.status(HttpStatusCode.OK).json(
       ApiResponse.success(
         {
+          type: "property",
           property,
           attributes,
           specifications,
@@ -357,7 +358,6 @@ export const updateProperty = async (
     const entity = lang === "ar" ? "العقار" : "property";
     const userMessage = lang === "ar" ? "المستخدم" : "user";
 
-    const { id } = req.params;
     const {
       title_ar,
       title_en,
@@ -368,20 +368,30 @@ export const updateProperty = async (
       price_usd,
       attributes,
       specifications,
-      latitude,
       longitude,
-      keptImages,
+      latitude,
       type_id,
+      seller_type,
+      listing_type,
       governorate_id,
     } = req.body;
 
     const userId = req["currentUser"].id;
-
-    const property = await propertyRepository.findOne({
-      where: { id: Number(id) },
-      relations: ["user"],
+    const id = Number(req.params)
+    const user = await AppDataSource.getRepository(User).findOne({
+      where: { id: userId },
     });
 
+    if (!user) {
+      throw new APIError(
+        HttpStatusCode.UNAUTHORIZED,
+        ErrorMessages.generateErrorMessage(userMessage, "not found", lang)
+      );
+    }
+
+    const property = await propertyRepository.findOne({
+      where: { id, user },
+    });
     if (!property) {
       throw new APIError(
         HttpStatusCode.NOT_FOUND,
@@ -389,23 +399,32 @@ export const updateProperty = async (
       );
     }
 
-    if (property.user.id !== userId) {
-      throw new APIError(
-        HttpStatusCode.FORBIDDEN,
-        ErrorMessages.generateErrorMessage(entity, "forbidden", lang)
-      );
-    }
+    const propertyType = type_id
+      ? await propertyTypeReposetry.findOneBy({ id: type_id })
+      : property.property_type;
 
-    const governorate = await governorateReposetory.findOneBy({
-      id: governorate_id,
+    const isBrokerOffice = await brokerOfficeRepository.findOne({
+      where: { user },
     });
-    if (!governorate) {
+
+    const images = req.files
+      ? (req.files as Express.Multer.File[]).map(
+          (file) => `/src/public/uploads/${file.filename}`
+        )
+      : property.images;
+
+    const governorate = governorate_id
+      ? await governorateReposetory.findOneBy({ id: governorate_id })
+      : property.governorateInfo;
+
+    if (governorate_id && !governorate) {
       throw new APIError(
         HttpStatusCode.NOT_FOUND,
         ErrorMessages.generateErrorMessage("governorate", "not found", lang)
       );
     }
 
+    // تحديث بيانات العقار
     propertyRepository.merge(property, {
       title_ar,
       title_en,
@@ -416,51 +435,27 @@ export const updateProperty = async (
       price_usd,
       latitude,
       longitude,
-      governorateId: governorate_id,
+      images,
+      broker_office: isBrokerOffice || property.broker_office,
+      property_type: propertyType,
+      seller_type,
+      listing_type,
+      governorateId: governorate?.id,
       governorateInfo: governorate,
     });
 
-    // معالجة الصور القادمة من keptImages
-    let keptImagesArray: string[] = [];
-
-    if (keptImages) {
-      if (typeof keptImages === "string") {
-        try {
-          keptImagesArray = JSON.parse(keptImages);
-        } catch (err) {
-          keptImagesArray = keptImages.split(",").map((img) => img.trim());
-        }
-      } else if (Array.isArray(keptImages)) {
-        keptImagesArray = keptImages;
-      }
-    }
-
-    const newImages = req.files
-      ? (req.files as Express.Multer.File[]).map(
-          (file) => `/src/public/uploads/${file.filename}`
-        )
-      : [];
-
-    property.images = [...keptImagesArray, ...newImages];
-
-    if (type_id) {
-      const newType = await propertyTypeReposetry.findOneBy({ id: type_id });
-      if (!newType) {
-        throw new APIError(
-          HttpStatusCode.NOT_FOUND,
-          ErrorMessages.generateErrorMessage("type car", "not found", lang)
-        );
-      }
-
-      property.property_type = newType;
-    }
-
     const updatedProperty = await propertyRepository.save(property);
 
+    // حذف attributes القديمة وإضافة الجديدة
     if (attributes && attributes.length > 0) {
-      const updatedAttributes = attributes.map(async (attr) => {
-        const attribute = await attributeValueRepository.findOneBy({
-          id: attr.id,
+      await attributeValueRepository.delete({
+        entity: EntityAttribute.properties,
+        entity_id: updatedProperty.id,
+      });
+
+      const attributePromises = attributes.map(async (attr) => {
+        const attribute = await attributeRepository.findOne({
+          where: { id: attr.id },
         });
         if (!attribute) {
           throw new APIError(
@@ -469,17 +464,26 @@ export const updateProperty = async (
           );
         }
 
-        return attributeValueRepository.merge(attribute, {
+        return attributeValueRepository.create({
+          attribute,
+          entity: EntityAttribute.properties,
+          entity_id: updatedProperty.id,
           value: attr.value,
         });
       });
 
-      await attributeValueRepository.save(await Promise.all(updatedAttributes));
+      await attributeValueRepository.save(await Promise.all(attributePromises));
     }
 
+    // حذف specifications القديمة وإضافة الجديدة
     if (specifications && specifications.length > 0) {
-      const updatedSpecifications = specifications.map(async (spec) => {
-        const specification = await specificationValueRepository.findOneBy({
+      await specificationValueRepository.delete({
+        entity: EntitySpecification.properties,
+        entity_id: updatedProperty.id,
+      });
+
+      const specPromises = specifications.map(async (spec) => {
+        const specification = await specificationRepository.findOneBy({
           id: spec.id,
         });
         if (!specification) {
@@ -489,28 +493,34 @@ export const updateProperty = async (
           );
         }
 
-        return specificationValueRepository.merge(specification, {
-          IsActive: spec.isActive,
+        return specificationValueRepository.create({
+          specification,
+          entity: EntitySpecification.properties,
+          entity_id: updatedProperty.id,
+          IsActive: true,
         });
       });
 
-      await specificationValueRepository.save(
-        await Promise.all(updatedSpecifications)
-      );
+      await specificationValueRepository.save(await Promise.all(specPromises));
     }
 
-    res
-      .status(HttpStatusCode.OK)
-      .json(
-        ApiResponse.success(
-          updatedProperty,
-          ErrorMessages.generateErrorMessage(entity, "updated", lang)
-        )
-      );
+    const propertyWithRelations = await propertyRepository.findOne({
+      where: { id: updatedProperty.id },
+    });
+
+    res.status(HttpStatusCode.OK).json(
+      ApiResponse.success(
+        {
+          property: propertyWithRelations,
+        },
+        ErrorMessages.generateErrorMessage(entity, "updated", lang)
+      )
+    );
   } catch (error) {
     next(error);
   }
 };
+
 
 export const deleteProperty = async (
   req: Request,
