@@ -341,74 +341,61 @@ export const updateCar = async (
 ) => {
   try {
     const lang = req.headers["accept-language"] || "ar";
-    const entity = lang == "ar" ? "السيارة" : "items";
-    const userMessage = lang == "ar" ? "المستخدم" : "user";
+    const entity = lang == "ar" ? "السيارات" : "items";
 
-    const { id } = req.params;
     const {
+      id,
       title_ar,
       title_en,
       desc_ar,
       desc_en,
       attributes,
       location,
-      price_sy,
       price_usd,
+      price_sy,
       specifications,
-      keptImages,
-      type_id,
-      governorate_id,
       latitude,
       longitude,
       listing_type,
-      seller_type
+      type_id,
+      seller_type,
+      governorate_id,
+      keptImages, 
     } = req.body;
 
-    const userId = req["currentUser"];
+    const userId = req["currentUser"]?.id;
 
     const car = await carRepository.findOne({
-      where: { id: Number(id) },
+      where: { id, user: { id: userId } },
       relations: ["user"],
     });
 
-    if (!car)
+    if (!car) {
       throw new APIError(
         HttpStatusCode.NOT_FOUND,
         ErrorMessages.generateErrorMessage(entity, "not found", lang)
       );
+    }
 
-    if (car.user.id !== userId.id) {
+    const user = car.user;
+
+    const carType = await carTypeReposetry.findOneBy({ id: type_id });
+    if (!carType && type_id) {
       throw new APIError(
-        HttpStatusCode.FORBIDDEN,
-        ErrorMessages.generateErrorMessage(entity, "forbidden", lang)
+        HttpStatusCode.NOT_FOUND,
+        ErrorMessages.generateErrorMessage("type id", "not found", lang)
       );
     }
 
-    const governorate = await governorateReposetory.findOneBy({
-      id: governorate_id,
-    });
+    const isOffice = await brokerOfficeRepository.findOne({ where: { user } });
+
+    const governorate = await governorateReposetory.findOneBy({ id: governorate_id });
     if (!governorate) {
       throw new APIError(
         HttpStatusCode.NOT_FOUND,
         ErrorMessages.generateErrorMessage("governorate", "not found", lang)
       );
     }
-
-    carRepository.merge(car, {
-      title_ar,
-      title_en,
-      desc_ar,
-      desc_en,
-      location,
-      price_sy,
-      price_usd,
-      listing_type,
-      lat:latitude,
-      long:longitude,
-      seller_type,
-      governorateId: governorate_id,
-      governorateInfo: governorate,
-    });
 
     const newImages = req.files
       ? (req.files as Express.Multer.File[]).map(
@@ -417,81 +404,85 @@ export const updateCar = async (
       : [];
 
     let keptImagesArray: string[] = [];
-
     if (keptImages) {
       keptImagesArray = JSON.parse(keptImages);
     }
 
+    car.title_ar = title_ar ?? car.title_ar;
+    car.title_en = title_en ?? car.title_en;
+    car.desc_ar = desc_ar ?? car.desc_ar;
+    car.desc_en = desc_en ?? car.desc_en;
+    car.location = location ?? car.location;
+    car.price_sy = price_sy ?? car.price_sy;
+    car.price_usd = price_usd ?? car.price_usd;
+    car.lat = latitude ?? car.lat;
+    car.long = longitude ?? car.long;
+    car.listing_type = listing_type ?? car.listing_type;
+    car.seller_type = seller_type ?? car.seller_type;
+    car.broker_office = isOffice || null;
+    car.car_type = carType ?? car.car_type;
+    car.governorateId = governorate.id;
+    car.governorateInfo = governorate;
     car.images = [...keptImagesArray, ...newImages];
 
-    if (type_id) {
-      const newType = await carTypeReposetry.findOneBy({ id: type_id });
-      if (!newType) {
-        throw new APIError(
-          HttpStatusCode.NOT_FOUND,
-          ErrorMessages.generateErrorMessage("type car", "not found", lang)
-        );
-      }
+    const savedCar = await carRepository.save(car);
 
-      car.car_type = newType;
-    }
+    await specificationValueRepostry.delete({ entity: EntitySpecification.car, entity_id: savedCar.id });
 
-    const updatedCar = await carRepository.save(car);
-
-    if (attributes && attributes.length > 0) {
-      const newAttributes = await Promise.all(
-        attributes.map(async (attr) => {
-          const attribute = await attributeValueRepository.findOneBy({
-            id: attr.id,
-          });
-
-          if (!attribute) {
-            throw new APIError(
-              HttpStatusCode.NOT_FOUND,
-              ErrorMessages.generateErrorMessage(userMessage, "not found", lang)
-            );
-          }
-
-          return attributeValueRepository.merge(attribute, {
-            value: attr.value,
-          });
-        })
-      );
-
-      await attributeValueRepository.save(newAttributes);
-    }
-
+    let specificationsList = [];
     if (specifications && specifications.length > 0) {
-      const newSpecifications = await Promise.all(
-        specifications.map(async (item) => {
-          const specification = await specificationValueRepostry.findOneBy({
-            id: item.id,
-          });
+      const specPromises = specifications.map(async (item) => {
+        const spec = await specificationRepostry.findOneBy({ id: item.id });
+        if (!spec) {
+          throw new APIError(
+            HttpStatusCode.NOT_FOUND,
+            ErrorMessages.generateErrorMessage("Specification", "not found", lang)
+          );
+        }
+        return specificationValueRepostry.create({
+          specification: spec,
+          entity: EntitySpecification.car,
+          entity_id: savedCar.id,
+          IsActive: true,
+        });
+      });
 
-          if (!specification) {
-            throw new APIError(
-              HttpStatusCode.NOT_FOUND,
-              ErrorMessages.generateErrorMessage(userMessage, "not found", lang)
-            );
-          }
-
-          return specificationValueRepostry.merge(specification, {
-            IsActive: item.isActive,
-          });
-        })
-      );
-
-      await specificationValueRepostry.save(newSpecifications);
+      specificationsList = await specificationValueRepostry.save(await Promise.all(specPromises));
     }
 
-    res
-      .status(HttpStatusCode.OK)
-      .json(
-        ApiResponse.success(
-          updatedCar,
-          ErrorMessages.generateErrorMessage(entity, "updated", lang)
-        )
-      );
+    await attributeValueRepository.delete({ entity: EntityAttribute.car, entity_id: savedCar.id });
+
+    let attributeList = [];
+    if (attributes && attributes.length > 0) {
+      const attrPromises = attributes.map(async (attr) => {
+        const attribute = await attributeRepository.findOneBy({ id: attr.id });
+        if (!attribute) {
+          throw new APIError(
+            HttpStatusCode.NOT_FOUND,
+            ErrorMessages.generateErrorMessage("Attribute", "not found", lang)
+          );
+        }
+        return attributeValueRepository.create({
+          attribute,
+          entity: EntityAttribute.car,
+          entity_id: savedCar.id,
+          value: attr.value,
+        });
+      });
+
+      attributeList = await attributeValueRepository.save(await Promise.all(attrPromises));
+    }
+
+    res.status(HttpStatusCode.OK).json(
+      ApiResponse.success(
+        {
+          car: savedCar,
+          attributes: attributeList,
+          specifications: specificationsList,
+        },
+        ErrorMessages.generateErrorMessage(entity, "updated", lang)
+      )
+    );
   } catch (error) {
     next(error);
   }
