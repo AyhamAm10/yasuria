@@ -62,6 +62,6 @@ export class ErrorMessages {
       }
     };
 
-    return messages[lang]?.[errorType] || messages[lang]["internal"] || `${entity} error occurred`;
+    return messages[lang]?.[errorType] || messages[lang]?.["internal"] || `${entity} error occurred`;
   }
 }
