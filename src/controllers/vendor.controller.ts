@@ -55,6 +55,6 @@ export const deleteProfile = async (req: Request, res: Response, next: NextFunct
 
     res.status(HttpStatusCode.OK).json(ApiResponse.success(null, ErrorMessages.generateErrorMessage("المستخدم", "deleted", lang)));
   } catch (error) {
-    next(new APIError(HttpStatusCode.INTERNAL_SERVER, ErrorMessages.generateErrorMessage("المستخدم", "internal", req.headers["accept-language"] || "ar")));
+    next(error);
   }
 };
