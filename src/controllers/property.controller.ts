@@ -377,7 +377,7 @@ export const updateProperty = async (
     } = req.body;
 
     const userId = req["currentUser"].id;
-    const id = Number(req.params)
+    const id = Number(req.params.id)
     const user = await AppDataSource.getRepository(User).findOne({
       where: { id: userId },
     });
@@ -388,10 +388,12 @@ export const updateProperty = async (
         ErrorMessages.generateErrorMessage(userMessage, "not found", lang)
       );
     }
-
+    
     const property = await propertyRepository.findOne({
-      where: { id, user },
+      where: { id , user:{id: user.id} },
     });
+
+    console.log(property)
     if (!property) {
       throw new APIError(
         HttpStatusCode.NOT_FOUND,
@@ -424,7 +426,6 @@ export const updateProperty = async (
       );
     }
 
-    // تحديث بيانات العقار
     propertyRepository.merge(property, {
       title_ar,
       title_en,
@@ -446,7 +447,6 @@ export const updateProperty = async (
 
     const updatedProperty = await propertyRepository.save(property);
 
-    // حذف attributes القديمة وإضافة الجديدة
     if (attributes && attributes.length > 0) {
       await attributeValueRepository.delete({
         entity: EntityAttribute.properties,
@@ -475,7 +475,6 @@ export const updateProperty = async (
       await attributeValueRepository.save(await Promise.all(attributePromises));
     }
 
-    // حذف specifications القديمة وإضافة الجديدة
     if (specifications && specifications.length > 0) {
       await specificationValueRepository.delete({
         entity: EntitySpecification.properties,
@@ -517,6 +516,7 @@ export const updateProperty = async (
       )
     );
   } catch (error) {
+    console.log(error)
     next(error);
   }
 };
