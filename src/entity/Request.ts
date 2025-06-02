@@ -22,7 +22,7 @@ export class Request {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User , {onDelete: "CASCADE"} )
   user: User;
 
   @Column("text")

@@ -40,3 +40,21 @@ export const updateProfile = async (req: Request, res: Response, next: NextFunct
     next(new APIError(HttpStatusCode.INTERNAL_SERVER, ErrorMessages.generateErrorMessage("الملف الشخصي", "internal", req.headers["accept-language"] || "ar")));
   }
 };
+
+export const deleteProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const lang = req.headers["accept-language"] || "ar";
+    const userRepository = AppDataSource.getRepository(User);
+    const user = req.currentUser;
+
+    if (!user) {
+      return next(new APIError(HttpStatusCode.UNAUTHORIZED, ErrorMessages.generateErrorMessage("المستخدم", "unauthorized", lang)));
+    }
+
+    await userRepository.remove(user);
+
+    res.status(HttpStatusCode.OK).json(ApiResponse.success(null, ErrorMessages.generateErrorMessage("المستخدم", "deleted", lang)));
+  } catch (error) {
+    next(new APIError(HttpStatusCode.INTERNAL_SERVER, ErrorMessages.generateErrorMessage("المستخدم", "internal", req.headers["accept-language"] || "ar")));
+  }
+};

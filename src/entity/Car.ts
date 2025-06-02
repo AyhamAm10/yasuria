@@ -67,7 +67,7 @@ export class Car {
   @ManyToOne(() => BrokerOffice, { nullable: true })
   broker_office: BrokerOffice;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User , {onDelete: "CASCADE"})
   user: User;
 
   @ManyToOne(() => CarType)

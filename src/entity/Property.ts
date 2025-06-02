@@ -81,7 +81,7 @@ export class Property {
   @ManyToOne(() => PropertyType)
   property_type: PropertyType;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User , {onDelete: "CASCADE"} )
   user: User;
 
   @ManyToOne(() => Governorate)
