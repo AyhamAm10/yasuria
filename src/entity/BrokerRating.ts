@@ -10,7 +10,7 @@ export class BrokerRating {
   @ManyToOne(() => BrokerOffice)
   broker_office: BrokerOffice;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User , {onDelete:"CASCADE"})
   user: User;
 
   @Column('decimal', { precision: 2, scale: 1 })
