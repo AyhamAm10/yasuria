@@ -20,9 +20,9 @@ export class CarSearchController {
         min_price,
         max_price,
         location,
+        governorate_id,
         attributes,
         specifications,
-        governorate_id,
         page = 1,
         limit = 20,
       } = req.body;
