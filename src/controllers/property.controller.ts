@@ -374,10 +374,11 @@ export const updateProperty = async (
       seller_type,
       listing_type,
       governorate_id,
+      keptImages,
     } = req.body;
 
     const userId = req["currentUser"].id;
-    const id = Number(req.params.id)
+    const id = Number(req.params.id);
     const user = await AppDataSource.getRepository(User).findOne({
       where: { id: userId },
     });
@@ -388,12 +389,12 @@ export const updateProperty = async (
         ErrorMessages.generateErrorMessage(userMessage, "not found", lang)
       );
     }
-    
+
     const property = await propertyRepository.findOne({
-      where: { id , user:{id: user.id} },
+      where: { id, user: { id: user.id } },
     });
 
-    console.log(property)
+    console.log(property);
     if (!property) {
       throw new APIError(
         HttpStatusCode.NOT_FOUND,
@@ -409,11 +410,16 @@ export const updateProperty = async (
       where: { user },
     });
 
-    const images = req.files
+    const newImages = req.files
       ? (req.files as Express.Multer.File[]).map(
           (file) => `/src/public/uploads/${file.filename}`
         )
       : property.images;
+
+    let keptImagesArray: string[] = [];
+    if (keptImages) {
+      keptImagesArray = JSON.parse(keptImages);
+    }
 
     const governorate = governorate_id
       ? await governorateReposetory.findOneBy({ id: governorate_id })
@@ -426,6 +432,7 @@ export const updateProperty = async (
       );
     }
 
+    property.images = [...keptImagesArray, ...newImages];
     propertyRepository.merge(property, {
       title_ar,
       title_en,
@@ -436,7 +443,6 @@ export const updateProperty = async (
       price_usd,
       latitude,
       longitude,
-      images,
       broker_office: isBrokerOffice || property.broker_office,
       property_type: propertyType,
       seller_type,
@@ -516,11 +522,10 @@ export const updateProperty = async (
       )
     );
   } catch (error) {
-    console.log(error)
+    console.log(error);
     next(error);
   }
 };
-
 
 export const deleteProperty = async (
   req: Request,
