@@ -5,7 +5,7 @@ import { checkRole } from "../middleware/checkRole.middleware";
 import { UserRole } from "../entity/User";
 import { PropertySearchController } from "../controllers/propertySearch.controller";
 import { CarSearchController } from "../controllers/carSearch.controller";
-import { updateProfile } from "../controllers/vendor.controller";
+import { deleteProfile, updateProfile } from "../controllers/vendor.controller";
 
 
 
@@ -19,6 +19,11 @@ profileRouter.put("/profile",
     upload.single("image"),
     updateProfile
 );
+
+profileRouter.delete("/profile",
+    authMiddleware,
+    deleteProfile
+)
 
 
 
