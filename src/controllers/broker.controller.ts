@@ -164,7 +164,7 @@ export class BrokerController {
         service_id,
         page = "1",
         limit = "10",
-        orderByFollowers, 
+        orderByFollowers,
       } = req.query;
 
       const lang = req.headers["accept-language"] || "ar";
@@ -432,23 +432,23 @@ export class BrokerController {
         await brokerofficeServiceRepository.delete({
           broker_office: { id: broker.id },
         });
-        
+
         const validServices = await serviceRepository.find({
           where: { id: In(services) },
         });
-        
+
         if (validServices.length === 0) {
           throw new Error("No valid services found");
         }
-        
+
         const brokerServices = validServices.map((service) =>
           brokerofficeServiceRepository.create({
             service: service,
             broker_office: { id: broker.id },
           })
         );
-        
-        console.log(broker)
+
+        console.log(broker);
         await brokerofficeServiceRepository.save(brokerServices);
       }
 
@@ -506,7 +506,7 @@ export class BrokerController {
         );
       }
 
-      if (broker.user !== user) {
+      if (broker.user.id !== user.id) {
         throw new APIError(
           HttpStatusCode.FORBIDDEN,
           ErrorMessages.generateErrorMessage(entity, "forbidden", lang)
