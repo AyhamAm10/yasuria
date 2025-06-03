@@ -9,7 +9,7 @@ export class ServiceCategory {
   @Column()
   name_ar: string;
 
-  @Column()
+  @Column({nullable:true})
   name_en: string;
 
   @Column({
