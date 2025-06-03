@@ -21,280 +21,289 @@ const serviceRepository = AppDataSource.getRepository(Service);
 const brokerofficeServiceRepository =
   AppDataSource.getRepository(brokerService);
 
-const governorateRepository = AppDataSource.getRepository(Governorate)
+const governorateRepository = AppDataSource.getRepository(Governorate);
 export class BrokerController {
   static async createBrokerOffice(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
-  try {
-    const lang = req.headers["accept-language"] || "ar";
-    const entity = lang === "ar" ? "المكتب الوسيط" : "broker office";
-    const serviceLang = lang === "ar" ? "ID الخدمة" : "ID service";
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const lang = req.headers["accept-language"] || "ar";
+      const entity = lang === "ar" ? "المكتب الوسيط" : "broker office";
+      const serviceLang = lang === "ar" ? "ID الخدمة" : "ID service";
 
-    // await validator(brokerOfficeSchema(lang), req.body);
+      // await validator(brokerOfficeSchema(lang), req.body);
 
-    const {
-      phone,
-      office_name,
-      user_name,
-      city,
-      commercial_number,
-      whatsapp_number,
-      governorate_id,
-      address,
-      lat,
-      long,
-      working_hours_from,
-      working_hours_to,
-      description,
-      services,
-    } = req.body;
+      const {
+        phone,
+        office_name,
+        user_name,
+        city,
+        commercial_number,
+        whatsapp_number,
+        governorate_id,
+        address,
+        lat,
+        long,
+        working_hours_from,
+        working_hours_to,
+        description,
+        services,
+      } = req.body;
 
-    const image = req.file ? req.file.filename : "";
+      const image = req.file ? req.file.filename : "";
 
-    const userExists = await userRepository.findOne({ where: { phone } });
-    if (userExists) {
-      throw new APIError(
-        HttpStatusCode.BAD_REQUEST,
-        ErrorMessages.generateErrorMessage(entity, "already exists", lang)
-      );
-    }
+      const userExists = await userRepository.findOne({ where: { phone } });
+      if (userExists) {
+        throw new APIError(
+          HttpStatusCode.BAD_REQUEST,
+          ErrorMessages.generateErrorMessage(entity, "already exists", lang)
+        );
+      }
 
-    const newUser = userRepository.create({
-      phone,
-      city,
-      name: user_name,
-      isActive: true,
-      role: UserRole.vendor,
-    });
-    const user = await userRepository.save(newUser);
+      const newUser = userRepository.create({
+        phone,
+        city,
+        name: user_name,
+        isActive: true,
+        role: UserRole.vendor,
+      });
+      const user = await userRepository.save(newUser);
 
-    const governorate = await governorateRepository.findOne({
-      where: { id: governorate_id },
-    });
-
-    if (!governorate) {
-      throw new APIError(
-        HttpStatusCode.NOT_FOUND,
-        ErrorMessages.generateErrorMessage("المحافظة", "not found", lang)
-      );
-    }
-
-    const newBrokerOffice = brokerRepository.create({
-      user,
-      office_name,
-      image: image || "default_broker.jpg",
-      commercial_number,
-      whatsapp_number,
-      governorateId: governorate.id,
-      governorateInfo: governorate,
-      address,
-      lat,
-      long,
-      working_hours_from,
-      working_hours_to,
-      description,
-      rating_avg: 0,
-      followers_count: 0,
-    });
-
-    const savedBroker = await brokerRepository.save(newBrokerOffice);
-
-    if (services) {
-      const servicePromises = services.map(async (id: number) => {
-        const service = await serviceRepository.findOne({ where: { id } });
-
-        if (!service) {
-          throw new APIError(
-            HttpStatusCode.NOT_FOUND,
-            ErrorMessages.generateErrorMessage(serviceLang, "not found", lang)
-          );
-        }
-
-        return brokerofficeServiceRepository.create({
-          service,
-          broker_office: savedBroker,
-        });
+      const governorate = await governorateRepository.findOne({
+        where: { id: governorate_id },
       });
 
-      const servicesToSave = await Promise.all(servicePromises);
-      await brokerofficeServiceRepository.save(servicesToSave);
-    }
+      if (!governorate) {
+        throw new APIError(
+          HttpStatusCode.NOT_FOUND,
+          ErrorMessages.generateErrorMessage("المحافظة", "not found", lang)
+        );
+      }
 
-    const accessToken = jwt.sign(
-      {
-        userId: user.id,
-        phone: user.phone,
-        role: UserRole.vendor,
-      },
-      process.env.ACCESS_TOKEN_SECRET!,
-      { expiresIn: "20m" }
-    );
+      const newBrokerOffice = brokerRepository.create({
+        user,
+        office_name,
+        image: image || "default_broker.jpg",
+        commercial_number,
+        whatsapp_number,
+        governorateId: governorate.id,
+        governorateInfo: governorate,
+        address,
+        lat,
+        long,
+        working_hours_from,
+        working_hours_to,
+        description,
+        rating_avg: 0,
+        followers_count: 0,
+      });
 
-    const refreshToken = jwt.sign(
-      {
-        userId: user.id,
-        phone: user.phone,
-        role: UserRole.vendor,
-      },
-      process.env.REFRESH_TOKEN_SECRET!,
-      { expiresIn: "7d" }
-    );
+      const savedBroker = await brokerRepository.save(newBrokerOffice);
 
-    res.cookie("jwt", refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-    });
+      if (services) {
+        const servicePromises = services.map(async (id: number) => {
+          const service = await serviceRepository.findOne({ where: { id } });
 
-    res.status(HttpStatusCode.OK_CREATED).json(
-      ApiResponse.success(
+          if (!service) {
+            throw new APIError(
+              HttpStatusCode.NOT_FOUND,
+              ErrorMessages.generateErrorMessage(serviceLang, "not found", lang)
+            );
+          }
+
+          return brokerofficeServiceRepository.create({
+            service,
+            broker_office: savedBroker,
+          });
+        });
+
+        const servicesToSave = await Promise.all(servicePromises);
+        await brokerofficeServiceRepository.save(servicesToSave);
+      }
+
+      const accessToken = jwt.sign(
         {
-          accessToken,
-          broker: savedBroker,
-          user,
+          userId: user.id,
+          phone: user.phone,
+          role: UserRole.vendor,
         },
-        ErrorMessages.generateErrorMessage(entity, "created", lang)
-      )
-    );
-  } catch (error) {
-    console.log(error);
-    next(error);
+        process.env.ACCESS_TOKEN_SECRET!,
+        { expiresIn: "20m" }
+      );
+
+      const refreshToken = jwt.sign(
+        {
+          userId: user.id,
+          phone: user.phone,
+          role: UserRole.vendor,
+        },
+        process.env.REFRESH_TOKEN_SECRET!,
+        { expiresIn: "7d" }
+      );
+
+      res.cookie("jwt", refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+      });
+
+      res.status(HttpStatusCode.OK_CREATED).json(
+        ApiResponse.success(
+          {
+            accessToken,
+            broker: savedBroker,
+            user,
+          },
+          ErrorMessages.generateErrorMessage(entity, "created", lang)
+        )
+      );
+    } catch (error) {
+      console.log(error);
+      next(error);
+    }
   }
-}
 
   static async getBrokerOffices(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
-  try {
-    const {
-      office_name,
-      governorate_id,
-      minRating,
-      maxRating,
-      service_id,
-      page = "1",
-      limit = "10",
-      orderByFollowers,
-    } = req.query;
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const {
+        office_name,
+        governorate_id,
+        minRating,
+        maxRating,
+        service_id,
+        page = "1",
+        limit = "10",
+        orderByFollowers,
+      } = req.query;
 
-    const lang = req.headers["accept-language"] || "ar";
-    const entity = lang === "ar" ? "المكاتب" : "broker offices";
-    const currentUserId = req["currentUser"]?.id;
+      const lang = req.headers["accept-language"] || "ar";
+      const entity = lang === "ar" ? "المكاتب" : "broker offices";
+      const currentUserId = req["currentUser"]?.id;
 
-    const pageNumber = Math.max(Number(page), 1);
-    const pageSize = Math.max(Number(limit), 1);
-    const skip = (pageNumber - 1) * pageSize;
+      const pageNumber = Math.max(Number(page), 1);
+      const pageSize = Math.max(Number(limit), 1);
+      const skip = (pageNumber - 1) * pageSize;
 
-    const query = brokerRepository
-      .createQueryBuilder("broker")
-      .leftJoinAndSelect("broker.user", "user")
-      .leftJoinAndSelect("broker.broker_service", "brokerService")
-      .leftJoinAndSelect("brokerService.service", "service")
-      .leftJoinAndSelect("broker.ratings", "rating")
-      .leftJoinAndSelect("broker.governorateInfo", "governorate")
-      .loadRelationCountAndMap("broker.followers_count", "broker.followers");
+      const query = brokerRepository
+        .createQueryBuilder("broker")
+        .leftJoinAndSelect("broker.user", "user")
+        .leftJoinAndSelect("broker.broker_service", "brokerService")
+        .leftJoinAndSelect("brokerService.service", "service")
+        .leftJoinAndSelect("broker.ratings", "rating")
+        .leftJoinAndSelect("broker.governorateInfo", "governorate")
+        .loadRelationCountAndMap("broker.followers_count", "broker.followers");
 
-    if (office_name) {
-      query.andWhere("broker.office_name ILIKE :office_name", {
-        office_name: `%${office_name}%`,
-      });
-    }
+      if (office_name) {
+        query.andWhere("broker.office_name ILIKE :office_name", {
+          office_name: `%${office_name}%`,
+        });
+      }
 
-    if (governorate_id) {
-      query.andWhere("governorate.id = :governorate_id", {
-        governorate_id: Number(governorate_id),
-      });
-    }
+      if (governorate_id) {
+        query.andWhere("governorate.id = :governorate_id", {
+          governorate_id: Number(governorate_id),
+        });
+      }
 
-    if (service_id) {
-      query.andWhere("service.id = :service_id", {
-        service_id: Number(service_id),
-      });
-    }
+      if (service_id) {
+        query.andWhere("service.id = :service_id", {
+          service_id: Number(service_id),
+        });
+      }
 
-    if (minRating || maxRating) {
-      query.leftJoin("broker.broker_ratings", "r");
-      if (minRating)
-        query.having("AVG(r.rating) >= :minRating", { minRating });
-      if (maxRating)
-        query.having("AVG(r.rating) <= :maxRating", { maxRating });
-      query.groupBy("broker.id");
-    }
+      if (minRating || maxRating) {
+        query.leftJoin("broker.broker_ratings", "r");
+        if (minRating)
+          query.having("AVG(r.rating) >= :minRating", { minRating });
+        if (maxRating)
+          query.having("AVG(r.rating) <= :maxRating", { maxRating });
+        query.groupBy("broker.id");
+      }
 
-    if (orderByFollowers) {
-      query.orderBy("broker.followers_count", orderByFollowers === "asc" ? "ASC" : "DESC");
-    } else {
-      query.orderBy("broker.created_at", "DESC");
-    }
+      if (orderByFollowers) {
+        query.orderBy(
+          "broker.followers_count",
+          orderByFollowers === "asc" ? "ASC" : "DESC"
+        );
+      } else {
+        query.orderBy("broker.created_at", "DESC");
+      }
 
-    const [brokers, totalCount] = await query.skip(skip).take(pageSize).getManyAndCount();
+      const [brokers, totalCount] = await query
+        .skip(skip)
+        .take(pageSize)
+        .getManyAndCount();
 
-    const brokersWithRating = await Promise.all(
-      brokers.map(async (broker) => {
-        const { avg } = await AppDataSource.getRepository(BrokerRating)
-          .createQueryBuilder("r")
-          .select("AVG(r.rating)", "avg")
-          .where("r.broker_office = :brokerId", { brokerId: broker.id })
-          .getRawOne();
-        return {
-          ...broker,
-          rating_avg: avg ? parseFloat(avg).toFixed(2) : "0.00",
-        };
-      })
-    );
-
-    const brokersWithFollow = await Promise.all(
-      brokersWithRating.map(async (broker) => {
-        let is_following = false;
-
-        if (currentUserId) {
-          const existingFollow = await AppDataSource.getRepository(BrokerFollower).findOne({
-            where: {
-              broker_office: { id: broker.id },
-              user: { id: currentUserId },
-            },
-          });
-          is_following = !!existingFollow;
-        }
-
-        return {
-          ...broker,
-          is_following,
-        };
-      })
-    );
-
-    const pagination = {
-      total: totalCount,
-      page: pageNumber,
-      limit: pageSize,
-      totalPages: Math.ceil(totalCount / pageSize),
-    };
-
-    if (brokers.length === 0) {
-      throw new APIError(
-        HttpStatusCode.NOT_FOUND,
-        ErrorMessages.generateErrorMessage(entity, "not found", lang)
+      const brokersWithRating = await Promise.all(
+        brokers.map(async (broker) => {
+          const { avg } = await AppDataSource.getRepository(BrokerRating)
+            .createQueryBuilder("r")
+            .select("AVG(r.rating)", "avg")
+            .where("r.broker_office = :brokerId", { brokerId: broker.id })
+            .getRawOne();
+          return {
+            ...broker,
+            rating_avg: avg ? parseFloat(avg).toFixed(2) : "0.00",
+          };
+        })
       );
+
+      const brokersWithFollow = await Promise.all(
+        brokersWithRating.map(async (broker) => {
+          let is_following = false;
+
+          if (currentUserId) {
+            const existingFollow = await AppDataSource.getRepository(
+              BrokerFollower
+            ).findOne({
+              where: {
+                broker_office: { id: broker.id },
+                user: { id: currentUserId },
+              },
+            });
+            is_following = !!existingFollow;
+          }
+
+          return {
+            ...broker,
+            is_following,
+          };
+        })
+      );
+
+      const pagination = {
+        total: totalCount,
+        page: pageNumber,
+        limit: pageSize,
+        totalPages: Math.ceil(totalCount / pageSize),
+      };
+
+      if (brokers.length === 0) {
+        throw new APIError(
+          HttpStatusCode.NOT_FOUND,
+          ErrorMessages.generateErrorMessage(entity, "not found", lang)
+        );
+      }
+
+      res
+        .status(HttpStatusCode.OK)
+        .json(
+          ApiResponse.success(
+            brokersWithFollow,
+            ErrorMessages.generateErrorMessage(entity, "retrieved", lang),
+            pagination
+          )
+        );
+    } catch (error) {
+      next(error);
     }
-
-    res.status(HttpStatusCode.OK).json(
-      ApiResponse.success(
-        brokersWithFollow,
-        ErrorMessages.generateErrorMessage(entity, "retrieved", lang),
-        pagination
-      )
-    );
-  } catch (error) {
-    next(error);
   }
-}
-
 
   static async getBrokerProfile(
     req: Request,
@@ -317,6 +326,7 @@ export class BrokerController {
           "broker_service",
           "broker_service.service",
           "ratings",
+          "governorateInfo",
         ],
       });
 
@@ -408,7 +418,7 @@ export class BrokerController {
         office_name,
         commercial_number,
         whatsapp_number,
-        governorate,
+        governorate_id,
         address,
         lat,
         long,
@@ -424,7 +434,6 @@ export class BrokerController {
         broker.commercial_number = commercial_number;
       if (typeof whatsapp_number === "string")
         broker.whatsapp_number = whatsapp_number;
-      if (typeof governorate === "string") broker.governorate = governorate;
       if (typeof address === "string") broker.address = address;
       if (typeof lat === "number") broker.lat = lat;
       if (typeof long === "number") broker.long = long;
@@ -435,6 +444,22 @@ export class BrokerController {
       if (typeof description === "string") broker.description = description;
 
       if (req.file) broker.image = req.file.filename;
+
+      if (governorate_id) {
+        const governorateEntity = await governorateRepository.findOneBy({
+          id: governorate_id,
+        });
+
+        if (!governorateEntity) {
+          throw new APIError(
+            HttpStatusCode.NOT_FOUND,
+            ErrorMessages.generateErrorMessage("المحافظة", "not found", lang)
+          );
+        }
+
+        broker.governorateId = governorateEntity.id;
+        broker.governorateInfo = governorateEntity;
+      }
 
       if (services) {
         await brokerofficeServiceRepository.delete({
