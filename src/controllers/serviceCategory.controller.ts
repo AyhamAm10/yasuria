@@ -115,6 +115,7 @@ export class ServiceCategoryController {
 
       const services = await serviceRepository.find({
         where: { category },
+        relations:["services"]
       });
 
       res
