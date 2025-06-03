@@ -109,7 +109,7 @@ export const createService = async (
   try {
     const lang = req.headers["accept-language"] || "ar";
     const entity = lang == "ar" ? "الخدمة" : "service";
-    const { category_id } = req.params;
+    const { category_id } = req.body;
     // await validator(addServiceSchema, req.body);
 
     const icon = req.file ? req.file.filename : "";
@@ -117,7 +117,7 @@ export const createService = async (
     const created = serviceRepository.create({ ...req.body, icon });
     const newService = Array.isArray(created) ? created[0] : created;
     if (category_id) {
-      const category = await serviceCategoryRepository.findOneBy({ id: Number(category_id) });
+      const category = await serviceCategoryRepository.findOneBy({ id: category_id });
       if (!category) {
         throw new APIError(
           HttpStatusCode.NOT_FOUND,
