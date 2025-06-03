@@ -7,7 +7,7 @@ export class BrokerRating {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => BrokerOffice)
+  @ManyToOne(() => BrokerOffice , {onDelete: "CASCADE"} )
   broker_office: BrokerOffice;
 
   @ManyToOne(() => User , {onDelete:"CASCADE"})

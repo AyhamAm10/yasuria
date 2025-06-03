@@ -6,7 +6,7 @@ export class BrokerPortfolio {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => BrokerOffice, (office) => office.portfolios)
+  @ManyToOne(() => BrokerOffice, (office) => office.portfolios , {onDelete: "CASCADE"})
   broker_office: BrokerOffice;
 
   @Column()
