@@ -19,7 +19,7 @@ serviceCategoryRouter.post(
   "/",
   authMiddleware,
   checkRole([UserRole.superAdmin]),
-  uploadIcon.single("icon"),
+  upload.single("icon"),
   ServiceCategoryController.createCategory
 );
 
@@ -39,7 +39,7 @@ serviceCategoryRouter.put(
   "/:id",
   authMiddleware,
   checkRole([UserRole.superAdmin]),
-  uploadIcon.single("icon"),
+  upload.single("icon"),
   ServiceCategoryController.updateCategory
 );
 
