@@ -131,6 +131,54 @@ export class ServiceCategoryController {
     } catch (error) {}
   }
 
+  static async updateCategory(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const lang = req.headers["accept-language"] || "ar";
+    const entity = lang === "ar" ? "سمة الخدمة" : "service category";
+
+    const categoryId = Number(req.params.id);
+    const { name, type }: any = req.body;
+
+    const category = await serviceCategoryRepository.findOneBy({ id: categoryId });
+
+    if (!category) {
+      throw new APIError(
+        HttpStatusCode.NOT_FOUND,
+        ErrorMessages.generateErrorMessage(entity, "not found", lang)
+      );
+    }
+
+    if (name && name !== category.name) {
+      const existingCategory = await serviceCategoryRepository.findOne({ where: { name } });
+      if (existingCategory) {
+        throw new APIError(
+          HttpStatusCode.CONFLICT,
+          ErrorMessages.generateErrorMessage(entity, "already exists", lang)
+        );
+      }
+    }
+
+    category.name = name ?? category.name;
+    category.type = type ?? category.type;
+    category.icon = req.file ? req.file.filename : category.icon;
+
+    const updatedCategory = await serviceCategoryRepository.save(category);
+
+    res.status(HttpStatusCode.OK).json(
+      ApiResponse.success(
+        updatedCategory,
+        ErrorMessages.generateErrorMessage(entity, "updated", lang)
+      )
+    );
+  } catch (error) {
+    next(error);
+  }
+}
+
   static async deleteCategory(
     req: Request,
     res: Response,
