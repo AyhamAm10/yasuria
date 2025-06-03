@@ -165,144 +165,136 @@ export class BrokerController {
   }
 }
 
-
   static async getBrokerOffices(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
-    try {
-      const {
-        office_name,
-        governorate,
-        minRating,
-        maxRating,
-        service_id,
-        page = "1",
-        limit = "10",
-        orderByFollowers,
-      } = req.query;
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const {
+      office_name,
+      governorate_id,
+      minRating,
+      maxRating,
+      service_id,
+      page = "1",
+      limit = "10",
+      orderByFollowers,
+    } = req.query;
 
-      const lang = req.headers["accept-language"] || "ar";
-      const entity = lang === "ar" ? "المكاتب" : "broker offices";
-      const currentUserId = req["currentUser"]?.id;
+    const lang = req.headers["accept-language"] || "ar";
+    const entity = lang === "ar" ? "المكاتب" : "broker offices";
+    const currentUserId = req["currentUser"]?.id;
 
-      const pageNumber = Math.max(Number(page), 1);
-      const pageSize = Math.max(Number(limit), 1);
-      const skip = (pageNumber - 1) * pageSize;
+    const pageNumber = Math.max(Number(page), 1);
+    const pageSize = Math.max(Number(limit), 1);
+    const skip = (pageNumber - 1) * pageSize;
 
-      const query = brokerRepository
-        .createQueryBuilder("broker")
-        .leftJoinAndSelect("broker.user", "user")
-        .leftJoinAndSelect("broker.broker_service", "brokerService")
-        .leftJoinAndSelect("brokerService.service", "service")
-        .leftJoinAndSelect("broker.ratings", "rating")
-        .loadRelationCountAndMap("broker.followers_count", "broker.followers");
+    const query = brokerRepository
+      .createQueryBuilder("broker")
+      .leftJoinAndSelect("broker.user", "user")
+      .leftJoinAndSelect("broker.broker_service", "brokerService")
+      .leftJoinAndSelect("brokerService.service", "service")
+      .leftJoinAndSelect("broker.ratings", "rating")
+      .leftJoinAndSelect("broker.governorateInfo", "governorate")
+      .loadRelationCountAndMap("broker.followers_count", "broker.followers");
 
-      if (office_name)
-        query.andWhere("broker.office_name ILIKE :office_name", {
-          office_name: `%${office_name}%`,
-        });
-
-      if (governorate)
-        query.andWhere("broker.governorate ILIKE :governorate", {
-          governorate: `%${governorate}%`,
-        });
-
-      if (service_id) {
-        query.andWhere("service.id = :service_id", {
-          service_id: Number(service_id),
-        });
-      }
-
-      if (minRating || maxRating) {
-        query.leftJoin("broker.broker_ratings", "r");
-        if (minRating)
-          query.having("AVG(r.rating) >= :minRating", { minRating });
-        if (maxRating)
-          query.having("AVG(r.rating) <= :maxRating", { maxRating });
-        query.groupBy("broker.id");
-      }
-
-      if (orderByFollowers) {
-        if (orderByFollowers === "asc") {
-          query.orderBy("broker.followers_count", "ASC");
-        } else if (orderByFollowers === "desc") {
-          query.orderBy("broker.followers_count", "DESC");
-        }
-      } else {
-        query.orderBy("broker.created_at", "DESC");
-      }
-
-      const [brokers, totalCount] = await query
-        .skip(skip)
-        .take(pageSize)
-        .getManyAndCount();
-
-      const brokersWithRating = await Promise.all(
-        brokers.map(async (broker) => {
-          const { avg } = await AppDataSource.getRepository(BrokerRating)
-            .createQueryBuilder("r")
-            .select("AVG(r.rating)", "avg")
-            .where("r.broker_office = :brokerId", { brokerId: broker.id })
-            .getRawOne();
-          return {
-            ...broker,
-            rating_avg: avg ? parseFloat(avg).toFixed(2) : "0.00",
-          };
-        })
-      );
-
-      const brokersWithFollow = await Promise.all(
-        brokersWithRating.map(async (broker) => {
-          let is_following = false;
-
-          if (currentUserId) {
-            const existingFollow = await AppDataSource.getRepository(
-              BrokerFollower
-            ).findOne({
-              where: {
-                broker_office: { id: broker.id },
-                user: { id: currentUserId },
-              },
-            });
-            is_following = !!existingFollow;
-          }
-
-          return {
-            ...broker,
-            is_following,
-          };
-        })
-      );
-
-      const pagination = {
-        total: totalCount,
-        page: pageNumber,
-        limit: pageSize,
-        totalPages: Math.ceil(totalCount / pageSize),
-      };
-
-      if (brokers.length === 0) {
-        throw new APIError(
-          HttpStatusCode.NOT_FOUND,
-          ErrorMessages.generateErrorMessage(entity, "not found", lang)
-        );
-      }
-
-      res
-        .status(HttpStatusCode.OK)
-        .json(
-          ApiResponse.success(
-            brokersWithFollow,
-            ErrorMessages.generateErrorMessage(entity, "retrieved", lang),
-            pagination
-          )
-        );
-    } catch (error) {
-      next(error);
+    if (office_name) {
+      query.andWhere("broker.office_name ILIKE :office_name", {
+        office_name: `%${office_name}%`,
+      });
     }
+
+    if (governorate_id) {
+      query.andWhere("governorate.id = :governorate_id", {
+        governorate_id: Number(governorate_id),
+      });
+    }
+
+    if (service_id) {
+      query.andWhere("service.id = :service_id", {
+        service_id: Number(service_id),
+      });
+    }
+
+    if (minRating || maxRating) {
+      query.leftJoin("broker.broker_ratings", "r");
+      if (minRating)
+        query.having("AVG(r.rating) >= :minRating", { minRating });
+      if (maxRating)
+        query.having("AVG(r.rating) <= :maxRating", { maxRating });
+      query.groupBy("broker.id");
+    }
+
+    if (orderByFollowers) {
+      query.orderBy("broker.followers_count", orderByFollowers === "asc" ? "ASC" : "DESC");
+    } else {
+      query.orderBy("broker.created_at", "DESC");
+    }
+
+    const [brokers, totalCount] = await query.skip(skip).take(pageSize).getManyAndCount();
+
+    const brokersWithRating = await Promise.all(
+      brokers.map(async (broker) => {
+        const { avg } = await AppDataSource.getRepository(BrokerRating)
+          .createQueryBuilder("r")
+          .select("AVG(r.rating)", "avg")
+          .where("r.broker_office = :brokerId", { brokerId: broker.id })
+          .getRawOne();
+        return {
+          ...broker,
+          rating_avg: avg ? parseFloat(avg).toFixed(2) : "0.00",
+        };
+      })
+    );
+
+    const brokersWithFollow = await Promise.all(
+      brokersWithRating.map(async (broker) => {
+        let is_following = false;
+
+        if (currentUserId) {
+          const existingFollow = await AppDataSource.getRepository(BrokerFollower).findOne({
+            where: {
+              broker_office: { id: broker.id },
+              user: { id: currentUserId },
+            },
+          });
+          is_following = !!existingFollow;
+        }
+
+        return {
+          ...broker,
+          is_following,
+        };
+      })
+    );
+
+    const pagination = {
+      total: totalCount,
+      page: pageNumber,
+      limit: pageSize,
+      totalPages: Math.ceil(totalCount / pageSize),
+    };
+
+    if (brokers.length === 0) {
+      throw new APIError(
+        HttpStatusCode.NOT_FOUND,
+        ErrorMessages.generateErrorMessage(entity, "not found", lang)
+      );
+    }
+
+    res.status(HttpStatusCode.OK).json(
+      ApiResponse.success(
+        brokersWithFollow,
+        ErrorMessages.generateErrorMessage(entity, "retrieved", lang),
+        pagination
+      )
+    );
+  } catch (error) {
+    next(error);
   }
+}
+
 
   static async getBrokerProfile(
     req: Request,
@@ -511,7 +503,7 @@ export class BrokerController {
       const entity = lang === "ar" ? "المكاتب" : "broker offices";
 
       const broker = await brokerRepository.findOne({
-        where: { user:{id:user.id} },
+        where: { user },
         relations: ["user"],
       });
 
