@@ -18,13 +18,14 @@ import { Property } from "./Property";
 import { Car } from "./Car";
 import { Service } from "./Services";
 import { brokerService } from "./BrokerService";
+import { Governorate } from "./governorate";
 
 @Entity("broker_offices")
 export class BrokerOffice {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @OneToOne(() => User , {onDelete: "CASCADE"})
+  @OneToOne(() => User, { onDelete: "CASCADE" })
   @JoinColumn()
   user: User;
 
@@ -62,8 +63,15 @@ export class BrokerOffice {
   @Column("text")
   description: string;
 
+  @Column({ name: "governorate_id" })
+  governorateId: number;
+  
   @Column("decimal", { precision: 3, scale: 2, default: 0 })
   rating_avg: number;
+
+  @ManyToOne(() => Governorate)
+  @JoinColumn({ name: "governorate_id" })
+  governorateInfo: Governorate;
 
   @Column({ default: 0 })
   followers_count: number;
