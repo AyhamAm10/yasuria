@@ -41,9 +41,6 @@ export class BrokerOffice {
   @Column()
   whatsapp_number: string;
 
-  @Index()
-  @Column()
-  governorate: string;
 
   @Column()
   address: string;
@@ -65,7 +62,7 @@ export class BrokerOffice {
 
   @Column({ name: "governorate_id" })
   governorateId: number;
-  
+
   @Column("decimal", { precision: 3, scale: 2, default: 0 })
   rating_avg: number;
 
