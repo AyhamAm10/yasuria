@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { authMiddleware } from "../middleware/auth.middleware";
-import { upload } from "../middleware/uploadProfile";
+import { upload, uploadIcon } from "../middleware/uploadProfile";
 import { checkRole } from "../middleware/checkRole.middleware";
 import { UserRole } from "../entity/User";
 
@@ -12,6 +12,7 @@ const serviceCategoryRouter: Router = Router();
 serviceCategoryRouter.post("/",
     authMiddleware,
     checkRole([ UserRole.superAdmin]),
+    uploadIcon.single("icon"),
     ServiceCategoryController.createCategory
 );
 

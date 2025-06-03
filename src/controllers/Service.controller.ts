@@ -220,7 +220,7 @@ export const deleteService = async (
           lang == "ar"
             ? "لا يمكن حذف الخدمة لأنها مستخدمة بواحد أو أكثر من المكاتب"
             : "cannot delete service as it's used by one or more offices",
-          lang
+          "bad request"
         )
       );
     }
