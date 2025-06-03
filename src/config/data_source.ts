@@ -25,6 +25,7 @@ import { brokerService } from "../entity/BrokerService";
 import { CarType } from "../entity/CarType";
 import { Governorate } from "../entity/governorate";
 import { UserToken } from "../entity/UserToken";
+import { Feedback } from "../entity/feedback";
 
 dotenv.config();
 const { DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME } =
@@ -65,7 +66,8 @@ export const AppDataSource = new DataSource({
     brokerService,
     CarType,
     Governorate,
-    UserToken
+    UserToken,
+    Feedback
   ],
 
   migrations: [__dirname + "/../migrations/*.ts"],

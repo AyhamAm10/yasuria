@@ -27,6 +27,7 @@ import officeProtfolioRouter from "./routes/officeProtfolio.router";
 import favoriteRoute from "./routes/favorite.route";
 import governorateRouter from "./routes/governorate.route";
 import notificationRoutes from "./routes/notification";
+import feedbackRouter from "./routes/feedback.route";
 
 
 
@@ -71,6 +72,7 @@ router.use("/type-c", carTypeRouter);
 router.use("/type-p", propertyTypeRouter);
 router.use("/search", SearchRouter);
 router.use("/user", profileRouter);
+router.use("/feedback", feedbackRouter);
 router.use("/favorite", favoriteRoute);
 router.use("/governorates", governorateRouter);
 app.use("/notifications", notificationRoutes);
