@@ -18,10 +18,10 @@ export class ServiceCategoryController {
     try {
       const lang = req.headers["accept-language"] || "ar";
       const entity = lang === "ar" ? "سمة الخدمة" : "service category";
-      const { name_ar, name_en, type }: any = req.body;
+      const { name, type }: any = req.body;
 
       const categoryExited = await serviceCategoryRepository.findOne({
-        where: { name_ar },
+        where: { name },
       });
 
       if (categoryExited) {
@@ -31,10 +31,12 @@ export class ServiceCategoryController {
         );
       }
 
+      const icon = req.file ? req.file.filename : "";
+
       const newCategorySevice = serviceCategoryRepository.create({
-        name_ar,
-        name_en,
+        name,
         type,
+        icon
       });
 
       const savedcategody = await serviceCategoryRepository.save(

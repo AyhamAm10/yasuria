@@ -7,10 +7,10 @@ export class ServiceCategory {
   id: number;
 
   @Column()
-  name_ar: string;
+  name: string;
 
   @Column({nullable:true})
-  name_en: string;
+  icon: string;
 
   @Column({
     type: 'enum',
