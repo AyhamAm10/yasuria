@@ -203,7 +203,7 @@ export const deleteService = async (
 
     const service = await serviceRepository.findOne({
       where: { id: Number(id) },
-      relations: ["broker_service"],
+      relations: ["broker_office"],
     });
 
     if (!service) {
