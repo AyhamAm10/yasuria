@@ -177,6 +177,7 @@ export class BrokerController {
         minRating,
         maxRating,
         service_id,
+        service_type,
         page = "1",
         limit = "10",
         orderByFollowers,
@@ -215,6 +216,10 @@ export class BrokerController {
         query.andWhere("service.id = :service_id", {
           service_id: Number(service_id),
         });
+      }
+
+      if (typeof service_type === "string") {
+        query.andWhere("service.type = :service_type", { service_type });
       }
 
       if (minRating || maxRating) {
