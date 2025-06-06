@@ -128,7 +128,9 @@ export class ServiceCategoryController {
             ErrorMessages.generateErrorMessage(entity, "retrieved", lang)
           )
         );
-    } catch (error) {}
+    } catch (error) {
+      next(error)
+    }
   }
 
   static async updateCategory(
