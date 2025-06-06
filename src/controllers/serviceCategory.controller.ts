@@ -124,7 +124,7 @@ export class ServiceCategoryController {
         .status(HttpStatusCode.OK)
         .json(
           ApiResponse.success(
-            services || [],
+            services,
             ErrorMessages.generateErrorMessage(entity, "retrieved", lang)
           )
         );
