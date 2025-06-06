@@ -401,7 +401,7 @@ export class BrokerController {
 
       const broker = await brokerRepository.findOne({
         where: { user: { id: user.id } },
-        relations: ["user", "broker_service", "broker_service.service"],
+        // relations: ["user", "broker_service", "broker_service.service"],
       });
 
       if (!broker) {
@@ -411,12 +411,12 @@ export class BrokerController {
         );
       }
 
-      if (broker.user.id !== user?.id) {
-        throw new APIError(
-          HttpStatusCode.FORBIDDEN,
-          ErrorMessages.generateErrorMessage(entity, "forbidden", lang)
-        );
-      }
+      // if (broker.user.id !== user?.id) {
+      //   throw new APIError(
+      //     HttpStatusCode.FORBIDDEN,
+      //     ErrorMessages.generateErrorMessage(entity, "forbidden", lang)
+      //   );
+      // }
 
       const {
         services,
@@ -479,14 +479,22 @@ export class BrokerController {
           throw new Error("No valid services found");
         }
 
-        const brokerServices = validServices.map((service) =>
+        const brokerServices = validServices.map((service) =>{
+
+          const new_b_s = 
           brokerofficeServiceRepository.create({
             service: service,
             broker_office: { id: broker.id },
           })
+          new_b_s.broker_office = broker
+
+          return new_b_s
+        }
+
         );
 
         console.log(broker);
+
         await brokerofficeServiceRepository.save(brokerServices);
       }
 
