@@ -362,6 +362,7 @@ export const updateCar = async (
       seller_type,
       governorate_id,
       keptImages, 
+      isActive
     } = req.body;
 
     const userId = req["currentUser"]?.id;
@@ -425,6 +426,7 @@ export const updateCar = async (
     car.governorateId = governorate.id;
     car.governorateInfo = governorate;
     car.images = [...keptImagesArray, ...newImages];
+    car.isActive = isActive
 
     const savedCar = await carRepository.save(car);
 

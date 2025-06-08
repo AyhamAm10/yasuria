@@ -375,6 +375,7 @@ export const updateProperty = async (
       listing_type,
       governorate_id,
       keptImages,
+      isActive
     } = req.body;
 
     const userId = req["currentUser"].id;
@@ -449,6 +450,7 @@ export const updateProperty = async (
       listing_type,
       governorateId: governorate?.id,
       governorateInfo: governorate,
+      isActive
     });
 
     const updatedProperty = await propertyRepository.save(property);
