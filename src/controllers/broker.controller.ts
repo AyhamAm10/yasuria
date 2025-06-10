@@ -353,6 +353,7 @@ export class BrokerController {
         broker.broker_service.map(async (serBrokect) => {
           const service = await serviceRepository.findOne({
             where: { id: serBrokect.service.id },
+            relations:["category"]
           });
           return service;
         })
