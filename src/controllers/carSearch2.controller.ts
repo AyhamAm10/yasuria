@@ -114,6 +114,7 @@ export class CarSearchController {
       whereConditions.id = In([...finalCarIds]);
     } else if (attributes.length > 0 || specifications.length > 0) {
        res.json(ApiResponse.success([], "No cars found", { total: 0, page, limit, totalPages: 0 }));
+        return;
     }
 
     const [cars, total] = await carRepo.findAndCount({

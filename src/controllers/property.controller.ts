@@ -455,6 +455,7 @@ export const updateProperty = async (
 
     const updatedProperty = await propertyRepository.save(property);
 
+    
     if (attributes && attributes.length > 0) {
       await attributeValueRepository.delete({
         entity: EntityAttribute.properties,
@@ -482,6 +483,7 @@ export const updateProperty = async (
 
       await attributeValueRepository.save(await Promise.all(attributePromises));
     }
+
 
     if (specifications && specifications.length > 0) {
       await specificationValueRepository.delete({

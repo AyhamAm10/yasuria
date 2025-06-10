@@ -426,7 +426,7 @@ export const updateCar = async (
     car.governorateId = governorate.id;
     car.governorateInfo = governorate;
     car.images = [...keptImagesArray, ...newImages];
-    car.isActive = isActive
+    car.isActive = isActive ?? car.isActive
 
     const savedCar = await carRepository.save(car);
 

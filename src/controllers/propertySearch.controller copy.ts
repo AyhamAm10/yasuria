@@ -132,6 +132,7 @@ async search(req: Request, res: Response, next: NextFunction): Promise<void> {
       whereConditions.id = In([...finalPropertyIds]);
     } else if (attributes.length > 0 || specifications.length > 0) {
        res.json(ApiResponse.success([], "No properties found", { total: 0, page, limit, totalPages: 0 }));
+       return;
     }
 
     const [properties, total] = await propertyRepo.findAndCount({
