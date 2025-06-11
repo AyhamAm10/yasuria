@@ -87,7 +87,6 @@ async search(req: Request, res: Response, next: NextFunction): Promise<void> {
 
       for (const specFilter of specifications) {
         const spec = specs.find((s) => s.id === specFilter.specification_id);
-        console.log(spec)
         if (!spec) {
           throw new APIError(HttpStatusCode.BAD_REQUEST, ErrorMessages.generateErrorMessage("specification id" , "not found" , lang));
         }
