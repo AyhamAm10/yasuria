@@ -35,6 +35,7 @@ async search(req: Request, res: Response, next: NextFunction): Promise<void> {
       limit = 20,
     } = req.body;
 
+     const lang = req.headers["accept-language"] || "ar";
     const propertyRepo = AppDataSource.getRepository(Property);
     const attributeRepo = AppDataSource.getRepository(Attribute);
     const attributeValueRepo = AppDataSource.getRepository(AttributeValue);
@@ -86,8 +87,9 @@ async search(req: Request, res: Response, next: NextFunction): Promise<void> {
 
       for (const specFilter of specifications) {
         const spec = specs.find((s) => s.id === specFilter.specification_id);
+        console.log(spec)
         if (!spec) {
-          throw new APIError(HttpStatusCode.BAD_REQUEST, `Specification with id ${specFilter.specification_id} not found`);
+          throw new APIError(HttpStatusCode.BAD_REQUEST, ErrorMessages.generateErrorMessage("specification id" , "not found" , lang));
         }
 
         let whereConditions: any = {
