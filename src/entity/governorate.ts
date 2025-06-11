@@ -19,12 +19,12 @@ export class Governorate {
   createdAt: Date;
 
   // Relations
-  @OneToMany(() => Car, (car) => car.governorateId)
+  @OneToMany(() => Car, (car) => car.governorateInfo)
   cars: Car[];
 
-  @OneToMany(() => Property, (property) => property.governorateId)
+  @OneToMany(() => Property, (property) => property.governorateInfo)
   propertys: Property[];
 
-  @OneToMany(() => Request, (req) => req.governorateId)
+  @OneToMany(() => Request, (req) => req.governorateInfo)
   requests: Request[];
 }
