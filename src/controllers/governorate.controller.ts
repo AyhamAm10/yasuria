@@ -177,7 +177,7 @@ export const deleteGovernorate = async (
 
     const governorate = await governorateRepository.findOne({
       where: { id: Number(id) },
-      relations: ["cars"]
+      relations: ["cars" , "propertys" , "requests"]
     });
 
     if (!governorate) {
