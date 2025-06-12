@@ -48,7 +48,8 @@ const options: swaggerJsdoc.Options = {
     "./src/swagger/editUser.docs.yaml",
     "./src/swagger/broker-office.docs.yaml",
     "./src/swagger/officeProtfolio.docs.yaml",
-    "./src/swagger/governorate.docs.yaml"
+    "./src/swagger/governorate.docs.yaml",
+    "./src/swagger/user.docs.yaml"
   ],
 };
 

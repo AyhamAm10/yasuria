@@ -1,0 +1,136 @@
+tags:
+  - name: User
+    description: APIs related to user data and management
+
+paths:
+  /user:
+    get:
+      tags:
+        - User
+      summary: Get all users
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: string
+        - in: query
+          name: userName
+          schema:
+            type: string
+        - in: query
+          name: sortByPrice
+          schema:
+            type: string
+            enum: [asc, desc]
+      responses:
+        "200":
+          description: Success
+
+  /user/{userId}/cars:
+    get:
+      tags:
+        - User
+      summary: Get cars for a user
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Success
+
+  /user/{userId}/properties:
+    get:
+      tags:
+        - User
+      summary: Get properties for a user
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Success
+
+  /user/{userId}/requests:
+    get:
+      tags:
+        - User
+      summary: Get requests for a user
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Success
+
+  /user/car/{carId}:
+    delete:
+      tags:
+        - User
+      summary: Delete a user's car
+      parameters:
+        - in: path
+          name: carId
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+
+  /user/property/{propertyId}:
+    delete:
+      tags:
+        - User
+      summary: Delete a user's property
+      parameters:
+        - in: path
+          name: propertyId
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+
+  /user/request/{requestId}:
+    delete:
+      tags:
+        - User
+      summary: Delete a user's request
+      parameters:
+        - in: path
+          name: requestId
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+
+  /user/{userId}:
+    delete:
+      tags:
+        - User
+      summary: Delete a user
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User Deleted

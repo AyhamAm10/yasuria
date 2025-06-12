@@ -28,6 +28,7 @@ import favoriteRoute from "./routes/favorite.route";
 import governorateRouter from "./routes/governorate.route";
 import notificationRoutes from "./routes/notification";
 import feedbackRouter from "./routes/feedback.route";
+import userRoute from "./routes/user.route";
 
 
 
@@ -76,6 +77,7 @@ router.use("/feedback", feedbackRouter);
 router.use("/favorite", favoriteRoute);
 router.use("/governorates", governorateRouter);
 app.use("/notifications", notificationRoutes);
+app.use("/user", userRoute);
 app.use(process.env.BASE_URL, router);
 
 app.use(errorHandler);
