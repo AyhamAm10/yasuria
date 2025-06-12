@@ -160,7 +160,7 @@ export const getCarById = async (
     res.status(HttpStatusCode.OK).json(
       ApiResponse.success(
         {
-          type: "car" ,
+          type: "car",
           ...car,
           is_favorite: await isFavorite(userId, car.id, Entity_Type.car),
           attributes,
@@ -255,8 +255,8 @@ export const createCar = async (
       price_usd,
       user,
       images,
-      lat:latitude,
-      long:longitude,
+      lat: latitude,
+      long: longitude,
       listing_type,
       seller_type,
       broker_office: isOffice || null,
@@ -360,11 +360,11 @@ export const updateCar = async (
       type_id,
       seller_type,
       governorate_id,
-      keptImages, 
-      isActive
+      keptImages,
+      isActive,
     } = req.body;
 
-    console.log(typeof(isActive))
+    console.log(typeof isActive);
     const userId = req["currentUser"]?.id;
 
     const car = await carRepository.findOne({
@@ -391,7 +391,9 @@ export const updateCar = async (
 
     const isOffice = await brokerOfficeRepository.findOne({ where: { user } });
 
-    const governorate = await governorateReposetory.findOneBy({ id: governorate_id });
+    const governorate = await governorateReposetory.findOneBy({
+      id: governorate_id,
+    });
     if (!governorate) {
       throw new APIError(
         HttpStatusCode.NOT_FOUND,
@@ -426,11 +428,17 @@ export const updateCar = async (
     car.governorateId = governorate.id;
     car.governorateInfo = governorate;
     car.images = [...keptImagesArray, ...newImages];
-    car.isActive = isActive ?? car.isActive
+    car.isActive =
+      isActive !== undefined && isActive !== null
+        ? isActive === "true" || isActive === true
+        : car.isActive;
 
     const savedCar = await carRepository.save(car);
 
-    await specificationValueRepostry.delete({ entity: EntitySpecification.car, entity_id: savedCar.id });
+    await specificationValueRepostry.delete({
+      entity: EntitySpecification.car,
+      entity_id: savedCar.id,
+    });
 
     let specificationsList = [];
     if (specifications && specifications.length > 0) {
@@ -439,7 +447,11 @@ export const updateCar = async (
         if (!spec) {
           throw new APIError(
             HttpStatusCode.NOT_FOUND,
-            ErrorMessages.generateErrorMessage("Specification", "not found", lang)
+            ErrorMessages.generateErrorMessage(
+              "Specification",
+              "not found",
+              lang
+            )
           );
         }
         return specificationValueRepostry.create({
@@ -450,10 +462,15 @@ export const updateCar = async (
         });
       });
 
-      specificationsList = await specificationValueRepostry.save(await Promise.all(specPromises));
+      specificationsList = await specificationValueRepostry.save(
+        await Promise.all(specPromises)
+      );
     }
 
-    await attributeValueRepository.delete({ entity: EntityAttribute.car, entity_id: savedCar.id });
+    await attributeValueRepository.delete({
+      entity: EntityAttribute.car,
+      entity_id: savedCar.id,
+    });
 
     let attributeList = [];
     if (attributes && attributes.length > 0) {
@@ -473,7 +490,9 @@ export const updateCar = async (
         });
       });
 
-      attributeList = await attributeValueRepository.save(await Promise.all(attrPromises));
+      attributeList = await attributeValueRepository.save(
+        await Promise.all(attrPromises)
+      );
     }
 
     res.status(HttpStatusCode.OK).json(
@@ -490,7 +509,6 @@ export const updateCar = async (
     next(error);
   }
 };
-
 
 export const deleteCar = async (
   req: Request,

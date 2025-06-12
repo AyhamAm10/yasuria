@@ -450,7 +450,7 @@ export const updateProperty = async (
       listing_type,
       governorateId: governorate?.id,
       governorateInfo: governorate,
-      isActive
+      isActive: isActive !== undefined ? isActive === "true" || isActive === true : property.isActive
     });
 
     const updatedProperty = await propertyRepository.save(property);
