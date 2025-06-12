@@ -12,7 +12,7 @@ import { ApiResponse } from "../helper/apiResponse";
 import { ErrorMessages } from "../error/ErrorMessages";
 import { Entity_Type } from "../entity/Favorites";
 import { isFavorite } from "../helper/isFavorite";
-import {  In, LessThanOrEqual, Like, MoreThanOrEqual } from "typeorm";
+import { In, LessThanOrEqual, Like, MoreThanOrEqual } from "typeorm";
 import { Attribute } from "../entity/Attribute";
 
 export class CarSearchController {
@@ -31,7 +31,7 @@ export class CarSearchController {
         page = 1,
         limit = 20,
       } = req.body;
-      console.log(attributes)
+      console.log(attributes);
       const lang = req.headers["accept-language"] || "ar";
       const entity = lang === "ar" ? "السيارة" : "car";
       const userId = req.currentUser?.id;
@@ -39,10 +39,14 @@ export class CarSearchController {
       const carRepo = AppDataSource.getRepository(Car);
       const attributeRepo = AppDataSource.getRepository(Attribute);
       const attributeValueRepo = AppDataSource.getRepository(AttributeValue);
-      const specificationValueRepo = AppDataSource.getRepository(SpecificationsValue);
+      const specificationValueRepo =
+        AppDataSource.getRepository(SpecificationsValue);
 
       if (page < 1 || limit < 1) {
-        throw new APIError(HttpStatusCode.BAD_REQUEST, "Page and limit must be positive numbers");
+        throw new APIError(
+          HttpStatusCode.BAD_REQUEST,
+          "Page and limit must be positive numbers"
+        );
       }
 
       const attrIds = attributes.map((a: any) => a.attribute_id);
@@ -53,7 +57,10 @@ export class CarSearchController {
       for (const attrFilter of attributes) {
         const attr = attrs.find((a) => a.id === attrFilter.attribute_id);
         if (!attr) {
-          throw new APIError(HttpStatusCode.BAD_REQUEST, `Attribute with id ${attrFilter.attribute_id} not found`);
+          throw new APIError(
+            HttpStatusCode.BAD_REQUEST,
+            `Attribute with id ${attrFilter.attribute_id} not found`
+          );
         }
 
         if (attr.input_type === "dropdown") {
@@ -62,29 +69,38 @@ export class CarSearchController {
           const matchedValues = await attributeValueRepo.find({
             where: {
               attribute: attrFilter.attribute_id,
-              entity:EntityAttribute.car,
+              entity: EntityAttribute.car,
               value: attrFilter.value,
             },
           });
 
           const carIds = new Set(matchedValues.map((v) => v.entity_id));
           carIdsSets.push(carIds);
-        }
+        } else if (attr.input_type === "text") {
+          const cleanedMin =
+            attrFilter.min !== undefined
+              ? parseFloat(attrFilter.min.toString().replace(/,/g, ""))
+              : undefined;
+          const cleanedMax =
+            attrFilter.max !== undefined
+              ? parseFloat(attrFilter.max.toString().replace(/,/g, ""))
+              : undefined;
 
-        else if (attr.input_type === "text") {
           const matchedValues = await attributeValueRepo.find({
             where: {
               attribute: attrFilter.attribute_id,
-              entity:EntityAttribute.car,
+              entity: EntityAttribute.car,
             },
           });
 
           const filtered = matchedValues.filter((v) => {
-            const numericValue = parseFloat(v.value);
+            const numericValue = parseFloat(v.value.replace(/,/g, ""));
             if (isNaN(numericValue)) return false;
 
-            const minOk = attrFilter.min === undefined || numericValue >= attrFilter.min;
-            const maxOk = attrFilter.max === undefined || numericValue <= attrFilter.max;
+            const minOk =
+              cleanedMin === undefined || numericValue >= cleanedMin;
+            const maxOk =
+              cleanedMax === undefined || numericValue <= cleanedMax;
 
             return minOk && maxOk;
           });
@@ -110,7 +126,9 @@ export class CarSearchController {
 
       let finalCarIds: Set<number>;
       if (carIdsSets.length > 0) {
-        finalCarIds = carIdsSets.reduce((acc, set) => new Set([...acc].filter((x) => set.has(x))));
+        finalCarIds = carIdsSets.reduce(
+          (acc, set) => new Set([...acc].filter((x) => set.has(x)))
+        );
       } else {
         finalCarIds = new Set();
       }
@@ -160,17 +178,18 @@ export class CarSearchController {
         totalPages: Math.ceil(total / limit),
       };
 
-      res.status(200).json(
-        ApiResponse.success(
-          carsWithFavorite,
-          ErrorMessages.generateErrorMessage(entity, "retrieved", lang),
-          pagination
-        )
-      );
+      res
+        .status(200)
+        .json(
+          ApiResponse.success(
+            carsWithFavorite,
+            ErrorMessages.generateErrorMessage(entity, "retrieved", lang),
+            pagination
+          )
+        );
     } catch (error) {
       console.error(error);
       next(error);
     }
   }
 }
-
