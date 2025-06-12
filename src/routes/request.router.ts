@@ -30,7 +30,7 @@ requesteRouter.put("/:id",
     RequestController.updateRequest
 );
 
-requesteRouter.delete("/Lid", 
+requesteRouter.delete("/:id", 
     authMiddleware,
     checkRole([UserRole.vendor]),
     RequestController.deleteRequest

@@ -11,7 +11,7 @@ const propertyRouter: Router = Router();
 propertyRouter.post("/",
     authMiddleware,
     checkRole([UserRole.vendor]),
-    upload.array("images", 5),
+    upload.array("images", 20),
     createProperty
 );
 
@@ -28,7 +28,7 @@ propertyRouter.get("/:id",
 propertyRouter.put("/:id", 
     authMiddleware,
     checkRole([UserRole.vendor]),
-    upload.array("images", 5),
+    upload.array("images", 20),
     updateProperty
 );
 propertyRouter.delete("/:id", 

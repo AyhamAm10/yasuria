@@ -18,7 +18,7 @@ export const getSpecifications = async (
   next: NextFunction
 ) => {
   try {
-    const { page = "1", limit = "10", entityType, type_id } = req.query;
+    const { page = "1", limit = "20", entityType, type_id } = req.query;
     const lang = req.headers["accept-language"] || "ar";
     const entity = lang === "ar" ? "المواصفات" : "specifications";
 

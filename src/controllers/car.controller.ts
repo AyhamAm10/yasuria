@@ -6,8 +6,7 @@ import { User } from "../entity/User";
 import { HttpStatusCode } from "../error/api.error";
 import { ApiResponse } from "../helper/apiResponse";
 import { ErrorMessages } from "../error/ErrorMessages";
-import { validator } from "../helper/validation/validator";
-import { Equal, In } from "typeorm";
+import { Equal } from "typeorm";
 import { AttributeValue } from "../entity/AttributeValue";
 import { Attribute, EntityAttribute } from "../entity/Attribute";
 import { Specifications } from "../entity/Specifications";
@@ -365,6 +364,7 @@ export const updateCar = async (
       isActive
     } = req.body;
 
+    console.log(isActive)
     const userId = req["currentUser"]?.id;
 
     const car = await carRepository.findOne({

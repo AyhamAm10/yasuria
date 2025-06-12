@@ -11,7 +11,7 @@ const carRouter: Router = Router();
 carRouter.post("/", 
     authMiddleware,
     checkRole([UserRole.vendor , UserRole.superAdmin]),
-    upload.array("images", 5),
+    upload.array("images", 20),
     createCar
 );
 carRouter.get("/", 
@@ -25,7 +25,7 @@ carRouter.get("/:id",
 carRouter.put("/:id", 
     authMiddleware,
     checkRole([UserRole.vendor , UserRole.superAdmin]),
-    upload.array("images", 5),
+    upload.array("images", 20),
     updateCar
 );
 carRouter.delete("/:id", 
