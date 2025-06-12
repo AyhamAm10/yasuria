@@ -364,7 +364,7 @@ export const updateCar = async (
       isActive
     } = req.body;
 
-    console.log(isActive)
+    console.log(typeof(isActive))
     const userId = req["currentUser"]?.id;
 
     const car = await carRepository.findOne({
