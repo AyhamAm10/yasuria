@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { optionalAuthMiddleware } from "../middleware/optionalAuthMiddleware";
-import { CarSearchController } from "../controllers/carSearch2.controller";
 import { PropertySearchController } from "../controllers/propertySearch.controller";
+import { CarSearchController } from "../controllers/carSearch.controller";
 
 const SearchRouter: Router = Router();
 

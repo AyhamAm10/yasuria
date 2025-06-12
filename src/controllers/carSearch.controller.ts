@@ -31,7 +31,7 @@ export class CarSearchController {
         page = 1,
         limit = 20,
       } = req.body;
-
+      console.log(attributes)
       const lang = req.headers["accept-language"] || "ar";
       const entity = lang === "ar" ? "السيارة" : "car";
       const userId = req.currentUser?.id;
