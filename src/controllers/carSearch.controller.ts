@@ -1,18 +1,22 @@
 import { Request, Response, NextFunction } from "express";
 import { Car } from "../entity/Car";
-import { AttributeValue } from "../entity/AttributeValue";
-import { SpecificationsValue } from "../entity/SpecificationsValue";
+import { AttributeValue, EntityAttribute } from "../entity/AttributeValue";
+import {
+  EntitySpecification,
+  SpecificationsValue,
+} from "../entity/SpecificationsValue";
 import { APIError } from "../error/api.error";
 import { HttpStatusCode } from "../error/api.error";
 import { AppDataSource } from "../config/data_source";
 import { ApiResponse } from "../helper/apiResponse";
 import { ErrorMessages } from "../error/ErrorMessages";
-import { Entity_Type, Favorite } from "../entity/Favorites";
+import { Entity_Type } from "../entity/Favorites";
 import { isFavorite } from "../helper/isFavorite";
+import {  In, LessThanOrEqual, Like, MoreThanOrEqual } from "typeorm";
 import { Attribute } from "../entity/Attribute";
-import { In } from "typeorm";
+
 export class CarSearchController {
-  async search(req: Request, res: Response, next: NextFunction) {
+  async search(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const {
         listing_type,
@@ -21,9 +25,9 @@ export class CarSearchController {
         min_price,
         max_price,
         location,
+        attributes = [],
+        specifications = [],
         governorate_id,
-        attributes,
-        specifications,
         page = 1,
         limit = 20,
       } = req.body;
@@ -31,118 +35,122 @@ export class CarSearchController {
       const lang = req.headers["accept-language"] || "ar";
       const entity = lang === "ar" ? "السيارة" : "car";
       const userId = req.currentUser?.id;
-      if (page < 1 || limit < 1) {
-        throw new APIError(
-          HttpStatusCode.BAD_REQUEST,
-          "Page and limit must be positive numbers"
-        );
-      }
 
       const carRepo = AppDataSource.getRepository(Car);
-      const query = carRepo
-        .createQueryBuilder("c")
-        .leftJoinAndSelect("c.car_type", "car_type")
-        .leftJoinAndSelect("c.user", "user");
+      const attributeRepo = AppDataSource.getRepository(Attribute);
+      const attributeValueRepo = AppDataSource.getRepository(AttributeValue);
+      const specificationValueRepo = AppDataSource.getRepository(SpecificationsValue);
 
-      // Basic Filters
-      if (listing_type)
-        query.andWhere("c.listing_type = :listing_type", { listing_type });
-      if (seller_type)
-        query.andWhere("c.seller_type = :seller_type", { seller_type });
-      if (car_type_id)
-        query.andWhere("c.car_type = :car_type_id", { car_type_id });
-      if (min_price) query.andWhere("c.price >= :min_price", { min_price });
-      if (max_price) query.andWhere("c.price <= :max_price", { max_price });
-      if (location)
-        query.andWhere("c.location LIKE :location", {
-          location: `%${location}%`,
-        });
-      if (governorate_id)
-        query.andWhere("c.governorateId = :governorateId", {
-          governorateId: governorate_id,
-        });
+      if (page < 1 || limit < 1) {
+        throw new APIError(HttpStatusCode.BAD_REQUEST, "Page and limit must be positive numbers");
+      }
 
-      // Dynamic Attribute Filters
-      if (attributes && attributes.length > 0) {
-        const attributeIds = attributes.map((attr) => attr.attribute_id);
-        const attributeRepo = AppDataSource.getRepository(Attribute);
-        const attributeEntities = await attributeRepo.findBy({id :In(attributeIds)} );
+      const attrIds = attributes.map((a: any) => a.attribute_id);
+      const attrs = await attributeRepo.findBy({ id: In(attrIds) });
 
-        for (let index = 0; index < attributes.length; index++) {
-          const attr = attributes[index];
-          const alias = `av${index}`;
-          const attributeEntity = attributeEntities.find(
-            (a) => a.id === attr.attribute_id
-          );
+      let carIdsSets: Set<number>[] = [];
 
-          if (!attributeEntity) continue;
+      for (const attrFilter of attributes) {
+        const attr = attrs.find((a) => a.id === attrFilter.attribute_id);
+        if (!attr) {
+          throw new APIError(HttpStatusCode.BAD_REQUEST, `Attribute with id ${attrFilter.attribute_id} not found`);
+        }
 
-          query.innerJoin(
-            AttributeValue,
-            alias,
-            `${alias}.entity_id = c.id AND ${alias}.entity = 'car' AND ${alias}.attributeId = :attrId${index}`,
-            { [`attrId${index}`]: attr.attribute_id }
-          );
+        if (attr.input_type === "dropdown") {
+          if (attrFilter.value === undefined) continue;
 
-          if (attributeEntity.input_type === "dropdown") {
+          const matchedValues = await attributeValueRepo.find({
+            where: {
+              attribute: attrFilter.attribute_id,
+              entity:EntityAttribute.car,
+              value: attrFilter.value,
+            },
+          });
 
-            if (attr.value !== undefined) {
-              query.andWhere(`${alias}.value = :attrValue${index}`, {
-                [`attrValue${index}`]: attr.value.toString(),
-              });
-            }
-          } else if (attributeEntity.input_type === "text") {
+          const carIds = new Set(matchedValues.map((v) => v.entity_id));
+          carIdsSets.push(carIds);
+        }
 
-            if (attr.min !== undefined) {
-              query.andWhere(
-                `CAST(${alias}.value AS INTEGER) >= :minValue${index}`,
-                {
-                  [`minValue${index}`]: Number(attr.min),
-                }
-              );
-            }
+        else if (attr.input_type === "text") {
+          const matchedValues = await attributeValueRepo.find({
+            where: {
+              attribute: attrFilter.attribute_id,
+              entity:EntityAttribute.car,
+            },
+          });
 
-            if (attr.max !== undefined) {
-              query.andWhere(
-                `CAST(${alias}.value AS INTEGER) <= :maxValue${index}`,
-                {
-                  [`maxValue${index}`]: Number(attr.max),
-                }
-              );
-            }
-          }
+          const filtered = matchedValues.filter((v) => {
+            const numericValue = parseFloat(v.value);
+            if (isNaN(numericValue)) return false;
+
+            const minOk = attrFilter.min === undefined || numericValue >= attrFilter.min;
+            const maxOk = attrFilter.max === undefined || numericValue <= attrFilter.max;
+
+            return minOk && maxOk;
+          });
+
+          const carIds = new Set(filtered.map((v) => v.entity_id));
+          carIdsSets.push(carIds);
         }
       }
 
-      if (specifications && specifications.length > 0) {
-        specifications.forEach((specId: number, index: number) => {
-          const alias = `sv${index}`;
-
-          query.innerJoin(
-            SpecificationsValue,
-            alias,
-            `${alias}.entity_id = c.id AND ${alias}.entity = 'car' AND ${alias}.specification.id = :specId${index}`,
-            { [`specId${index}`]: specId }
-          );
-
-          query.andWhere(`${alias}.IsActive = :isActive${index}`, {
-            [`isActive${index}`]: true,
-          });
+      if (specifications.length > 0) {
+        const specIds = specifications.map((s: any) => s.specification_id);
+        const specValues = await specificationValueRepo.find({
+          where: {
+            specification: In(specIds),
+            entity: EntitySpecification.car,
+            IsActive: true,
+          },
         });
+
+        const specCarIds = new Set(specValues.map((v) => v.entity_id));
+        carIdsSets.push(specCarIds);
       }
 
-      // Pagination
-      query.skip((page - 1) * limit).take(limit);
+      let finalCarIds: Set<number>;
+      if (carIdsSets.length > 0) {
+        finalCarIds = carIdsSets.reduce((acc, set) => new Set([...acc].filter((x) => set.has(x))));
+      } else {
+        finalCarIds = new Set();
+      }
 
-      const [cars, total] = await query.getManyAndCount();
+      const whereConditions: any = {};
+      if (listing_type) whereConditions.listing_type = listing_type;
+      if (seller_type) whereConditions.seller_type = seller_type;
+      if (car_type_id) whereConditions.car_type = { id: car_type_id };
+      if (min_price) whereConditions.price = MoreThanOrEqual(min_price);
+      if (max_price) whereConditions.price = LessThanOrEqual(max_price);
+      if (location) whereConditions.location = Like(`%${location}%`);
+      if (governorate_id) whereConditions.governorateId = governorate_id;
+
+      if (finalCarIds.size > 0) {
+        whereConditions.id = In([...finalCarIds]);
+      } else if (attributes.length > 0 || specifications.length > 0) {
+        res.json(
+          ApiResponse.success([], "No cars found", {
+            total: 0,
+            page,
+            limit,
+            totalPages: 0,
+          })
+        );
+        return;
+      }
+
+      const [cars, total] = await carRepo.findAndCount({
+        where: whereConditions,
+        relations: ["car_type", "user", "governorateInfo"],
+        skip: (page - 1) * limit,
+        take: limit,
+        order: { created_at: "DESC" },
+      });
 
       const carsWithFavorite = await Promise.all(
-        cars.map(async (car) => {
-          return {
-            ...car,
-            is_favorite: await isFavorite(userId, car.id, Entity_Type.car),
-          };
-        })
+        cars.map(async (car) => ({
+          ...car,
+          is_favorite: await isFavorite(userId, car.id, Entity_Type.car),
+        }))
       );
 
       const pagination = {
@@ -152,17 +160,17 @@ export class CarSearchController {
         totalPages: Math.ceil(total / limit),
       };
 
-      res
-        .status(HttpStatusCode.OK)
-        .json(
-          ApiResponse.success(
-            carsWithFavorite,
-            ErrorMessages.generateErrorMessage(entity, "retrieved", lang),
-            pagination
-          )
-        );
+      res.status(200).json(
+        ApiResponse.success(
+          carsWithFavorite,
+          ErrorMessages.generateErrorMessage(entity, "retrieved", lang),
+          pagination
+        )
+      );
     } catch (error) {
+      console.error(error);
       next(error);
     }
   }
 }
+

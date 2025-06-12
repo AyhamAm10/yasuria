@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { Car } from "../entity/Car";
-import { AttributeValue, EntityAttribute } from "../entity/AttributeValue";
+import { AttributeValue } from "../entity/AttributeValue";
 import {
   EntitySpecification,
   SpecificationsValue,
@@ -39,7 +39,8 @@ export class CarSearchController {
       const carRepo = AppDataSource.getRepository(Car);
       const attributeRepo = AppDataSource.getRepository(Attribute);
       const attributeValueRepo = AppDataSource.getRepository(AttributeValue);
-      const specificationValueRepo = AppDataSource.getRepository(SpecificationsValue);
+      const specificationValueRepo =
+        AppDataSource.getRepository(SpecificationsValue);
 
       if (page < 1 || limit < 1) {
         throw new APIError(
@@ -62,46 +63,30 @@ export class CarSearchController {
           );
         }
 
+        let whereConditions: any = {
+          attribute: attrFilter.attribute_id,
+          entity: "car",
+        };
+
         if (attr.input_type === "dropdown") {
           if (attrFilter.value === undefined) continue;
-
-          const matchedValues = await attributeValueRepo.find({
-            where: {
-              attribute: attrFilter.attribute_id,
-              entity: EntityAttribute.car,
-              value: attrFilter.value,
-            },
-          });
-
-          const carIds = new Set(matchedValues.map((v) => v.entity_id));
-          carIdsSets.push(carIds);
+          whereConditions.value = attrFilter.value;
+        } else if (attr.input_type === "text") {
+          if (attrFilter.min !== undefined && attrFilter.max !== undefined) {
+            whereConditions.value = Between(attrFilter.min, attrFilter.max);
+          } else if (attrFilter.min !== undefined) {
+            whereConditions.value = MoreThanOrEqual(attrFilter.min);
+          } else if (attrFilter.max !== undefined) {
+            whereConditions.value = LessThanOrEqual(attrFilter.max);
+          }
         }
 
-        else if (attr.input_type === "text") {
-          const allValues = await attributeValueRepo.find({
-            where: {
-              attribute: attrFilter.attribute_id,
-             entity: EntityAttribute.car,
-            },
-          });
+        const matchedValues = await attributeValueRepo.find({
+          where: whereConditions,
+        });
 
-          const filteredValues = allValues.filter((val) => {
-            const num = parseFloat(val.value);
-            if (isNaN(num)) return false;
-
-            if (attrFilter.min !== undefined && attrFilter.max !== undefined) {
-              return num >= attrFilter.min && num <= attrFilter.max;
-            } else if (attrFilter.min !== undefined) {
-              return num >= attrFilter.min;
-            } else if (attrFilter.max !== undefined) {
-              return num <= attrFilter.max;
-            }
-            return true;
-          });
-
-          const carIds = new Set(filteredValues.map((v) => v.entity_id));
-          carIdsSets.push(carIds);
-        }
+        const carIds = new Set(matchedValues.map((v) => v.entity_id));
+        carIdsSets.push(carIds);
       }
 
       if (specifications.length > 0) {
@@ -174,17 +159,18 @@ export class CarSearchController {
         totalPages: Math.ceil(total / limit),
       };
 
-      res.status(HttpStatusCode.OK).json(
-        ApiResponse.success(
-          carsWithFavorite,
-          ErrorMessages.generateErrorMessage(entity, "retrieved", lang),
-          pagination
-        )
-      );
+      res
+        .status(HttpStatusCode.OK)
+        .json(
+          ApiResponse.success(
+            carsWithFavorite,
+            ErrorMessages.generateErrorMessage(entity, "retrieved", lang),
+            pagination
+          )
+        );
     } catch (error) {
       console.log(error);
       next(error);
     }
   }
 }
-
