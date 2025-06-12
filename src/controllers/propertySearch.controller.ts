@@ -1,8 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { Property } from "../entity/Property";
-import { AttributeValue } from "../entity/AttributeValue";
+import { AttributeValue, EntityAttribute } from "../entity/AttributeValue";
 import {
-  EntitySpecification,
   SpecificationsValue,
 } from "../entity/SpecificationsValue";
 import { APIError } from "../error/api.error";
@@ -10,14 +9,12 @@ import { HttpStatusCode } from "../error/api.error";
 import { AppDataSource } from "../config/data_source";
 import { ApiResponse } from "../helper/apiResponse";
 import { ErrorMessages } from "../error/ErrorMessages";
-import { Entity_Type, Favorite } from "../entity/Favorites";
-import { isFavorite } from "../helper/isFavorite";
 import { Attribute } from "../entity/Attribute";
+import { Between, In, LessThanOrEqual, Like, MoreThanOrEqual } from "typeorm";
+import { Specifications } from "../entity/Specifications";
 
-// const specificationValueRepository
-const favoriteRepository = AppDataSource.getRepository(Favorite);
 export class PropertySearchController {
-  async search(req: Request, res: Response, next: NextFunction) {
+  async search(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const {
         listing_type,
@@ -26,115 +23,136 @@ export class PropertySearchController {
         min_price,
         max_price,
         location,
-        attributes,
-        specifications,
+        attributes = [],
+        specifications = [],
         governorate_id,
         page = 1,
         limit = 20,
       } = req.body;
 
       const lang = req.headers["accept-language"] || "ar";
-      const entity = lang === "ar" ? "العقار" : "property";
-      const userId = req.currentUser?.id;
-
-      if (page < 1 || limit < 1) {
-        throw new APIError(
-          HttpStatusCode.BAD_REQUEST,
-          "Page and limit must be positive numbers"
-        );
-      }
-
       const propertyRepo = AppDataSource.getRepository(Property);
-      const query = propertyRepo
-        .createQueryBuilder("p")
-        .leftJoinAndSelect("p.property_type", "property_type")
-        .leftJoinAndSelect("p.user", "user");
+      const attributeRepo = AppDataSource.getRepository(Attribute);
+      const attributeValueRepo = AppDataSource.getRepository(AttributeValue);
+      const specificationsRepo = AppDataSource.getRepository(Specifications);
+      const specificationsValueRepo = AppDataSource.getRepository(SpecificationsValue);
 
-      // Filters...
-      if (listing_type)
-        query.andWhere("p.listing_type = :listing_type", { listing_type });
-      if (seller_type)
-        query.andWhere("p.seller_type = :seller_type", { seller_type });
-      if (property_type_id)
-        query.andWhere("p.property_type = :property_type_id", {
-          property_type_id,
-        });
-      if (min_price) query.andWhere("p.price_sy >= :min_price", { min_price });
-      if (max_price) query.andWhere("p.price_sy <= :max_price", { max_price });
-      if (location)
-        query.andWhere("p.location LIKE :location", {
-          location: `%${location}%`,
-        });
-      if (governorate_id)
-        query.andWhere("p.governorateId = :governorateId", {
-          governorateId: governorate_id,
-        });
+      let propertyIdsSets: Set<number>[] = [];
 
-      // Attributes joins...
-      if (attributes && attributes.length > 0) {
-        for (const [index, attr] of attributes.entries()) {
-          const alias = `av${index}`;
+      if (attributes.length > 0) {
+        const attrIds = attributes.map((a: any) => a.attribute_id);
+        const attrs = await attributeRepo.findBy({ id: In(attrIds) });
 
-          const attributeEntity = await AppDataSource.getRepository(
-            Attribute
-          ).findOne({
-            where: { id: attr.attribute_id },
-          });
-
-          if (!attributeEntity) {
-            throw new APIError(
-              HttpStatusCode.BAD_REQUEST,
-              `Attribute with id ${attr.attribute_id} not found`
-            );
+        for (const attrFilter of attributes) {
+          const attr = attrs.find((a) => a.id === attrFilter.attribute_id);
+          if (!attr) {
+            throw new APIError(HttpStatusCode.BAD_REQUEST, ErrorMessages.generateErrorMessage("attribute id" , "not found" , lang));
           }
 
-          query.innerJoin(
-            AttributeValue,
-            alias,
-            `${alias}.entity_id = p.id AND ${alias}.entity = 'property' AND ${alias}.attribute_id = :attrId${index}`,
-            { [`attrId${index}`]: attr.attribute_id }
-          );
+          if (attr.input_type === "dropdown") {
+            if (attrFilter.value === undefined) continue;
 
-          if (attributeEntity.input_type === "dropdown") {
-            if (attr.value !== undefined) {
-              query.andWhere(`${alias}.value = :attrValue${index}`, {
-                [`attrValue${index}`]: `${attr.value}`,
-              });
-            }
-          } else if (attributeEntity.input_type === "text") {
-            if (attr.min !== undefined) {
-              query.andWhere(`${alias}.value >= :attrMin${index}`, {
-                [`attrMin${index}`]: `${attr.min}`,
-              });
-            }
-            if (attr.max !== undefined) {
-              query.andWhere(`${alias}.value <= :attrMax${index}`, {
-                [`attrMax${index}`]: `${attr.max}`,
-              });
-            }
+            const matchedValues = await attributeValueRepo.find({
+              where: {
+                attribute: attrFilter.attribute_id,
+                entity: EntityAttribute.properties,
+                value: attrFilter.value,
+              },
+            });
+
+            const propertyIds = new Set(matchedValues.map((v) => v.entity_id));
+            propertyIdsSets.push(propertyIds);
+          }
+
+          else if (attr.input_type === "text") {
+            const allValues = await attributeValueRepo.find({
+              where: {
+                attribute: attrFilter.attribute_id,
+                entity: EntityAttribute.properties,
+              },
+            });
+
+            const filteredValues = allValues.filter((val) => {
+              const num = parseFloat(val.value);
+              if (isNaN(num)) return false;
+
+              if (attrFilter.min !== undefined && attrFilter.max !== undefined) {
+                return num >= attrFilter.min && num <= attrFilter.max;
+              } else if (attrFilter.min !== undefined) {
+                return num >= attrFilter.min;
+              } else if (attrFilter.max !== undefined) {
+                return num <= attrFilter.max;
+              }
+              return true;
+            });
+
+            const propertyIds = new Set(filteredValues.map((v) => v.entity_id));
+            propertyIdsSets.push(propertyIds);
           }
         }
       }
 
-      if (specifications && specifications.length > 0) {
-        specifications.forEach((specId: number, index: number) => {
-          const alias = `sv${index}`;
-          query.innerJoin(
-            SpecificationsValue,
-            alias,
-            `${alias}.entity_id = p.id AND ${alias}.entity = 'property' AND ${alias}.specification.id = :specId${index}`,
-            { [`specId${index}`]: specId }
-          );
-          query.andWhere(`${alias}.IsActive = :isActive${index}`, {
-            [`isActive${index}`]: true,
+      if (specifications.length > 0) {
+        const specIds = specifications.map((s: any) => s.specification_id);
+        const specs = await specificationsRepo.findBy({ id: In(specIds) });
+
+        for (const specFilter of specifications) {
+          const spec = specs.find((s) => s.id === specFilter.specification_id);
+          if (!spec) {
+            throw new APIError(HttpStatusCode.BAD_REQUEST, ErrorMessages.generateErrorMessage("specification id", "not found", lang));
+          }
+
+          let whereConditions: any = {
+            specification: specFilter.specification_id,
+            entity: "property",
+            IsActive: true,
+          };
+
+          if (specFilter.value !== undefined) {
+            whereConditions.value = specFilter.value;
+          }
+
+          const matchedSpecValues = await specificationsValueRepo.find({
+            where: whereConditions,
           });
-        });
+
+          const propertyIds = new Set(matchedSpecValues.map((v) => v.entity_id));
+          propertyIdsSets.push(propertyIds);
+        }
       }
 
-      const [properties, total] = await query
-        .skip((page - 1) * limit)
-        .take(limit)
-        .getManyAndCount();
+      let finalPropertyIds: Set<number>;
+      if (propertyIdsSets.length > 0) {
+        finalPropertyIds = propertyIdsSets.reduce((acc, set) => {
+          return new Set([...acc].filter((x) => set.has(x)));
+        });
+      } else {
+        finalPropertyIds = new Set();
+      }
+
+      const whereConditions: any = {};
+      if (listing_type) whereConditions.listing_type = listing_type;
+      if (seller_type) whereConditions.seller_type = seller_type;
+      if (property_type_id) whereConditions.property_type = { id: property_type_id };
+      if (min_price) whereConditions.price_sy = MoreThanOrEqual(min_price);
+      if (max_price) whereConditions.price_sy = LessThanOrEqual(max_price);
+      if (location) whereConditions.location = Like(`%${location}%`);
+      if (governorate_id) whereConditions.governorateId = governorate_id;
+
+      if (finalPropertyIds.size > 0) {
+        whereConditions.id = In([...finalPropertyIds]);
+      } else if (attributes.length > 0 || specifications.length > 0) {
+        res.json(ApiResponse.success([], "No properties found", { total: 0, page, limit, totalPages: 0 }));
+        return;
+      }
+
+      const [properties, total] = await propertyRepo.findAndCount({
+        where: whereConditions,
+        relations: ["property_type", "user", "governorateInfo"],
+        skip: (page - 1) * limit,
+        take: limit,
+        order: { created_at: "DESC" },
+      });
 
       const pagination = {
         total,
@@ -143,29 +161,9 @@ export class PropertySearchController {
         totalPages: Math.ceil(total / limit),
       };
 
-      const data = await Promise.all(
-        properties.map(async (property) => {
-          return {
-            ...property,
-            is_favorite: await isFavorite(
-              userId,
-              property.id,
-              Entity_Type.properties
-            ),
-          };
-        })
-      );
-
-      res
-        .status(HttpStatusCode.OK)
-        .json(
-          ApiResponse.success(
-            data,
-            ErrorMessages.generateErrorMessage(entity, "retrieved", lang),
-            pagination
-          )
-        );
+      res.status(200).json(ApiResponse.success(properties, "Properties retrieved", pagination));
     } catch (error) {
+      console.log(error);
       next(error);
     }
   }

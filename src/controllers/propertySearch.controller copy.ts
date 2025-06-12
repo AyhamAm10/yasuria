@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from "express";
 import { Property } from "../entity/Property";
 import { AttributeValue } from "../entity/AttributeValue";
 import {
-  EntitySpecification,
   SpecificationsValue,
 } from "../entity/SpecificationsValue";
 import { APIError } from "../error/api.error";
@@ -10,14 +9,10 @@ import { HttpStatusCode } from "../error/api.error";
 import { AppDataSource } from "../config/data_source";
 import { ApiResponse } from "../helper/apiResponse";
 import { ErrorMessages } from "../error/ErrorMessages";
-import { Entity_Type, Favorite } from "../entity/Favorites";
-import { isFavorite } from "../helper/isFavorite";
 import { Attribute } from "../entity/Attribute";
 import { Between, In, LessThanOrEqual, Like, MoreThanOrEqual } from "typeorm";
 import { Specifications } from "../entity/Specifications";
 
-// const specificationValueRepository
-const favoriteRepository = AppDataSource.getRepository(Favorite);
 export class PropertySearchController {
 async search(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {

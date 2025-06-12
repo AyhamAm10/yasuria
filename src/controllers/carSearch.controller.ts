@@ -9,7 +9,8 @@ import { ApiResponse } from "../helper/apiResponse";
 import { ErrorMessages } from "../error/ErrorMessages";
 import { Entity_Type, Favorite } from "../entity/Favorites";
 import { isFavorite } from "../helper/isFavorite";
-
+import { Attribute } from "../entity/Attribute";
+import { In } from "typeorm";
 export class CarSearchController {
   async search(req: Request, res: Response, next: NextFunction) {
     try {
@@ -63,22 +64,54 @@ export class CarSearchController {
 
       // Dynamic Attribute Filters
       if (attributes && attributes.length > 0) {
-        attributes.forEach((attr: any, index: number) => {
+        const attributeIds = attributes.map((attr) => attr.attribute_id);
+        const attributeRepo = AppDataSource.getRepository(Attribute);
+        const attributeEntities = await attributeRepo.findBy({id :In(attributeIds)} );
+
+        for (let index = 0; index < attributes.length; index++) {
+          const attr = attributes[index];
           const alias = `av${index}`;
+          const attributeEntity = attributeEntities.find(
+            (a) => a.id === attr.attribute_id
+          );
+
+          if (!attributeEntity) continue;
 
           query.innerJoin(
             AttributeValue,
             alias,
-            `${alias}.entity_id = c.id AND ${alias}.entity = 'car' AND ${alias}.attribute_id = :attrId${index}`,
+            `${alias}.entity_id = c.id AND ${alias}.entity = 'car' AND ${alias}.attributeId = :attrId${index}`,
             { [`attrId${index}`]: attr.attribute_id }
           );
 
-          if (attr.value !== undefined) {
-            query.andWhere(`${alias}.value = :attrValue${index}`, {
-              [`attrValue${index}`]: attr.value.toString(),
-            });
+          if (attributeEntity.input_type === "dropdown") {
+
+            if (attr.value !== undefined) {
+              query.andWhere(`${alias}.value = :attrValue${index}`, {
+                [`attrValue${index}`]: attr.value.toString(),
+              });
+            }
+          } else if (attributeEntity.input_type === "text") {
+
+            if (attr.min !== undefined) {
+              query.andWhere(
+                `CAST(${alias}.value AS INTEGER) >= :minValue${index}`,
+                {
+                  [`minValue${index}`]: Number(attr.min),
+                }
+              );
+            }
+
+            if (attr.max !== undefined) {
+              query.andWhere(
+                `CAST(${alias}.value AS INTEGER) <= :maxValue${index}`,
+                {
+                  [`maxValue${index}`]: Number(attr.max),
+                }
+              );
+            }
           }
-        });
+        }
       }
 
       if (specifications && specifications.length > 0) {
