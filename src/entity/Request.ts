@@ -17,12 +17,18 @@ export enum RequestStatus {
   CANCELLED = "cancelled",
 }
 
+
+export enum RequestPurpose {
+  SELL = "sell",
+  RENT = "rent",
+}
+
 @Entity("requests")
 export class Request {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => User , {onDelete: "CASCADE"} )
+  @ManyToOne(() => User, { onDelete: "CASCADE" })
   user: User;
 
   @Column("text")
@@ -40,6 +46,13 @@ export class Request {
     default: RequestStatus.PENDING,
   })
   status: RequestStatus;
+
+  @Column({
+    type: "enum",
+    enum: RequestPurpose,
+    default: RequestPurpose.RENT,
+  })
+  purpose: RequestPurpose;
 
   @ManyToOne(() => Governorate)
   @JoinColumn({ name: "governorate_id" })

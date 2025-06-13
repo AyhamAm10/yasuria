@@ -1,6 +1,10 @@
 import { Request, Response, NextFunction } from "express";
 import { AppDataSource } from "../config/data_source";
-import { Request as RequestEntity, RequestStatus } from "../entity/Request";
+import {
+  Request as RequestEntity,
+  RequestPurpose,
+  RequestStatus,
+} from "../entity/Request";
 import { getRequestSchema } from "../helper/validation/schema/requestShema";
 import { ApiResponse } from "../helper/apiResponse";
 import { ErrorMessages } from "../error/ErrorMessages";
@@ -25,8 +29,14 @@ export class RequestController {
 
       // await validator(getRequestSchema(lang), req.body);
 
-      const { description, budget, governorate_id } = req.body;
+      const { description, budget, governorate_id, purpose } = req.body;
 
+      if (!purpose || !Object.values(RequestPurpose).includes(purpose)) {
+        throw new APIError(
+          HttpStatusCode.BAD_REQUEST,
+          ErrorMessages.generateErrorMessage("purpose", "invalid", lang)
+        );
+      }
       const governorate = await governorateReposetory.findOneBy({
         id: governorate_id,
       });
@@ -49,6 +59,7 @@ export class RequestController {
       const newRequest = requestRepo.create({
         description,
         budget,
+        purpose,
         governorateId: governorate.id,
         governorateInfo: governorate,
         user,
@@ -80,7 +91,7 @@ export class RequestController {
 
       const page = Number(req.query.page) || 1;
       const limit = Number(req.query.limit) || 10;
-      const { governorate_id } = req.query;
+      const { governorate_id, purpose } = req.query;
       const skip = (page - 1) * limit;
 
       const query = requestRepo
@@ -96,6 +107,9 @@ export class RequestController {
         });
       }
 
+      if (purpose) {
+        query.andWhere("request.purpose = :purpose", { purpose });
+      }
       const [requests, total] = await query.getManyAndCount();
 
       res.status(HttpStatusCode.OK).json(
@@ -161,7 +175,7 @@ export class RequestController {
       const lang = req.headers["accept-language"] || "ar";
       const entity = lang === "ar" ? "الطلب" : "request";
       const id = Number(req.params.id);
-      const { governorate_id, description, budget } = req.body;
+      const { governorate_id, description, budget , purpose } = req.body;
       const request = await requestRepo.findOne({
         where: { id },
         relations: ["user"],
@@ -193,11 +207,12 @@ export class RequestController {
         );
       }
 
-      requestRepo.merge(request,{
+      requestRepo.merge(request, {
         budget,
         description,
-        governorateInfo:governorate,
-        governorateId:governorate_id,
+        governorateInfo: governorate,
+        governorateId: governorate_id,
+        ...(purpose && { purpose }),
       });
 
       const updatedRequest = await requestRepo.save(request);
@@ -237,7 +252,7 @@ export class RequestController {
         );
       }
 
-      if (request.user !== req.currentUser) {
+      if (request.user.id !== req.currentUser.id) {
         throw new APIError(
           HttpStatusCode.FORBIDDEN,
           ErrorMessages.generateErrorMessage(entity, "forbidden", lang)
@@ -274,7 +289,7 @@ export class RequestController {
 
       const [requests, total] = await requestRepo.findAndCount({
         where: { user: { id: userId } },
-        relations: ["user" , "governorateInfo"],
+        relations: ["user", "governorateInfo"],
         order: { created_at: "DESC" },
         take: limit,
         skip,
