@@ -16,14 +16,17 @@ export enum EntityAttribute {
 }
 
 export enum AttributeFor {
-  sale = "sale",       
-  rent = "rent",       
-  both = "both",     
+  sale = "sale",
+  rent = "rent",
+  both = "both",
 }
 @Entity("attribute")
 export class Attribute {
   @PrimaryGeneratedColumn()
   id: number;
+
+  @Column({ nullable: true })
+  order: number;
 
   @Column()
   title: string;
@@ -31,7 +34,7 @@ export class Attribute {
   @OneToMany(() => AttributeValue, (value) => value.attribute)
   values: AttributeValue[];
 
-  @Column({nullable:true})
+  @Column({ nullable: true })
   icon: string;
 
   @Column({
@@ -44,15 +47,15 @@ export class Attribute {
   @Column({ type: "json", nullable: true })
   options: any;
 
-  @Column({ default: false }) 
-  show_in_search: boolean; 
+  @Column({ default: false })
+  show_in_search: boolean;
 
   @Column({
     type: "enum",
     enum: AttributeFor,
-    default: AttributeFor.both, 
+    default: AttributeFor.both,
   })
-  purpose: AttributeFor; 
+  purpose: AttributeFor;
 
   @Column({ nullable: true })
   parent_id: number;

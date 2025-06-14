@@ -4,7 +4,7 @@ import { authMiddleware } from "../middleware/auth.middleware";
 import { uploadIcon } from "../middleware/uploadProfile";
 import { checkRole } from "../middleware/checkRole.middleware";
 import { UserRole } from "../entity/User";
-import { createAttribute, deleteAttribute, getAttributeById, getAttributes, getChildattribute, updateAttribute } from "../controllers/attribute.controller";
+import { createAttribute, deleteAttribute, getAttributeById, getAttributes, getChildattribute, updateAttribute, updateAttributeOrder } from "../controllers/attribute.controller";
 
 const attributeRouter: Router = Router();
 
@@ -25,6 +25,12 @@ attributeRouter.post("/child/:id",
     getChildattribute
 );
 
+attributeRouter.put("/order:id", 
+    authMiddleware,
+    checkRole([UserRole.superAdmin]),
+    updateAttributeOrder
+);
+
 attributeRouter.get("/:id", 
     // authMiddleware,
     // checkRole([UserRole.vendor, UserRole.user, UserRole.admin, UserRole.superAdmin]),
@@ -37,6 +43,7 @@ attributeRouter.put("/:id",
     uploadIcon.single("icon"),
     updateAttribute
 );
+
 
 attributeRouter.delete("/:id", 
     authMiddleware,

@@ -280,6 +280,7 @@ export const createAttribute = async (
   }
 };
 
+
 export const updateAttribute = async (
   req: Request,
   res: Response,
@@ -344,6 +345,52 @@ export const updateAttribute = async (
     next(error);
   }
 };
+
+
+export const updateAttributeOrder = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { id } = req.params;
+    const { order } = req.body;
+    const lang = req.headers["accept-language"] || "ar";
+    const entityName = lang === "ar" ? "الخاصية" : "attribute";
+
+    if (order === undefined || isNaN(Number(order))) {
+      throw new APIError(
+        HttpStatusCode.BAD_REQUEST,
+        lang === "ar"
+          ? "الترتيب غير صالح"
+          : "Invalid sort order"
+      );
+    }
+
+    const attribute = await attributeRepository.findOneBy({ id: Number(id) });
+
+    if (!attribute) {
+      throw new APIError(
+        HttpStatusCode.NOT_FOUND,
+        ErrorMessages.generateErrorMessage(entityName, "not found", lang)
+      );
+    }
+
+    attribute.order = Number(order);
+
+    await attributeRepository.save(attribute);
+
+     res.status(HttpStatusCode.OK).json(
+      ApiResponse.success(
+        attribute,
+        ErrorMessages.generateErrorMessage(entityName, "updated", lang)
+      )
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
 
 export const deleteAttribute = async (
   req: Request,
