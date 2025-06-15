@@ -25,6 +25,7 @@ export const getAttributes = async (
       carTypeId,
       propertyTypeId,
     } = req.query;
+    console.log(req.query)
     const lang = req.headers["accept-language"] || "ar";
     const entity = lang === "ar" ? "الخصائص" : "attributes";
 

@@ -4,7 +4,6 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { AppDataSource } from "../config/data_source";
 import { APIError, HttpStatusCode } from "../error/api.error";
-import { sendSms } from "../helper/smsService";
 import { validator } from "../helper/validation/validator";
 import { ErrorMessages } from "../error/ErrorMessages";
 import { ApiResponse } from "../helper/apiResponse";
