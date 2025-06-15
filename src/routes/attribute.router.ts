@@ -25,7 +25,7 @@ attributeRouter.post("/child/:id",
     getChildattribute
 );
 
-attributeRouter.put("/order:id", 
+attributeRouter.put("/order/:id", 
     authMiddleware,
     checkRole([UserRole.superAdmin]),
     updateAttributeOrder
