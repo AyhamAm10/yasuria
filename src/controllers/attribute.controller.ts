@@ -298,6 +298,7 @@ export const updateAttribute = async (
       entity,
       parent_id,
       parent_value,
+      purpose,
       options,
       show_in_search,
     } = req.body;
@@ -333,6 +334,7 @@ export const updateAttribute = async (
 
     attribute.title = title || attribute.title;
     attribute.input_type = input_type || attribute.input_type;
+    attribute.purpose = purpose || attribute.purpose;
     attribute.entity = entity || attribute.entity;
     attribute.parent_id = parent_id || attribute.parent_id;
     attribute.show_in_search =
