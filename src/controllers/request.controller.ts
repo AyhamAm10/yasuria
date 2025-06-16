@@ -29,7 +29,8 @@ export class RequestController {
 
       // await validator(getRequestSchema(lang), req.body);
 
-      const { description, budget, governorate_id, purpose } = req.body;
+      const { description, rentType, budget, governorate_id, purpose } =
+        req.body;
 
       if (!purpose || !Object.values(RequestPurpose).includes(purpose)) {
         throw new APIError(
@@ -47,6 +48,14 @@ export class RequestController {
         );
       }
 
+      if (purpose !== RequestPurpose.RENT && rentType) {
+        throw new APIError(
+          HttpStatusCode.BAD_REQUEST,
+          lang === "ar"
+            ? "لا يمكن تحديد نوع الإيجار عند عدم اختيار الغرض كـ 'إيجار'."
+            : "Cannot specify rent type unless purpose is 'rent'."
+        );
+      }
       const user = await userReposetory.findOneBy({
         id: req.currentUser?.id,
       });
@@ -63,6 +72,7 @@ export class RequestController {
         governorateId: governorate.id,
         governorateInfo: governorate,
         user,
+        rentType,
       });
 
       const savedRequest = await requestRepo.save(newRequest);
@@ -91,7 +101,7 @@ export class RequestController {
 
       const page = Number(req.query.page) || 1;
       const limit = Number(req.query.limit) || 10;
-      const { governorate_id, purpose } = req.query;
+      const { governorate_id, purpose, rentType } = req.query;
       const skip = (page - 1) * limit;
 
       const query = requestRepo
@@ -110,6 +120,11 @@ export class RequestController {
       if (purpose) {
         query.andWhere("request.purpose = :purpose", { purpose });
       }
+
+      if (rentType) {
+        query.andWhere("request.rentType = :rentType", { rentType });
+      }
+
       const [requests, total] = await query.getManyAndCount();
 
       res.status(HttpStatusCode.OK).json(
@@ -175,7 +190,8 @@ export class RequestController {
       const lang = req.headers["accept-language"] || "ar";
       const entity = lang === "ar" ? "الطلب" : "request";
       const id = Number(req.params.id);
-      const { governorate_id, description, budget , purpose } = req.body;
+      const { governorate_id, description, budget, purpose, rentType } =
+        req.body;
       const request = await requestRepo.findOne({
         where: { id },
         relations: ["user"],
@@ -210,6 +226,7 @@ export class RequestController {
       requestRepo.merge(request, {
         budget,
         description,
+        rentType,
         governorateInfo: governorate,
         governorateId: governorate_id,
         ...(purpose && { purpose }),

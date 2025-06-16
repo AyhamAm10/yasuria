@@ -17,10 +17,15 @@ export enum RequestStatus {
   CANCELLED = "cancelled",
 }
 
-
 export enum RequestPurpose {
   SELL = "sell",
   RENT = "rent",
+}
+
+export enum RentType {
+  DAILY = "daily",
+  MONTHLY = "monthly",
+  YEARLY = "yearly",
 }
 
 @Entity("requests")
@@ -53,6 +58,13 @@ export class Request {
     default: RequestPurpose.RENT,
   })
   purpose: RequestPurpose;
+
+  @Column({
+    type: "enum",
+    enum: RentType,
+    nullable: true,
+  })
+  rentType: RentType;
 
   @ManyToOne(() => Governorate)
   @JoinColumn({ name: "governorate_id" })
