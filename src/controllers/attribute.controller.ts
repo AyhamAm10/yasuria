@@ -18,14 +18,8 @@ export const getAttributes = async (
   next: NextFunction
 ) => {
   try {
-    const {
-      entityType,
-      purpose,
-      showInSearch,
-      carTypeId,
-      propertyTypeId,
-    } = req.query;
-    console.log(req.query)
+    const { entityType, purpose, showInSearch, carTypeId, propertyTypeId } =
+      req.query;
     const lang = req.headers["accept-language"] || "ar";
     const entity = lang === "ar" ? "الخصائص" : "attributes";
 
@@ -59,12 +53,9 @@ export const getAttributes = async (
     }
 
     if (carTypeId) {
-      queryBuilder = queryBuilder.andWhere(
-        "attribute.car_type = :carTypeId",
-        {
-          carTypeId: Number(carTypeId),
-        }
-      );
+      queryBuilder = queryBuilder.andWhere("attribute.car_type = :carTypeId", {
+        carTypeId: Number(carTypeId),
+      });
     }
 
     if (propertyTypeId) {
@@ -85,11 +76,18 @@ export const getAttributes = async (
       );
     }
 
+    const sortedAttributes = attributes.sort((a, b) => {
+      if (a.order === null && b.order === null) return 0;
+      if (a.order === null) return 1;
+      if (b.order === null) return -1;
+      return a.order - b.order;
+    });
+
     res
       .status(HttpStatusCode.OK)
       .json(
         ApiResponse.success(
-          attributes,
+          sortedAttributes,
           ErrorMessages.generateErrorMessage(entity, "retrieved", lang)
         )
       );
@@ -143,12 +141,13 @@ export const getChildattribute = async (
     const { value } = req.body;
     const lang = req.headers["accept-language"] || "ar";
     const entity = lang === "ar" ? "الخاصية" : "attribute";
-    const message = lang === "ar" 
-      ? "لايوجد خاصية مرتبطة بهذا ال id" 
-      : "attribute nested not found";
+    const message =
+      lang === "ar"
+        ? "لايوجد خاصية مرتبطة بهذا ال id"
+        : "attribute nested not found";
 
     const queryBuilder = attributeRepository.createQueryBuilder("attribute");
-    console.log(value)
+    console.log(value);
     queryBuilder.where("attribute.parent_id = :id", { id });
 
     if (value) {
@@ -161,12 +160,14 @@ export const getChildattribute = async (
       throw new APIError(HttpStatusCode.NOT_FOUND, message);
     }
 
-    res.status(HttpStatusCode.OK).json(
-      ApiResponse.success(
-        attributes,
-        ErrorMessages.generateErrorMessage(entity, "retrieved", lang)
-      )
-    );
+    res
+      .status(HttpStatusCode.OK)
+      .json(
+        ApiResponse.success(
+          attributes,
+          ErrorMessages.generateErrorMessage(entity, "retrieved", lang)
+        )
+      );
   } catch (error) {
     next(error);
   }
@@ -189,7 +190,7 @@ export const createAttribute = async (
       show_in_search,
       purpose,
       car_type_id,
-      property_type_id
+      property_type_id,
     } = req.body;
     const lang = req.headers["accept-language"] || "ar";
     const entityName = lang === "ar" ? "الخاصية" : "attribute";
@@ -229,7 +230,9 @@ export const createAttribute = async (
     }
 
     if (car_type_id) {
-      const carType = await AppDataSource.getRepository(CarType).findOneBy({ id: car_type_id });
+      const carType = await AppDataSource.getRepository(CarType).findOneBy({
+        id: car_type_id,
+      });
       if (!carType) {
         throw new APIError(
           HttpStatusCode.BAD_REQUEST,
@@ -239,7 +242,9 @@ export const createAttribute = async (
     }
 
     if (property_type_id) {
-      const propertyType = await AppDataSource.getRepository(PropertyType).findOneBy({ id: property_type_id });
+      const propertyType = await AppDataSource.getRepository(
+        PropertyType
+      ).findOneBy({ id: property_type_id });
       if (!propertyType) {
         throw new APIError(
           HttpStatusCode.BAD_REQUEST,
@@ -247,7 +252,6 @@ export const createAttribute = async (
         );
       }
     }
-
 
     const icon = req.file ? req.file.filename : "";
 
@@ -281,7 +285,6 @@ export const createAttribute = async (
   }
 };
 
-
 export const updateAttribute = async (
   req: Request,
   res: Response,
@@ -289,8 +292,15 @@ export const updateAttribute = async (
 ) => {
   try {
     const { id } = req.params;
-    const { title, input_type, entity, parent_id, parent_value, options , show_in_search } =
-      req.body;
+    const {
+      title,
+      input_type,
+      entity,
+      parent_id,
+      parent_value,
+      options,
+      show_in_search,
+    } = req.body;
     const lang = req.headers["accept-language"] || "ar";
     const entityName = lang === "ar" ? "الخاصية" : "attribute";
 
@@ -298,7 +308,7 @@ export const updateAttribute = async (
       if (typeof value === "boolean") return value;
       if (typeof value === "string") return value.toLowerCase() === "true";
       return false;
-    }
+    };
 
     const attribute = await attributeRepository.findOneBy({ id: Number(id) });
 
@@ -325,9 +335,10 @@ export const updateAttribute = async (
     attribute.input_type = input_type || attribute.input_type;
     attribute.entity = entity || attribute.entity;
     attribute.parent_id = parent_id || attribute.parent_id;
-    attribute.show_in_search = show_in_search !== undefined
-  ? parseBoolean(show_in_search)
-  : attribute.show_in_search;
+    attribute.show_in_search =
+      show_in_search !== undefined
+        ? parseBoolean(show_in_search)
+        : attribute.show_in_search;
     attribute.parent_value = parent_value || attribute.parent_value;
     attribute.options = options ? JSON.parse(options) : attribute.options;
     if (req.file) attribute.icon = req.file.filename;
@@ -347,7 +358,6 @@ export const updateAttribute = async (
   }
 };
 
-
 export const updateAttributeOrder = async (
   req: Request,
   res: Response,
@@ -362,9 +372,7 @@ export const updateAttributeOrder = async (
     if (order === undefined || isNaN(Number(order))) {
       throw new APIError(
         HttpStatusCode.BAD_REQUEST,
-        lang === "ar"
-          ? "الترتيب غير صالح"
-          : "Invalid sort order"
+        lang === "ar" ? "الترتيب غير صالح" : "Invalid sort order"
       );
     }
 
@@ -381,17 +389,18 @@ export const updateAttributeOrder = async (
 
     await attributeRepository.save(attribute);
 
-     res.status(HttpStatusCode.OK).json(
-      ApiResponse.success(
-        attribute,
-        ErrorMessages.generateErrorMessage(entityName, "updated", lang)
-      )
-    );
+    res
+      .status(HttpStatusCode.OK)
+      .json(
+        ApiResponse.success(
+          attribute,
+          ErrorMessages.generateErrorMessage(entityName, "updated", lang)
+        )
+      );
   } catch (error) {
     next(error);
   }
 };
-
 
 export const deleteAttribute = async (
   req: Request,
