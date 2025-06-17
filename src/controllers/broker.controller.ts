@@ -30,7 +30,7 @@ export class BrokerController {
   ): Promise<void> {
     try {
       const lang = req.headers["accept-language"] || "ar";
-      const entity = lang === "ar" ? "المكتب الوسيط" : "broker office";
+      const entity = lang === "ar" ? "رقم الوتساب" : "phone";
       const serviceLang = lang === "ar" ? "ID الخدمة" : "ID service";
 
       // await validator(brokerOfficeSchema(lang), req.body);
