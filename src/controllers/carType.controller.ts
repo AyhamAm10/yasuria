@@ -4,10 +4,11 @@ import { CarType } from '../entity/CarType';
 import { APIError, HttpStatusCode } from '../error/api.error';
 import { ApiResponse } from '../helper/apiResponse';
 import { ErrorMessages } from '../error/ErrorMessages';
+import { Attribute } from '../entity/Attribute';
 
 
 const carTypeRepository = AppDataSource.getRepository(CarType);
-
+const attributeRepository = AppDataSource.getRepository(Attribute)
 
 export const createCarType = async (
   req: Request,
@@ -146,6 +147,13 @@ export const deleteCarType = async (
       );
     }
 
+    const hasAttribute = await attributeRepository.findOneBy({car_type:carType})
+    if (hasAttribute) {
+      throw new APIError(
+        HttpStatusCode.NOT_FOUND,
+        `لايمكن حذف هذا النوع لانه مرتبط بل attribute ${hasAttribute.title} المعرف الخاص به ${hasAttribute.id}`
+      );
+    }
     await carTypeRepository.remove(carType);
 
     res
