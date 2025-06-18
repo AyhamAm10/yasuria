@@ -69,13 +69,6 @@ export const getAttributes = async (
 
     const attributes = await queryBuilder.getMany();
 
-    if (!attributes.length) {
-      throw new APIError(
-        HttpStatusCode.NOT_FOUND,
-        ErrorMessages.generateErrorMessage(entity, "not found", lang)
-      );
-    }
-
     const sortedAttributes = attributes.sort((a, b) => {
       if (a.order === null && b.order === null) return 0;
       if (a.order === null) return 1;
@@ -141,10 +134,6 @@ export const getChildattribute = async (
     const { value } = req.body;
     const lang = req.headers["accept-language"] || "ar";
     const entity = lang === "ar" ? "الخاصية" : "attribute";
-    const message =
-      lang === "ar"
-        ? "لايوجد خاصية مرتبطة بهذا ال id"
-        : "attribute nested not found";
 
     const queryBuilder = attributeRepository.createQueryBuilder("attribute");
     console.log(value);
@@ -155,10 +144,6 @@ export const getChildattribute = async (
     }
 
     const attributes = await queryBuilder.getMany();
-
-    if (!attributes.length) {
-      throw new APIError(HttpStatusCode.NOT_FOUND, message);
-    }
 
     res
       .status(HttpStatusCode.OK)

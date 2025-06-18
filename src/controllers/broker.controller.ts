@@ -432,12 +432,7 @@ static async createBrokerOffice(
         totalPages: Math.ceil(totalCount / pageSize),
       };
 
-      if (brokers.length === 0) {
-        throw new APIError(
-          HttpStatusCode.NOT_FOUND,
-          ErrorMessages.generateErrorMessage(entity, "not found", lang)
-        );
-      }
+     
 
       res
         .status(HttpStatusCode.OK)

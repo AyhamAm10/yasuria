@@ -73,12 +73,6 @@ export const getCars = async (
       totalPages: Math.ceil(totalCount / pageSize),
     };
 
-    if (!queryResult || queryResult.length === 0) {
-      throw new APIError(
-        HttpStatusCode.NOT_FOUND,
-        ErrorMessages.generateErrorMessage(entity, "not found", lang)
-      );
-    }
 
     const data = await Promise.all(
       queryResult.map(async (rawCar) => {

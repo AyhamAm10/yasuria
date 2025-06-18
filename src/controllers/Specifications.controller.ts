@@ -58,13 +58,6 @@ export const getSpecifications = async (
       .take(pageSize)
       .getManyAndCount();
 
-    if (!specifications.length) {
-      throw new APIError(
-        HttpStatusCode.NOT_FOUND,
-        ErrorMessages.generateErrorMessage(entity, "not found", lang)
-      );
-    }
-
     const pagination = {
       total: totalCount,
       page: pageNumber,
