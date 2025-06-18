@@ -101,7 +101,7 @@ export const getAttributeById = async (
 
     const attribute = await attributeRepository.findOne({
       where: { id: Number(id) },
-      relations: ["values"],
+     relations: ["car_type", "property_type"],
     });
 
     if (!attribute) {
