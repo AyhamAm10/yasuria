@@ -29,7 +29,6 @@ serviceCategoryRouter.get(
   checkRole([
     UserRole.superAdmin,
     UserRole.admin,
-    UserRole.vendor,
     UserRole.user,
   ]),
   ServiceCategoryController.getCategorys
@@ -49,7 +48,6 @@ serviceCategoryRouter.get(
   checkRole([
     UserRole.superAdmin,
     UserRole.admin,
-    UserRole.vendor,
     UserRole.user,
   ]),
   ServiceCategoryController.getServiceByCategoryId

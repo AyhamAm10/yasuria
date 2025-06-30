@@ -23,195 +23,37 @@ const brokerofficeServiceRepository =
 
 const governorateRepository = AppDataSource.getRepository(Governorate);
 export class BrokerController {
-  // static async createBrokerOffice(
-  //   req: Request,
-  //   res: Response,
-  //   next: NextFunction
-  // ): Promise<void> {
-  //   try {
-  //     const lang = req.headers["accept-language"] || "ar";
-  //     const entity = lang === "ar" ? "رقم الوتساب" : "phone";
-  //     const serviceLang = lang === "ar" ? "ID الخدمة" : "ID service";
+  static async createNewBrokerOffice(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const lang = req.headers["accept-language"] || "ar";
+      const entity = lang === "ar" ? "رقم الوتساب" : "phone";
+      const serviceLang = lang === "ar" ? "ID الخدمة" : "ID service";
+      const userId = req.currentUser?.id;
+      await validator(brokerOfficeSchema(lang), req.body);
 
-  //     // await validator(brokerOfficeSchema(lang), req.body);
+      const {
+        office_name,
+        commercial_number,
+        whatsapp_number,
+        governorate_id,
+        address,
+        lat,
+        long,
+        working_hours_from,
+        working_hours_to,
+        description,
+        services,
+      } = req.body;
 
-  //     const {
-  //       phone,
-  //       office_name,
-  //       user_name,
-  //       city,
-  //       commercial_number,
-  //       whatsapp_number,
-  //       governorate_id,
-  //       address,
-  //       lat,
-  //       long,
-  //       working_hours_from,
-  //       working_hours_to,
-  //       description,
-  //       services,
-  //     } = req.body;
+      const image = req.file ? req.file.filename : "";
 
-  //     const image = req.file ? req.file.filename : "";
-
-  //     const userExists = await userRepository.findOne({ where: { phone } });
-  //     if (userExists) {
-  //       throw new APIError(
-  //         HttpStatusCode.BAD_REQUEST,
-  //         ErrorMessages.generateErrorMessage(entity, "already exists", lang)
-  //       );
-  //     }
-
-  //     const newUser = userRepository.create({
-  //       phone,
-  //       city,
-  //       name: user_name,
-  //       isActive: true,
-  //       role: UserRole.vendor,
-  //     });
-  //     const user = await userRepository.save(newUser);
-
-  //     const governorate = await governorateRepository.findOne({
-  //       where: { id: governorate_id },
-  //     });
-
-  //     if (!governorate) {
-  //       throw new APIError(
-  //         HttpStatusCode.NOT_FOUND,
-  //         ErrorMessages.generateErrorMessage("المحافظة", "not found", lang)
-  //       );
-  //     }
-
-  //     const newBrokerOffice = brokerRepository.create({
-  //       user,
-  //       office_name,
-  //       image: image || "default_broker.jpg",
-  //       commercial_number,
-  //       whatsapp_number,
-  //       governorateId: governorate.id,
-  //       governorateInfo: governorate,
-  //       address,
-  //       lat,
-  //       long,
-  //       working_hours_from,
-  //       working_hours_to,
-  //       description,
-  //       rating_avg: 0,
-  //       followers_count: 0,
-  //     });
-
-  //     const savedBroker = await brokerRepository.save(newBrokerOffice);
-
-  //     if (services) {
-  //       const servicePromises = services.map(async (id: number) => {
-  //         const service = await serviceRepository.findOne({ where: { id } });
-
-  //         if (!service) {
-  //           throw new APIError(
-  //             HttpStatusCode.NOT_FOUND,
-  //             ErrorMessages.generateErrorMessage(serviceLang, "not found", lang)
-  //           );
-  //         }
-
-  //         return brokerofficeServiceRepository.create({
-  //           service,
-  //           broker_office: savedBroker,
-  //         });
-  //       });
-
-  //       const servicesToSave = await Promise.all(servicePromises);
-  //       await brokerofficeServiceRepository.save(servicesToSave);
-  //     }
-
-  //     const accessToken = jwt.sign(
-  //       {
-  //         userId: user.id,
-  //         phone: user.phone,
-  //         role: UserRole.vendor,
-  //       },
-  //       process.env.ACCESS_TOKEN_SECRET!,
-  //       { expiresIn: "20m" }
-  //     );
-
-  //     const refreshToken = jwt.sign(
-  //       {
-  //         userId: user.id,
-  //         phone: user.phone,
-  //         role: UserRole.vendor,
-  //       },
-  //       process.env.REFRESH_TOKEN_SECRET!,
-  //       { expiresIn: "7d" }
-  //     );
-
-  //     res.cookie("jwt", refreshToken, {
-  //       httpOnly: true,
-  //       secure: process.env.NODE_ENV === "production",
-  //       sameSite: "lax",
-  //     });
-
-  //     res.status(HttpStatusCode.OK_CREATED).json(
-  //       ApiResponse.success(
-  //         {
-  //           accessToken,
-  //           broker: savedBroker,
-  //           user,
-  //         },
-  //         ErrorMessages.generateErrorMessage(entity, "created", lang)
-  //       )
-  //     );
-  //   } catch (error) {
-  //     console.log(error);
-  //     next(error);
-  //   }
-  // }
-
-static async createBrokerOffice(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
-  try {
-    const lang = req.headers["accept-language"] || "ar";
-    const entity = lang === "ar" ? "رقم الوتساب" : "phone";
-    const serviceLang = lang === "ar" ? "ID الخدمة" : "ID service";
-
-    await validator(brokerOfficeSchema(lang), req.body);
-    const {
-      phone,
-      office_name,
-      user_name,
-      city,
-      commercial_number,
-      whatsapp_number,
-      governorate_id,
-      address,
-      lat,
-      long,
-      working_hours_from,
-      working_hours_to,
-      description,
-      services,
-    } = req.body;
-
-    const image = req.file ? req.file.filename : "";
-
-    const userExists = await userRepository.findOne({ where: { phone } });
-    if (userExists) {
-      throw new APIError(
-        HttpStatusCode.BAD_REQUEST,
-        ErrorMessages.generateErrorMessage(entity, "already exists", lang)
-      );
-    }
-
-    await AppDataSource.manager.transaction(async (transactionalEntityManager) => {
-      const newUser = userRepository.create({
-        phone,
-        city,
-        name: user_name,
-        isActive: true,
-        role: UserRole.vendor,
+      const user = await AppDataSource.getRepository(User).findOneBy({
+        id: userId,
       });
-      const user = await transactionalEntityManager.save(newUser);
 
       const governorate = await governorateRepository.findOne({
         where: { id: governorate_id },
@@ -242,71 +84,194 @@ static async createBrokerOffice(
         followers_count: 0,
       });
 
-      const savedBroker = await transactionalEntityManager.save(newBrokerOffice);
+      const savedBroker = await brokerRepository.save(newBrokerOffice);
 
       if (services) {
-        const serviceEntities = [];
-        for (const id of services) {
+        const servicePromises = services.map(async (id: number) => {
           const service = await serviceRepository.findOne({ where: { id } });
+
           if (!service) {
             throw new APIError(
               HttpStatusCode.NOT_FOUND,
               ErrorMessages.generateErrorMessage(serviceLang, "not found", lang)
             );
           }
-          const relation = brokerofficeServiceRepository.create({
+
+          return brokerofficeServiceRepository.create({
             service,
             broker_office: savedBroker,
           });
-          serviceEntities.push(relation);
-        }
+        });
 
-        await transactionalEntityManager.save(serviceEntities);
+        const servicesToSave = await Promise.all(servicePromises);
+        await brokerofficeServiceRepository.save(servicesToSave);
       }
-
-      const accessToken = jwt.sign(
-        {
-          userId: user.id,
-          phone: user.phone,
-          role: UserRole.vendor,
-        },
-        process.env.ACCESS_TOKEN_SECRET!,
-        { expiresIn: "20m" }
-      );
-
-      const refreshToken = jwt.sign(
-        {
-          userId: user.id,
-          phone: user.phone,
-          role: UserRole.vendor,
-        },
-        process.env.REFRESH_TOKEN_SECRET!,
-        { expiresIn: "7d" }
-      );
-
-      res.cookie("jwt", refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-      });
 
       res.status(HttpStatusCode.OK_CREATED).json(
         ApiResponse.success(
           {
-            accessToken,
             broker: savedBroker,
             user,
           },
           ErrorMessages.generateErrorMessage(entity, "created", lang)
         )
       );
-    });
-  } catch (error) {
-    console.log(error);
-    next(error);
+    } catch (error) {
+      console.log(error);
+      next(error);
+    }
   }
-}
 
+  static async createBrokerOffice(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const lang = req.headers["accept-language"] || "ar";
+      const entity = lang === "ar" ? "رقم الوتساب" : "phone";
+      const serviceLang = lang === "ar" ? "ID الخدمة" : "ID service";
+      await validator(brokerOfficeSchema(lang), req.body);
+      const {
+        phone,
+        office_name,
+        user_name,
+        city,
+        commercial_number,
+        whatsapp_number,
+        governorate_id,
+        address,
+        lat,
+        long,
+        working_hours_from,
+        working_hours_to,
+        description,
+        services,
+      } = req.body;
+
+      const image = req.file ? req.file.filename : "";
+
+      const userExists = await userRepository.findOne({ where: { phone } });
+      if (userExists) {
+        throw new APIError(
+          HttpStatusCode.BAD_REQUEST,
+          ErrorMessages.generateErrorMessage(entity, "already exists", lang)
+        );
+      }
+
+      await AppDataSource.manager.transaction(
+        async (transactionalEntityManager) => {
+          const newUser = userRepository.create({
+            phone,
+            city,
+            name: user_name,
+            isActive: true,
+            role: UserRole.user,
+          });
+          const user = await transactionalEntityManager.save(newUser);
+
+          const governorate = await governorateRepository.findOne({
+            where: { id: governorate_id },
+          });
+
+          if (!governorate) {
+            throw new APIError(
+              HttpStatusCode.NOT_FOUND,
+              ErrorMessages.generateErrorMessage("المحافظة", "not found", lang)
+            );
+          }
+
+          const newBrokerOffice = brokerRepository.create({
+            user,
+            office_name,
+            image: image || "default_broker.jpg",
+            commercial_number,
+            whatsapp_number,
+            governorateId: governorate.id,
+            governorateInfo: governorate,
+            address,
+            lat,
+            long,
+            working_hours_from,
+            working_hours_to,
+            description,
+            rating_avg: 0,
+            followers_count: 0,
+          });
+
+          const savedBroker = await transactionalEntityManager.save(
+            newBrokerOffice
+          );
+
+          if (services) {
+            const serviceEntities = [];
+            for (const id of services) {
+              const service = await serviceRepository.findOne({
+                where: { id },
+              });
+              if (!service) {
+                throw new APIError(
+                  HttpStatusCode.NOT_FOUND,
+                  ErrorMessages.generateErrorMessage(
+                    serviceLang,
+                    "not found",
+                    lang
+                  )
+                );
+              }
+              const relation = brokerofficeServiceRepository.create({
+                service,
+                broker_office: savedBroker,
+              });
+              serviceEntities.push(relation);
+            }
+
+            await transactionalEntityManager.save(serviceEntities);
+          }
+
+          const accessToken = jwt.sign(
+            {
+              userId: user.id,
+              phone: user.phone,
+              role: UserRole.user,
+            },
+            process.env.ACCESS_TOKEN_SECRET!,
+            { expiresIn: "20m" }
+          );
+
+          const refreshToken = jwt.sign(
+            {
+              userId: user.id,
+              phone: user.phone,
+              role: UserRole.user,
+            },
+            process.env.REFRESH_TOKEN_SECRET!,
+            { expiresIn: "7d" }
+          );
+
+          res.cookie("jwt", refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+          });
+
+          res.status(HttpStatusCode.OK_CREATED).json(
+            ApiResponse.success(
+              {
+                accessToken,
+                broker: savedBroker,
+                user,
+              },
+              ErrorMessages.generateErrorMessage(entity, "created", lang)
+            )
+          );
+        }
+      );
+    } catch (error) {
+      console.log(error);
+      next(error);
+    }
+  }
 
   static async getBrokerOffices(
     req: Request,
@@ -432,8 +397,6 @@ static async createBrokerOffice(
         totalPages: Math.ceil(totalCount / pageSize),
       };
 
-     
-
       res
         .status(HttpStatusCode.OK)
         .json(
@@ -491,7 +454,7 @@ static async createBrokerOffice(
         broker.broker_service.map(async (serBrokect) => {
           const service = await serviceRepository.findOne({
             where: { id: serBrokect.service.id },
-            relations:["category"]
+            relations: ["category"],
           });
           return service;
         })
@@ -618,19 +581,15 @@ static async createBrokerOffice(
           throw new Error("No valid services found");
         }
 
-        const brokerServices = validServices.map((service) =>{
-
-          const new_b_s = 
-          brokerofficeServiceRepository.create({
+        const brokerServices = validServices.map((service) => {
+          const new_b_s = brokerofficeServiceRepository.create({
             service: service,
             broker_office: { id: broker.id },
-          })
-          new_b_s.broker_office = broker
+          });
+          new_b_s.broker_office = broker;
 
-          return new_b_s
-        }
-
-        );
+          return new_b_s;
+        });
 
         console.log(broker);
 

@@ -10,7 +10,7 @@ const specificationRouter: Router = Router();
 
 specificationRouter.post("/",
     authMiddleware,
-    checkRole([UserRole.vendor, UserRole.user, UserRole.admin, UserRole.superAdmin]),
+    checkRole([  UserRole.admin, UserRole.superAdmin]),
     uploadIcon.single("icon"),
     createSpecification
 );
@@ -23,20 +23,20 @@ specificationRouter.get("/",
 
 specificationRouter.get("/:id", 
     authMiddleware,
-    checkRole([UserRole.vendor, UserRole.user, UserRole.admin, UserRole.superAdmin]),
+    checkRole([  UserRole.admin, UserRole.superAdmin]),
     getSpecificationById
 );
 
 specificationRouter.put("/:id", 
     authMiddleware,
-    checkRole([UserRole.vendor]),
+    checkRole([  UserRole.admin, UserRole.superAdmin]),
     uploadIcon.single("icon"),
     updateSpecification
 );
 
 specificationRouter.delete("/:id", 
     authMiddleware,
-    checkRole([UserRole.vendor, UserRole.admin, UserRole.superAdmin]),
+    checkRole([  UserRole.admin, UserRole.superAdmin]),
     deleteSpecification
 );
 

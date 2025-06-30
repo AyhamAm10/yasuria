@@ -10,8 +10,9 @@ import { optionalAuthMiddleware } from "../middleware/optionalAuthMiddleware";
 const officeRouter: Router = Router();
 
 officeRouter.post("/", 
+    authMiddleware,
     upload.single("image"),
-    BrokerController.createBrokerOffice
+    BrokerController.createNewBrokerOffice
 );
 
 officeRouter.get("/", 
@@ -19,15 +20,20 @@ officeRouter.get("/",
     BrokerController.getBrokerOffices
 );
 
+officeRouter.post("/user", 
+    optionalAuthMiddleware,
+    upload.single("image"),
+    BrokerController.createBrokerOffice
+);
 officeRouter.post("/follow", 
     authMiddleware,
-    checkRole([UserRole.vendor , UserRole.user , UserRole.admin , UserRole.superAdmin]),
+    checkRole([ UserRole.user , UserRole.admin , UserRole.superAdmin]),
     toggleFollowBroker
 );
 
 officeRouter.post("/rate", 
     authMiddleware,
-    checkRole([UserRole.vendor , UserRole.user , UserRole.admin , UserRole.superAdmin]),
+    checkRole([ UserRole.user , UserRole.admin , UserRole.superAdmin]),
     rateBroker
 );
 
@@ -38,14 +44,14 @@ officeRouter.get("/:id",
 
 officeRouter.put("/:id", 
     authMiddleware,
-    checkRole([UserRole.vendor , UserRole.superAdmin]),
+    checkRole([UserRole.user , UserRole.superAdmin]),
     upload.single("image"),
     BrokerController.updateBrokerOffice
 );
 
 officeRouter.delete("/", 
     authMiddleware,
-    checkRole([UserRole.vendor , UserRole.superAdmin]),
+    checkRole([UserRole.user , UserRole.superAdmin]),
     BrokerController.deleteBrokerOffice
 );
 

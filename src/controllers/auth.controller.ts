@@ -1,6 +1,5 @@
 import { NextFunction, Request, Response } from "express";
 import { User, UserRole } from "../entity/User";
-import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { AppDataSource } from "../config/data_source";
 import { APIError, HttpStatusCode } from "../error/api.error";
@@ -12,7 +11,6 @@ import { getRegisterSchema } from "../helper/validation/schema/registerSchema";
 import { BrokerOffice } from "../entity/BrokerOffice";
 
 const userRepository = AppDataSource.getRepository(User);
-const verificationCodes = new Map<string, string>();
 const brokerRepository = AppDataSource.getRepository(BrokerOffice);
 export class AuthController {
   static async login(

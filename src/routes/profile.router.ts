@@ -15,7 +15,7 @@ const propertyController = new PropertySearchController();
 
 profileRouter.put("/profile",
     authMiddleware,
-    checkRole([UserRole.admin , UserRole.superAdmin , UserRole.vendor , UserRole.user]),
+    checkRole([UserRole.admin , UserRole.superAdmin , UserRole.user]),
     upload.single("image"),
     updateProfile
 );

@@ -10,7 +10,7 @@ const attributeRouter: Router = Router();
 
 attributeRouter.post("/",
     authMiddleware,
-    checkRole([UserRole.vendor, UserRole.user, UserRole.admin, UserRole.superAdmin]),
+    checkRole([ UserRole.admin, UserRole.superAdmin]),
     uploadIcon.single("icon"),
     createAttribute
 );

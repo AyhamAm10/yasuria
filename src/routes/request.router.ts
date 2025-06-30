@@ -8,7 +8,7 @@ const requesteRouter: Router = Router();
 
 requesteRouter.post("/", 
     authMiddleware,
-    checkRole([UserRole.vendor]),
+    checkRole([UserRole.user]),
     RequestController.createRequest
 );
 
@@ -26,13 +26,13 @@ requesteRouter.get("/user/:id",
 
 requesteRouter.put("/:id", 
     authMiddleware,
-    checkRole([UserRole.vendor]),
+    checkRole([UserRole.user]),
     RequestController.updateRequest
 );
 
 requesteRouter.delete("/:id", 
     authMiddleware,
-    checkRole([UserRole.vendor]),
+    checkRole([UserRole.user]),
     RequestController.deleteRequest
 );
 

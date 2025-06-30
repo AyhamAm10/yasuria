@@ -9,13 +9,13 @@ const favoriteRoute: Router = Router();
 
 favoriteRoute.get("/", 
     authMiddleware,
-    checkRole([UserRole.admin , UserRole.superAdmin , UserRole.vendor , UserRole.user]),
+    checkRole([UserRole.admin , UserRole.superAdmin , UserRole.user]),
     getUserFavorites
 );
 
 favoriteRoute.post("/toggle", 
     authMiddleware,
-    checkRole([UserRole.admin , UserRole.superAdmin , UserRole.vendor , UserRole.user]),
+    checkRole([UserRole.admin , UserRole.superAdmin  , UserRole.user]),
     toggleFavorite
 );
 

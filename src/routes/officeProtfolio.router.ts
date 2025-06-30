@@ -9,7 +9,7 @@ const officeProtfolioRouter: Router = Router();
 
 officeProtfolioRouter.post("/", 
     authMiddleware,
-    checkRole([UserRole.vendor]),
+    checkRole([UserRole.user]),
     upload.array("image"),
     addBrokerPortfolio
 );
@@ -21,7 +21,7 @@ officeProtfolioRouter.get("/",
 
 officeProtfolioRouter.delete("/:id", 
     authMiddleware,
-    checkRole([UserRole.vendor , UserRole.superAdmin , UserRole.admin]),
+    checkRole([UserRole.user , UserRole.superAdmin , UserRole.admin]),
     deleteBrokerPortfolio
 );
 
