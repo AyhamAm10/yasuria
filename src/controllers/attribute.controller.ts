@@ -101,7 +101,7 @@ export const getAttributeById = async (
 
     const attribute = await attributeRepository.findOne({
       where: { id: Number(id) },
-     relations: ["car_type", "property_type"],
+      relations: ["car_type", "property_type"],
     });
 
     if (!attribute) {
@@ -286,6 +286,7 @@ export const updateAttribute = async (
       purpose,
       options,
       show_in_search,
+      has_child,
     } = req.body;
     const lang = req.headers["accept-language"] || "ar";
     const entityName = lang === "ar" ? "الخاصية" : "attribute";
@@ -326,6 +327,10 @@ export const updateAttribute = async (
       show_in_search !== undefined
         ? parseBoolean(show_in_search)
         : attribute.show_in_search;
+    attribute.has_child =
+      has_child !== undefined
+        ? parseBoolean(has_child)
+        : attribute.has_child;
     attribute.parent_value = parent_value || attribute.parent_value;
     attribute.options = options ? JSON.parse(options) : attribute.options;
     if (req.file) attribute.icon = req.file.filename;
