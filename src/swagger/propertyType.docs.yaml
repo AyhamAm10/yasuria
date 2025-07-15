@@ -11,7 +11,7 @@ tags:
     description: Operations related to property types
 
 paths:
-  /property-types:
+  /type-p:
     post:
       tags: [Property Types]
       summary: Create a new property type
@@ -56,7 +56,7 @@ paths:
         '500':
           description: Internal server error
 
-  /property-types/{id}:
+  /type-p/{id}:
     get:
       tags: [Property Types]
       summary: Get a property type by ID

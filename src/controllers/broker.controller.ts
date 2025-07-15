@@ -33,7 +33,7 @@ export class BrokerController {
       const entity = lang === "ar" ? "رقم الوتساب" : "phone";
       const serviceLang = lang === "ar" ? "ID الخدمة" : "ID service";
       const userId = req.currentUser?.id;
-      await validator(brokerOfficeSchema(lang), req.body);
+      // await validator(brokerOfficeSchema(lang), req.body);
 
       const {
         office_name,
@@ -131,7 +131,7 @@ export class BrokerController {
       const lang = req.headers["accept-language"] || "ar";
       const entity = lang === "ar" ? "رقم الوتساب" : "phone";
       const serviceLang = lang === "ar" ? "ID الخدمة" : "ID service";
-      await validator(brokerOfficeSchema(lang), req.body);
+      // await validator(brokerOfficeSchema(lang), req.body);
       const {
         phone,
         office_name,
