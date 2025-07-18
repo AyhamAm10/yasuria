@@ -159,4 +159,29 @@ export class AuthController {
       next(error);
     }
   }
+
+  static async me(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const lang = req.headers["accept-language"] || "ar";
+      const entity = lang === "ar" ? "المستخدم" : "user";
+
+      const id = req.currentUser?.id
+      const me =await userRepository.findOne({where: {id} , relations:[""]}) 
+      const brokerOffice =await brokerRepository.findOneBy({user: {id}})
+      res
+        .status(HttpStatusCode.OK)
+        .json(
+          ApiResponse.success(
+            {user: me, broker:brokerOffice },
+            ErrorMessages.generateErrorMessage(entity, "retrieved", lang)
+          )
+        );
+    } catch (error) {
+      next(error);
+    }
+  }
 }
