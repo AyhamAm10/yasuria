@@ -170,7 +170,7 @@ export class AuthController {
       const entity = lang === "ar" ? "المستخدم" : "user";
 
       const id = req.currentUser?.id
-      const me =await userRepository.findOne({where: {id} , relations:[""]}) 
+      const me =await userRepository.findOne({where: {id}}) 
       const brokerOffice =await brokerRepository.findOneBy({user: {id}})
       res
         .status(HttpStatusCode.OK)
