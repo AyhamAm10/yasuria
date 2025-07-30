@@ -33,6 +33,9 @@ paths:
           description: Filter by entity type
           schema:
             type: string
+            enum:
+              - car
+              - property
         - name: type_id
           in: query
           description: Filter by  Propert or Car id

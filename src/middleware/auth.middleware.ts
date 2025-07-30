@@ -35,7 +35,7 @@ export const authMiddleware = async (
           if (err.name === "TokenExpiredError") {
             const refreshToken = req.cookies?.jwt;
             if (!refreshToken) {
-              return next(new APIError(HttpStatusCode.FORBIDDEN, ErrorMessages.generateErrorMessage("المصادقة", "forbidden", lang)));
+              return next(new APIError(HttpStatusCode.UNAUTHORIZED, ErrorMessages.generateErrorMessage("المصادقة", "unauthorized", lang)));
             }
 
             try {

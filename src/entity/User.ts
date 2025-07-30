@@ -14,7 +14,7 @@ export class User {
   @Column()
   name: string;
 
-  @Column({nullable: true , default:"defulte_img"})
+  @Column({nullable: true})
   image_url: string;
 
   @Column({ default: true })
