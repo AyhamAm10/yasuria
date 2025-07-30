@@ -57,7 +57,7 @@ export const authMiddleware = async (
               return next(new APIError(HttpStatusCode.FORBIDDEN, ErrorMessages.generateErrorMessage("المصادقة", "forbidden", lang)));
             }
           } else {
-            return next(new APIError(HttpStatusCode.FORBIDDEN, ErrorMessages.generateErrorMessage("المصادقة", "forbidden", lang)));
+            return next(new APIError(HttpStatusCode.UNAUTHORIZED, ErrorMessages.generateErrorMessage("المصادقة", "unauthorized", lang)));
           }
         }
 
