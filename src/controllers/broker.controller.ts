@@ -331,12 +331,18 @@ export class BrokerController {
       }
 
       if (minRating || maxRating) {
-        query.leftJoin("broker.broker_ratings", "r");
+        query.leftJoin("broker.ratings", "r");
         if (minRating)
           query.having("AVG(r.rating) >= :minRating", { minRating });
         if (maxRating)
           query.having("AVG(r.rating) <= :maxRating", { maxRating });
-        query.groupBy("broker.id");
+
+        query
+          .groupBy("broker.id")
+          .addGroupBy("user.id")
+          .addGroupBy("governorate.id")
+          .addGroupBy("brokerService.id")
+          .addGroupBy("service.id");
       }
 
       if (orderByFollowers) {
