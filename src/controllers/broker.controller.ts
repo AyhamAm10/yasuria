@@ -331,11 +331,10 @@ export class BrokerController {
       }
 
       if (minRating || maxRating) {
-        query.leftJoin("broker.ratings", "r");
         if (minRating)
-          query.having("AVG(r.rating) >= :minRating", { minRating });
+          query.having("AVG(rating.rating) >= :minRating", { minRating });
         if (maxRating)
-          query.having("AVG(r.rating) <= :maxRating", { maxRating });
+          query.having("AVG(rating.rating) <= :maxRating", { maxRating });
 
         query
           .groupBy("broker.id")
