@@ -55,8 +55,12 @@ export const getProperties = async (
 
     const query = propertyRepository.createQueryBuilder("property");
 
-    if (title)
-      query.andWhere("property.title LIKE :title", { title: `%${title}%` });
+    if (title) {
+      query.andWhere(
+        "(property.title_ar ILIKE :title OR property.title_en ILIKE :title)",
+        { title: `%${title}%` }
+      );
+    }
     if (governorate_id) {
       query.andWhere("property.governorateId = :governorateId", {
         governorateId: governorate_id,
@@ -375,7 +379,7 @@ export const updateProperty = async (
       listing_type,
       governorate_id,
       keptImages,
-      isActive
+      isActive,
     } = req.body;
 
     const userId = req["currentUser"].id;
@@ -450,12 +454,14 @@ export const updateProperty = async (
       listing_type,
       governorateId: governorate?.id,
       governorateInfo: governorate,
-      isActive: isActive !== undefined ? isActive === "true" || isActive === true : property.isActive
+      isActive:
+        isActive !== undefined
+          ? isActive === "true" || isActive === true
+          : property.isActive,
     });
 
     const updatedProperty = await propertyRepository.save(property);
 
-    
     if (attributes && attributes.length > 0) {
       await attributeValueRepository.delete({
         entity: EntityAttribute.properties,
@@ -483,7 +489,6 @@ export const updateProperty = async (
 
       await attributeValueRepository.save(await Promise.all(attributePromises));
     }
-
 
     if (specifications && specifications.length > 0) {
       await specificationValueRepository.delete({

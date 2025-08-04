@@ -51,7 +51,7 @@ officeRouter.put("/:id",
 
 officeRouter.delete("/", 
     authMiddleware,
-    checkRole([UserRole.user , UserRole.superAdmin]),
+    // checkRole([UserRole.user , UserRole.superAdmin]),
     BrokerController.deleteBrokerOffice
 );
 

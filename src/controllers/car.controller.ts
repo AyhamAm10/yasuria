@@ -37,6 +37,7 @@ export const getCars = async (
 ) => {
   try {
     const {
+      title,
       governorate_id,
       page = "1",
       limit = "10",
@@ -50,6 +51,12 @@ export const getCars = async (
     const userId = req.currentUser?.id;
     const query = carRepository.createQueryBuilder("car");
 
+    if (title) {
+      query.andWhere(
+        "(car.title_ar ILIKE :title OR car.title_en ILIKE :title)",
+        { title: `%${title}%` }
+      );
+    }
     if (governorate_id) {
       query.andWhere("car.governorateId = :governorateId", {
         governorateId: governorate_id,
@@ -72,7 +79,6 @@ export const getCars = async (
       limit: pageSize,
       totalPages: Math.ceil(totalCount / pageSize),
     };
-
 
     const data = await Promise.all(
       queryResult.map(async (rawCar) => {

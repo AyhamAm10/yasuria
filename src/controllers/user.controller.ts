@@ -1,6 +1,6 @@
 import { NextFunction, Response, Request } from "express";
 import { AppDataSource } from "../config/data_source";
-import { User } from "../entity/User";
+import { User, UserRole } from "../entity/User";
 import { HttpStatusCode } from "../error/api.error";
 import { ApiResponse } from "../helper/apiResponse";
 import { ErrorMessages } from "../error/ErrorMessages";
@@ -216,14 +216,20 @@ export const deleteUser = async (
 ) => {
   try {
     const { userId } = req.params;
+    const {currentUser} = req
     const lang = req.headers["accept-language"] || "ar";
     const entity = lang == "ar" ? "المستخدم" : "user";
 
-    const result = await AppDataSource.getRepository(User).delete(userId);
+    if(currentUser.role === UserRole.superAdmin){
+      await AppDataSource.getRepository(User).delete(userId);
+    }
+    else{
+      await AppDataSource.getRepository(User).delete({id: currentUser.id});
+    }
 
     res.status(HttpStatusCode.OK).json(
       ApiResponse.success(
-        result,
+        {},
         ErrorMessages.generateErrorMessage(entity, "deleted", lang)
       )
     );
@@ -231,6 +237,8 @@ export const deleteUser = async (
     next(error);
   }
 };
+
+
 
 
 
