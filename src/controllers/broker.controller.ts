@@ -304,7 +304,7 @@ export class BrokerController {
         .leftJoinAndSelect("broker.user", "user")
         .leftJoinAndSelect("broker.broker_service", "brokerService")
         .leftJoinAndSelect("brokerService.service", "service")
-        .leftJoinAndSelect("broker.ratings", "rating")
+        .leftJoin("broker.ratings", "rating")
         .leftJoinAndSelect("broker.governorateInfo", "governorate")
         .loadRelationCountAndMap("broker.followers_count", "broker.followers");
 
