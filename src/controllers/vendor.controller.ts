@@ -51,7 +51,8 @@ export const deleteProfile = async (req: Request, res: Response, next: NextFunct
       return next(new APIError(HttpStatusCode.UNAUTHORIZED, ErrorMessages.generateErrorMessage("المستخدم", "unauthorized", lang)));
     }
 
-    await userRepository.remove(user);
+    const userToDelete =await userRepository.findOneBy({id: user.id})
+    await userRepository.remove(userToDelete);
 
     res.status(HttpStatusCode.OK).json(ApiResponse.success(null, ErrorMessages.generateErrorMessage("المستخدم", "deleted", lang)));
   } catch (error) {
