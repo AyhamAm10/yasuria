@@ -645,7 +645,6 @@ export class BrokerController {
 
       const broker = await brokerRepository.findOne({
         where: { user },
-        relations: ["user"],
       });
 
       if (!broker) {
@@ -663,8 +662,7 @@ export class BrokerController {
       }
 
       await brokerRepository.remove(broker);
-      await userRepository.remove(broker.user);
-
+      
       res
         .status(HttpStatusCode.OK)
         .json(
