@@ -644,7 +644,7 @@ export class BrokerController {
       const entity = lang === "ar" ? "المكاتب" : "broker offices";
 
       const broker = await brokerRepository.findOne({
-        where: { user },
+        where: { user: { id: user.id } },
       });
 
       if (!broker) {
@@ -662,7 +662,7 @@ export class BrokerController {
       }
 
       await brokerRepository.remove(broker);
-      
+
       res
         .status(HttpStatusCode.OK)
         .json(
