@@ -11,8 +11,6 @@ import { deleteProfile, updateProfile } from "../controllers/vendor.controller";
 
 const profileRouter: Router = Router();
 
-const propertyController = new PropertySearchController();
-
 profileRouter.put("/profile",
     authMiddleware,
     checkRole([UserRole.admin , UserRole.superAdmin , UserRole.user]),
