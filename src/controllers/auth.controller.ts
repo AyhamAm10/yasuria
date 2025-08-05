@@ -29,16 +29,17 @@ export class AuthController {
         where: { phone }
       });
 
-      const breoker = await brokerRepository.findOne({
-        where: { user: { id: user.id } }
-      });
-
       if (!user) {
         throw new APIError(
           HttpStatusCode.NOT_FOUND,
           ErrorMessages.generateErrorMessage(entity, "not found", lang)
         );
       }
+      
+      const breoker = await brokerRepository.findOne({
+        where: { user: { id: user.id } }
+      });
+
 
       const accessToken = jwt.sign(
         { userId: user.id, phone: user.phone, role: user.role },
