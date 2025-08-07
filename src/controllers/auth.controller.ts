@@ -35,9 +35,10 @@ export class AuthController {
           ErrorMessages.generateErrorMessage(entity, "not found", lang)
         );
       }
-      
+
       const breoker = await brokerRepository.findOne({
-        where: { user: { id: user.id } }
+        where: { user: { id: user.id } },
+        relations:["broker_service.service"]
       });
 
 
