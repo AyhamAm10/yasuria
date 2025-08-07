@@ -26,7 +26,7 @@ export class AuthController {
       await validator(getLoginSchema(lang), req.body);
 
       let user = await userRepository.findOne({
-        where: { phone }
+        where: { phone },
       });
 
       if (!user) {
@@ -38,9 +38,8 @@ export class AuthController {
 
       const breoker = await brokerRepository.findOne({
         where: { user: { id: user.id } },
-        relations:["broker_service.service"]
+        relations: ["broker_service.service"],
       });
-
 
       const accessToken = jwt.sign(
         { userId: user.id, phone: user.phone, role: user.role },
@@ -64,7 +63,7 @@ export class AuthController {
         .status(HttpStatusCode.OK)
         .json(
           ApiResponse.success(
-            { accessToken, user , breoker },
+            { accessToken, user, breoker },
             ErrorMessages.generateErrorMessage(entity, "logged in", lang)
           )
         );
@@ -171,14 +170,17 @@ export class AuthController {
       const lang = req.headers["accept-language"] || "ar";
       const entity = lang === "ar" ? "المستخدم" : "user";
 
-      const id = req.currentUser?.id
-      const me =await userRepository.findOne({where: {id}}) 
-      const brokerOffice =await brokerRepository.findOneBy({user: {id}})
+      const id = req.currentUser?.id;
+      const me = await userRepository.findOne({ where: { id } });
+      const brokerOffice = await brokerRepository.findOne({
+        where: { user: { id } },
+        relations: ["broker_service.service"],
+      });
       res
         .status(HttpStatusCode.OK)
         .json(
           ApiResponse.success(
-            {user: me, broker:brokerOffice },
+            { user: me, broker: brokerOffice },
             ErrorMessages.generateErrorMessage(entity, "retrieved", lang)
           )
         );
