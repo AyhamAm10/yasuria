@@ -23,8 +23,6 @@ export const addBrokerPortfolio = async (
     ).findOne({
       where: { user: {id: userId} },
     });
-    
-    console.log(brokerOffice)
 
     if (!brokerOffice) {
       throw new APIError(
@@ -116,7 +114,7 @@ export const getBrokerPortfolios = async (
     const lang = req.headers["accept-language"] || "ar";
     const entity = lang === "ar" ? "الأعمال" : "portfolios";
 
-    const userId = req.currentUser?.id
+    const userId = Number(req.params.id)
 
     const brokerOffice = await AppDataSource.getRepository(
       BrokerOffice

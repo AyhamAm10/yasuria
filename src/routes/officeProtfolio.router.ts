@@ -14,7 +14,7 @@ officeProtfolioRouter.post("/",
     addBrokerPortfolio
 );
 
-officeProtfolioRouter.get("/", 
+officeProtfolioRouter.get("/:id", 
     authMiddleware,
     getBrokerPortfolios
 );
