@@ -1,9 +1,18 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, Index } from "typeorm";
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToMany,
+  Index,
+} from "typeorm";
+import { Chat } from "./chat";
 
 export enum UserRole {
   superAdmin = "super admin",
   admin = "admin",
-  user = "user"
+  user = "user",
 }
 
 @Entity("users")
@@ -14,7 +23,7 @@ export class User {
   @Column()
   name: string;
 
-  @Column({nullable: true})
+  @Column({ nullable: true })
   image_url: string;
 
   @Column({ default: true })
@@ -24,7 +33,7 @@ export class User {
   @Column()
   phone: string;
 
-  @Column({nullable:true})
+  @Column({ nullable: true })
   city: string;
 
   @Column({
@@ -36,4 +45,10 @@ export class User {
 
   @CreateDateColumn()
   created_at: Date;
+
+  @OneToMany(() => Chat, (chat) => chat.sender)
+  sentMessages: Chat[];
+
+  @OneToMany(() => Chat, (chat) => chat.receiver)
+  receivedMessages: Chat[];
 }

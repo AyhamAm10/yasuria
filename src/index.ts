@@ -29,6 +29,10 @@ import governorateRouter from "./routes/governorate.route";
 import notificationRoutes from "./routes/notification";
 import feedbackRouter from "./routes/feedback.route";
 import userRoute from "./routes/user.route";
+import { createServer } from "http";
+import { initChatSocket } from "./chat/soket";
+import chatRouter from "./routes/chat.route";
+
 
 
 
@@ -48,7 +52,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 
-// handle files
+
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 app.use('/icons', express.static(path.join(__dirname, 'public/icons')));
 
@@ -78,12 +82,17 @@ router.use("/favorite", favoriteRoute);
 router.use("/governorates", governorateRouter);
 app.use("/notifications", notificationRoutes);
 app.use("/user", userRoute);
+app.use("/chat", chatRouter);
 app.use(process.env.BASE_URL, router);
 
 app.use(errorHandler);
 const PORT = Number(process.env.PORT);
 swaggerDoc(app);
 logger.info(`NODE_ENV: ${Environment.toString()}`);
+
+const httpServer = createServer(app);
+
+
 
 if (Environment.isDevelopment() || Environment.isProduction()) {
   AppDataSource.initialize()
@@ -95,8 +104,9 @@ if (Environment.isDevelopment() || Environment.isProduction()) {
       );
 
       await createSuperAdmin();
+      initChatSocket(httpServer);
 
-      app.listen(PORT ,'0.0.0.0', () => {
+      httpServer.listen(PORT ,'0.0.0.0', () => {
         logger.info(`Server running at http://localhost:${PORT}`);
       });
     })
