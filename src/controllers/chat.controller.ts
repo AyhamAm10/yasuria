@@ -5,33 +5,66 @@ import { Chat } from "../entity/chat";
 
 export class ChatController {
 
-   async sendMessage(req: Request, res: Response) {
-    try {
-      const {  receiverId, message } = req.body;
-      const senderId = req.currentUser?.id
+  //  async sendMessage(req: Request, res: Response) {
+  //   try {
+  //     const {  receiverId, message } = req.body;
+  //     const senderId = req.currentUser?.id
 
-      const sender = await AppDataSource.getRepository(User).findOne({ where: { id: senderId } });
-      const receiver = await AppDataSource.getRepository(User).findOne({ where: { id: receiverId } });
+  //     const sender = await AppDataSource.getRepository(User).findOne({ where: { id: senderId } });
+  //     const receiver = await AppDataSource.getRepository(User).findOne({ where: { id: receiverId } });
 
-      if (!sender || !receiver) {
-        return res.status(404).json({ message: "Sender or receiver not found" });
-      }
+  //     if (!sender || !receiver) {
+  //       return res.status(404).json({ message: "Sender or receiver not found" });
+  //     }
 
-      const chatRepo = AppDataSource.getRepository(Chat);
-      const newMessage = chatRepo.create({
-        sender,
-        receiver,
-        message,
-      });
+  //     const chatRepo = AppDataSource.getRepository(Chat);
+  //     const newMessage = chatRepo.create({
+  //       sender,
+  //       receiver,
+  //       message,
+  //     });
 
-      await chatRepo.save(newMessage);
+  //     await chatRepo.save(newMessage);
 
-      return res.status(201).json(newMessage);
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({ message: "Error sending message" });
+  //     return res.status(201).json(newMessage);
+  //   } catch (error) {
+  //     console.error(error);
+  //     return res.status(500).json({ message: "Error sending message" });
+  //   }
+  // }
+
+  async sendMessage(req: Request, res: Response) {
+  try {
+    const { receiverId, message } = req.body;
+    const senderId = req.currentUser?.id;
+
+    const sender = await AppDataSource.getRepository(User).findOne({ where: { id: senderId } });
+    const receiver = await AppDataSource.getRepository(User).findOne({ where: { id: receiverId } });
+
+    if (!sender || !receiver) {
+      return res.status(404).json({ message: "Sender or receiver not found" });
     }
+
+    const images = req.files
+      ? (req.files as Express.Multer.File[]).map(file => `/uploads/${file.filename}`)
+      : [];
+
+    const chatRepo = AppDataSource.getRepository(Chat);
+    const newMessage = chatRepo.create({
+      sender,
+      receiver,
+      message,
+      images, 
+    });
+
+    await chatRepo.save(newMessage);
+
+    return res.status(201).json(newMessage);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Error sending message" });
   }
+}
 
    async getMessages(req: Request, res: Response) {
     try {

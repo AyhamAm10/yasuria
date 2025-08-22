@@ -1,6 +1,12 @@
-// src/entities/Chat.ts
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from "typeorm";
-import { User } from "./User"; // تأكد أن عندك جدول المستخدمين
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  ManyToOne,
+  JoinColumn,
+} from "typeorm";
+import { User } from "./User";
 
 @Entity()
 export class Chat {
@@ -21,8 +27,11 @@ export class Chat {
   @Column()
   receiverId: number;
 
-  @Column("text")
+  @Column("text", { nullable: true })
   message: string;
+
+  @Column("simple-array", { nullable: true })
+  images: string[];
 
   @CreateDateColumn()
   createdAt: Date;
