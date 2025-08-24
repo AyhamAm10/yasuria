@@ -20,9 +20,9 @@ chatRouter.get(
 );
 
 chatRouter.get(
-  "/contacts/",
+  "/contacts",
   authMiddleware,
-  controller.getContacts.bind(controller)
+  controller.getContactsWithLastMessage.bind(controller)
 );
 
 export default chatRouter;
