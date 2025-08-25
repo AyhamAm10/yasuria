@@ -84,22 +84,18 @@ export class ChatController {
 
       const chatRepo = AppDataSource.getRepository(Chat);
 
-      const [messages, total] = await chatRepo.findAndCount({
-        where: [
-          {
-            sender: { id: Number(senderId) },
-            receiver: { id: Number(receiverId) },
-          },
-          {
-            sender: { id: Number(receiverId) },
-            receiver: { id: Number(senderId) },
-          },
-        ],
-        relations: ["sender", "receiver"],
-        order: { createdAt: "ASC" },
-        skip,
-        take: limit,
-      });
+      const [messages, total] = await chatRepo
+        .createQueryBuilder("chat")
+        .leftJoinAndSelect("chat.sender", "sender")
+        .leftJoinAndSelect("chat.receiver", "receiver")
+        .where(
+          "(chat.senderId = :senderId AND chat.receiverId = :receiverId) OR (chat.senderId = :receiverId AND chat.receiverId = :senderId)",
+          { senderId, receiverId }
+        )
+        .orderBy("chat.createdAt", "ASC")
+        .skip(skip)
+        .take(limit)
+        .getManyAndCount();
 
       return res.json({
         data: messages,
