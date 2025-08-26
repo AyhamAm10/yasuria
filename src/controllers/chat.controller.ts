@@ -92,7 +92,7 @@ export class ChatController {
           "(chat.senderId = :senderId AND chat.receiverId = :receiverId) OR (chat.senderId = :receiverId AND chat.receiverId = :senderId)",
           { senderId, receiverId }
         )
-        .orderBy("chat.createdAt", "ASC")
+        .orderBy("chat.createdAt", "DESC")
         .skip(skip)
         .take(limit)
         .getManyAndCount();
