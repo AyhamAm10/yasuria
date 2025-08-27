@@ -6,7 +6,7 @@ import { Chat } from "../entity/chat";
 export class ChatController {
   async sendMessage(req: Request, res: Response) {
     try {
-      const { receiverId, message } = req.body;
+      const { receiverId, message , images } = req.body;
       const senderId = req.currentUser?.id;
 
       const sender = await AppDataSource.getRepository(User).findOne({
@@ -22,18 +22,14 @@ export class ChatController {
           .json({ message: "Sender or receiver not found" });
       }
 
-      const images = req.files
-        ? (req.files as Express.Multer.File[]).map(
-            (file) => `/uploads/${file.filename}`
-          )
-        : [];
+      const imageList: string[] = Array.isArray(images) ? images : [];
 
       const chatRepo = AppDataSource.getRepository(Chat);
       const newMessage = chatRepo.create({
         sender,
         receiver,
         message,
-        images,
+        images:imageList,
       });
 
       await chatRepo.save(newMessage);

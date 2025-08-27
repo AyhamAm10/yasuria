@@ -9,7 +9,6 @@ const controller = new ChatController();
 chatRouter.post(
   "/send",
   authMiddleware,
-  upload.array("images", 20),
   controller.sendMessage.bind(controller)
 );
 

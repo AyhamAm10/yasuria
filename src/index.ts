@@ -32,6 +32,7 @@ import userRoute from "./routes/user.route";
 import { createServer } from "http";
 import { initChatSocket } from "./chat/soket";
 import chatRouter from "./routes/chat.route";
+import ImageRouter from "./routes/image.route";
 
 
 
@@ -83,6 +84,7 @@ router.use("/governorates", governorateRouter);
 app.use("/notifications", notificationRoutes);
 app.use("/user", userRoute);
 app.use("/chat", chatRouter);
+app.use("/image", ImageRouter);
 app.use(process.env.BASE_URL, router);
 
 app.use(errorHandler);
