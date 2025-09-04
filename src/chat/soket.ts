@@ -4,7 +4,7 @@ import { AppDataSource } from "../config/data_source";
 import { User } from "../entity/User";
 import { Chat } from "../entity/chat";
 
-const onlineUsers = new Map<number, string>(); // userId -> socketId
+const onlineUsers = new Map<number, string>(); 
 
 export const initChatSocket = (server: HttpServer) => {
   const io = new Server(server, {
@@ -69,46 +69,3 @@ export const initChatSocket = (server: HttpServer) => {
 
   return io;
 };
-
-// const onlineUsers = new Map<number, string>(); // userId -> socketId
-
-// io.on("connection", (socket) => {
-//   console.log("🔗 User connected", socket.id);
-
-//   // When a user registers
-//   socket.on("register", (userId: number) => {
-//     onlineUsers.set(userId, socket.id);
-//     console.log(✅ Registered user ${userId} with socket ${socket.id});
-//   });
-
-//   // When user sends a message
-//   socket.on("sendMessage", (data) => {
-//     const { senderId, receiverId, message } = data;
-//     console.log("📤 Message received from client:", data);
-
-//     // Find receiver
-//     const receiverSocketId = onlineUsers.get(receiverId);
-//     if (receiverSocketId) {
-//       // Send to receiver only
-//       io.to(receiverSocketId).emit("message", {
-//         id: Date.now(), // fake id
-//         message,
-//         sender: { id: senderId },
-//         receiver: { id: receiverId },
-//       });
-//       console.log(📩 Delivered to user ${receiverId});
-//     } else {
-//       console.log(⚠️ User ${receiverId} is offline);
-//     }
-//   });
-
-//   // Handle disconnect
-//   socket.on("disconnect", () => {
-//     for (const [userId, sid] of onlineUsers.entries()) {
-//       if (sid === socket.id) {
-//         onlineUsers.delete(userId);
-//         console.log(❌ User ${userId} disconnected);
-//       }
-//     }
-//   });
-// });

@@ -10,6 +10,7 @@ import { swaggerDoc } from "./helper/swaggerOptions";
 import { Environment } from "./environment";
 import { logger } from "./logging/logger";
 import carRouter from "./routes/car.router";
+import fs from "fs"
 import serviceRouter from "./routes/service.router";
 import propertyRouter from "./routes/property.router";
 import attributeRouter from "./routes/attribute.router";
@@ -36,6 +37,10 @@ import ImageRouter from "./routes/image.route";
 
 
 
+const options = {
+  key: fs.readFileSync("./server.key"),
+  cert: fs.readFileSync("./server.cert"),
+};
 
 dotenv.config();
 const app = express();
@@ -47,6 +52,8 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
+
 
 
 app.use(express.json()); 
@@ -92,7 +99,7 @@ const PORT = Number(process.env.PORT);
 swaggerDoc(app);
 logger.info(`NODE_ENV: ${Environment.toString()}`);
 
-const httpServer = createServer(app);
+const httpServer = createServer(options as any , app);
 
 
 
