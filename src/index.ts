@@ -38,8 +38,8 @@ import ImageRouter from "./routes/image.route";
 
 
 const options = {
-  key: fs.readFileSync("./server.key"),
-  cert: fs.readFileSync("./server.cert"),
+  key: fs.readFileSync(path.join(__dirname, "server.key")),
+  cert: fs.readFileSync(path.join(__dirname, "server.cert")),
 };
 
 dotenv.config();
