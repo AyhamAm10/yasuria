@@ -30,7 +30,7 @@ import governorateRouter from "./routes/governorate.route";
 import notificationRoutes from "./routes/notification";
 import feedbackRouter from "./routes/feedback.route";
 import userRoute from "./routes/user.route";
-import { createServer } from "http";
+import { createServer } from "https";
 import { initChatSocket } from "./chat/soket";
 import chatRouter from "./routes/chat.route";
 import ImageRouter from "./routes/image.route";
@@ -99,7 +99,7 @@ const PORT = Number(process.env.PORT);
 swaggerDoc(app);
 logger.info(`NODE_ENV: ${Environment.toString()}`);
 
-const httpServer = createServer(options as any , app);
+const httpServer = createServer(options , app);
 
 
 
