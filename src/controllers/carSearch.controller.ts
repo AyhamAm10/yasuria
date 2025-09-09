@@ -137,8 +137,8 @@ export class CarSearchController {
       if (listing_type) whereConditions.listing_type = listing_type;
       if (seller_type) whereConditions.seller_type = seller_type;
       if (car_type_id) whereConditions.car_type = { id: car_type_id };
-      if (min_price) whereConditions.price = MoreThanOrEqual(min_price);
-      if (max_price) whereConditions.price = LessThanOrEqual(max_price);
+      if (min_price) whereConditions.price_sy = MoreThanOrEqual(min_price);
+      if (max_price) whereConditions.price_sy = LessThanOrEqual(max_price);
       if (location) whereConditions.location = Like(`%${location}%`);
       if (governorate_id) whereConditions.governorateId = governorate_id;
 
