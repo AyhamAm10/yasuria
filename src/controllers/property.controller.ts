@@ -280,6 +280,17 @@ export const createProperty = async (
 
     const savedProperty = await propertyRepository.save(newProperty);
 
+    await attributeValueRepository.delete({
+      entity: EntityAttribute.properties,
+      entity_id: savedProperty.id,
+    });
+
+    await specificationValueRepository.delete({
+      entity: EntitySpecification.properties,
+      entity_id: savedProperty.id,
+    });
+    
+    
     let attributeValues = [];
     if (attributes && attributes.length > 0) {
       const attributePromises = attributes.map(async (attr) => {

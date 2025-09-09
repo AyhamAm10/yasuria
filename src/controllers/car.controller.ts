@@ -267,6 +267,16 @@ export const createCar = async (
 
     const savedCar = await carRepository.save(newCar);
 
+    await attributeValueRepository.delete({
+      entity: EntityAttribute.car,
+      entity_id: savedCar.id,
+    });
+
+    await specificationValueRepostry.delete({
+      entity: EntitySpecification.car,
+      entity_id: savedCar.id,
+    });
+
     let attributeList = [];
     if (attributes && attributes.length > 0) {
       const attributePromises = attributes.map(async (attr) => {
