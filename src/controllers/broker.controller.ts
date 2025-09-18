@@ -547,8 +547,8 @@ export class BrokerController {
       if (typeof whatsapp_number === "string")
         broker.whatsapp_number = whatsapp_number;
       if (typeof address === "string") broker.address = address;
-      if (typeof lat === "number") broker.lat = lat;
-      if (typeof long === "number") broker.long = long;
+      if (lat !== undefined) broker.lat = parseFloat(lat);
+      if (long !== undefined) broker.long = parseFloat(long);
       if (typeof working_hours_from === "string")
         broker.working_hours_from = working_hours_from;
       if (typeof working_hours_to === "string")
@@ -559,7 +559,7 @@ export class BrokerController {
 
       if (governorate_id) {
         const governorateEntity = await governorateRepository.findOneBy({
-          id: governorate_id,
+          id: parseInt(governorate_id, 10),
         });
 
         if (!governorateEntity) {
